@@ -1,0 +1,72 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29102.190
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DemoApp", "DemoApp\DemoApp.vcxproj", "{406F0670-47E1-40F9-AAA3-4F14B5F8F53F}"
+	ProjectSection(ProjectDependencies) = postProject
+		{BC7F9F35-0F76-42AE-9F84-6F4A6687F617} = {BC7F9F35-0F76-42AE-9F84-6F4A6687F617}
+		{31A1ADBA-A977-4727-AC0D-26DBD8BADDC1} = {31A1ADBA-A977-4727-AC0D-26DBD8BADDC1}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "yUtils", "..\yUtils\yUtils.vcxproj", "{BC7F9F35-0F76-42AE-9F84-6F4A6687F617}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ImageRLib", "..\ImageRLib\ImageRLib.vcxproj", "{31A1ADBA-A977-4727-AC0D-26DBD8BADDC1}"
+	ProjectSection(ProjectDependencies) = postProject
+		{BC7F9F35-0F76-42AE-9F84-6F4A6687F617} = {BC7F9F35-0F76-42AE-9F84-6F4A6687F617}
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Debug|x64 = Debug|x64
+		Release|Win32 = Release|Win32
+		Release|x64 = Release|x64
+		Template|Win32 = Template|Win32
+		Template|x64 = Template|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{406F0670-47E1-40F9-AAA3-4F14B5F8F53F}.Debug|Win32.ActiveCfg = Debug|Win32
+		{406F0670-47E1-40F9-AAA3-4F14B5F8F53F}.Debug|Win32.Build.0 = Debug|Win32
+		{406F0670-47E1-40F9-AAA3-4F14B5F8F53F}.Debug|x64.ActiveCfg = Debug|x64
+		{406F0670-47E1-40F9-AAA3-4F14B5F8F53F}.Release|Win32.ActiveCfg = Release|Win32
+		{406F0670-47E1-40F9-AAA3-4F14B5F8F53F}.Release|Win32.Build.0 = Release|Win32
+		{406F0670-47E1-40F9-AAA3-4F14B5F8F53F}.Release|x64.ActiveCfg = Release|Win32
+		{406F0670-47E1-40F9-AAA3-4F14B5F8F53F}.Template|Win32.ActiveCfg = Template|Win32
+		{406F0670-47E1-40F9-AAA3-4F14B5F8F53F}.Template|Win32.Build.0 = Template|Win32
+		{406F0670-47E1-40F9-AAA3-4F14B5F8F53F}.Template|x64.ActiveCfg = Template|Win32
+		{BC7F9F35-0F76-42AE-9F84-6F4A6687F617}.Debug|Win32.ActiveCfg = Debug|Win32
+		{BC7F9F35-0F76-42AE-9F84-6F4A6687F617}.Debug|Win32.Build.0 = Debug|Win32
+		{BC7F9F35-0F76-42AE-9F84-6F4A6687F617}.Debug|x64.ActiveCfg = Debug|x64
+		{BC7F9F35-0F76-42AE-9F84-6F4A6687F617}.Debug|x64.Build.0 = Debug|x64
+		{BC7F9F35-0F76-42AE-9F84-6F4A6687F617}.Release|Win32.ActiveCfg = Release|Win32
+		{BC7F9F35-0F76-42AE-9F84-6F4A6687F617}.Release|Win32.Build.0 = Release|Win32
+		{BC7F9F35-0F76-42AE-9F84-6F4A6687F617}.Release|x64.ActiveCfg = Release|x64
+		{BC7F9F35-0F76-42AE-9F84-6F4A6687F617}.Release|x64.Build.0 = Release|x64
+		{BC7F9F35-0F76-42AE-9F84-6F4A6687F617}.Template|Win32.ActiveCfg = Template|Win32
+		{BC7F9F35-0F76-42AE-9F84-6F4A6687F617}.Template|Win32.Build.0 = Template|Win32
+		{BC7F9F35-0F76-42AE-9F84-6F4A6687F617}.Template|x64.ActiveCfg = Template|x64
+		{BC7F9F35-0F76-42AE-9F84-6F4A6687F617}.Template|x64.Build.0 = Template|x64
+		{31A1ADBA-A977-4727-AC0D-26DBD8BADDC1}.Debug|Win32.ActiveCfg = Debug|Win32
+		{31A1ADBA-A977-4727-AC0D-26DBD8BADDC1}.Debug|Win32.Build.0 = Debug|Win32
+		{31A1ADBA-A977-4727-AC0D-26DBD8BADDC1}.Debug|x64.ActiveCfg = Debug|x64
+		{31A1ADBA-A977-4727-AC0D-26DBD8BADDC1}.Debug|x64.Build.0 = Debug|x64
+		{31A1ADBA-A977-4727-AC0D-26DBD8BADDC1}.Release|Win32.ActiveCfg = Release|Win32
+		{31A1ADBA-A977-4727-AC0D-26DBD8BADDC1}.Release|Win32.Build.0 = Release|Win32
+		{31A1ADBA-A977-4727-AC0D-26DBD8BADDC1}.Release|x64.ActiveCfg = Release|x64
+		{31A1ADBA-A977-4727-AC0D-26DBD8BADDC1}.Release|x64.Build.0 = Release|x64
+		{31A1ADBA-A977-4727-AC0D-26DBD8BADDC1}.Template|Win32.ActiveCfg = Template|Win32
+		{31A1ADBA-A977-4727-AC0D-26DBD8BADDC1}.Template|Win32.Build.0 = Template|Win32
+		{31A1ADBA-A977-4727-AC0D-26DBD8BADDC1}.Template|x64.ActiveCfg = Template|x64
+		{31A1ADBA-A977-4727-AC0D-26DBD8BADDC1}.Template|x64.Build.0 = Template|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E23FBC99-788D-4E96-96F6-DF0A391FB74D}
+	EndGlobalSection
+	GlobalSection(RationalClearCase) = preSolution
+		SourceControlProvider = RationalClearCase
+	EndGlobalSection
+EndGlobal
