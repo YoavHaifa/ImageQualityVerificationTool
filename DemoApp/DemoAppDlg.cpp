@@ -512,13 +512,25 @@ void CDemoAppDlg::OnProcessSmooth()
 {
 	if (!mpImages)
 		return;
+	if (!mpImages->GetDicom())
+	{
+		CMyWindows::MessBox("This function requires DICOM images", "Input Error");
+		return;
+	}
 	if (mpSmoother)
 		return;
 
 	mpSmoother = new CSmoother(mpImages->GetNLines(), mpImages->GetNCols());
 
 	if (!mpSmoothed)
+	{
 		mpSmoothed = mpImages->CreateSharedImage("Smoothed");
+		if (!mpSmoothed)
+		{
+			CMyWindows::MessBox("Failed to creat shared image", "SW Error");
+			return;
+		}
+	}
 	
 	unsigned short *pInput = mpImages->GetImageDataStart(miPos);
 	mpSmoother->Smooth((unsigned short *)mpSmoothed->GetDataStart(), pInput);
