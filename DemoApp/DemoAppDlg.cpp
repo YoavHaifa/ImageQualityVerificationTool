@@ -469,23 +469,30 @@ void CDemoAppDlg::OnFileOpen32771()
 	if (dlg.DoModal())
 	{
 		CString sImageName(dlg.m_ofn.lpstrFile);
-		if (!mpImageRIF)
+		if (!CMyDicom::IsDicom(sImageName))
 		{
-			if (LoadViewerWithImages(sImageName))
-			{
-				mpImages = new CArchivesImages(sImageName);
-				miPos = mpImages->GetCurrentPosition();
-				DisplayPos();
-				mImages.AddTail(mpImages);
-			}
+			CMyWindows::MessBox("Expecting DICOM images here...", "Warning");
 		}
-		else // Add Extra Images' series
+		else
 		{
-			if (mImages.GetSize() == 1)
-				mpImageRIF->SetNColumns(2); // Do it once
-			CArchivesImages *pNewImages = new CArchivesImages(sImageName);
-			mImages.AddTail(pNewImages);
-			mpImageRIF->FileOpen(sImageName);
+			if (!mpImageRIF)
+			{
+				if (LoadViewerWithImages(sImageName))
+				{
+					mpImages = new CArchivesImages(sImageName);
+					miPos = mpImages->GetCurrentPosition();
+					DisplayPos();
+					mImages.AddTail(mpImages);
+				}
+			}
+			else // Add Extra Images' series
+			{
+				if (mImages.GetSize() == 1)
+					mpImageRIF->SetNColumns(2); // Do it once
+				CArchivesImages *pNewImages = new CArchivesImages(sImageName);
+				mImages.AddTail(pNewImages);
+				mpImageRIF->FileOpen(sImageName);
+			}
 		}
 	}
 }
@@ -493,7 +500,7 @@ void CDemoAppDlg::OnFileOpencolorer()
 {
 	if (!mpImageRIF || !mpImages)
 	{
-		CMyWindows::MessBox("Please oad some base images first","Notice");
+		CMyWindows::MessBox("Please load some base images first","Notice");
 		return;
 	}
 	
@@ -512,13 +519,25 @@ void CDemoAppDlg::OnProcessSmooth()
 {
 	if (!mpImages)
 		return;
+	if (!mpImages->GetDicom())
+	{
+		CMyWindows::MessBox("This function requires DICOM images", "Input Error");
+		return;
+	}
 	if (mpSmoother)
 		return;
 
 	mpSmoother = new CSmoother(mpImages->GetNLines(), mpImages->GetNCols());
 
 	if (!mpSmoothed)
+	{
 		mpSmoothed = mpImages->CreateSharedImage("Smoothed");
+		if (!mpSmoothed)
+		{
+			CMyWindows::MessBox("Failed to creat shared image", "SW Error");
+			return;
+		}
+	}
 	
 	unsigned short *pInput = mpImages->GetImageDataStart(miPos);
 	mpSmoother->Smooth((unsigned short *)mpSmoothed->GetDataStart(), pInput);
