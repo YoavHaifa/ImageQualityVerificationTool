@@ -475,23 +475,30 @@ void CDemoAppDlg::OnFileOpen32771()
 		}
 		else
 		{
-			if (!mpImageRIF)
+			if (!CMyDicom::IsDicom(sImageName))
 			{
-				if (LoadViewerWithImages(sImageName))
-				{
-					mpImages = new CArchivesImages(sImageName);
-					miPos = mpImages->GetCurrentPosition();
-					DisplayPos();
-					mImages.AddTail(mpImages);
-				}
+				CMyWindows::MessBox("Expecting DICOM images here...", "Warning");
 			}
-			else // Add Extra Images' series
+			else
 			{
-				if (mImages.GetSize() == 1)
-					mpImageRIF->SetNColumns(2); // Do it once
-				CArchivesImages *pNewImages = new CArchivesImages(sImageName);
-				mImages.AddTail(pNewImages);
-				mpImageRIF->FileOpen(sImageName);
+				if (!mpImageRIF)
+				{
+					if (LoadViewerWithImages(sImageName))
+					{
+						mpImages = new CArchivesImages(sImageName);
+						miPos = mpImages->GetCurrentPosition();
+						DisplayPos();
+						mImages.AddTail(mpImages);
+					}
+				}
+				else // Add Extra Images' series
+				{
+					if (mImages.GetSize() == 1)
+						mpImageRIF->SetNColumns(2); // Do it once
+					CArchivesImages* pNewImages = new CArchivesImages(sImageName);
+					mImages.AddTail(pNewImages);
+					mpImageRIF->FileOpen(sImageName);
+				}
 			}
 		}
 	}
