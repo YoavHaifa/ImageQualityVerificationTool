@@ -236,7 +236,7 @@ LRESULT CDemoAppDlg::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
 		{
 			//gCardiac.OnGraphicUpdate();
 			sprintf_s (zBuf,sizeof(zBuf), "<WindowProc> Graphic Active Messgae %d %d - %s", 
-				(int)wParam, (int)lParam, pGE->Name());
+				(int)wParam, (int)lParam, (const char *)pGE->Name());
 			CMyWindows::PrintStatus(zBuf);
 		    return 0;
 		}
@@ -255,7 +255,7 @@ LRESULT CDemoAppDlg::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
         else if (message == mpImageRIF->mImageRWindowMsg)
 	    {
 			char zBuf[128];
-			sprintf_s(zBuf,sizeof(zBuf),"Window center %d width %d", wParam, lParam);
+			sprintf_s(zBuf,sizeof(zBuf),"Window center %d width %d", (int)wParam, (int)lParam);
 			CMyWindows::MessBox(zBuf,"Window from MyViewer");
 		    return 0;
 	    }
@@ -364,7 +364,7 @@ void CDemoAppDlg::InitSharedVolume(void)
 			short *pImData = mpSharedVolume->GetImageStart(iAbsIm);
 			if (pfLog)
 				fprintf (pfLog, "iImage %3d  iAbs %3d p %8p (%8p)\n", 
-					iImage, iAbsIm, pImData, pImData - pLast);
+					iImage, iAbsIm, pImData, (void *)(pImData - pLast));
 			pLast = pImData;
 
 			int lastLineToFill = mnImageLines - 20 - iRow * 10;
@@ -739,7 +739,7 @@ void CDemoAppDlg::OnProcessSaveall()
 		nSaved++;
 	}
 	char zBuf[512];
-	sprintf_s(zBuf, sizeof(zBuf), "%d images saved in <%s>", nSaved, saveDir);
+	sprintf_s(zBuf, sizeof(zBuf), "%d images saved in <%s>", nSaved, (const char *)saveDir);
 	CMyWindows::MessBox(zBuf, "Save All Finished");
 }
 void CDemoAppDlg::OnProcessSaveallwithnewname()
@@ -811,7 +811,7 @@ void CDemoAppDlg::OnProcessSavewithnewmatrix()
 		nSaved++;
 	}
 	char zBuf[512];
-	sprintf_s(zBuf, sizeof(zBuf), "%d images saved in <%s>", nSaved, saveDir);
+	sprintf_s(zBuf, sizeof(zBuf), "%d images saved in <%s>", nSaved, (const char *)saveDir);
 	CMyWindows::MessBox(zBuf, "Save All Finished");
 }
 void CDemoAppDlg::OnBnClickedButtonAddColors()
