@@ -197,6 +197,7 @@ copy ..\..\ImageRLib\$(Platform)\$(Configuration)\ImageRLib.dll $(OutDir)
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="TubesMix.h" />
     <ClInclude Include="DemoApp.h" />
     <ClInclude Include="DemoAppDlg.h" />
     <ClInclude Include="framework.h" />
@@ -205,6 +206,7 @@ copy ..\..\ImageRLib\$(Platform)\$(Configuration)\ImageRLib.dll $(OutDir)
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="TubesMix.cpp" />
     <ClCompile Include="DemoApp.cpp" />
     <ClCompile Include="DemoAppDlg.cpp" />
     <ClCompile Include="pch.cpp">

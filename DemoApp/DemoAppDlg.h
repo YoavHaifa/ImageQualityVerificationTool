@@ -58,6 +58,8 @@ public:
 	bool mbDisplayReadyImages;
 	class CArchivesImages *mpImages;
 	class CDataFiles* mpDataFiles;
+	class CTubesMix* mpTubesMix;
+
 	CList<class CArchivesImages*,class CArchivesImages*> mImages;
 	CTSharedImage<unsigned short> *mpSmoothed;
 	CTSharedImage<COLORREF> *mpColors;
@@ -92,5 +94,6 @@ public:
 	afx_msg void OnSetWindowrange();
 	afx_msg void OnGetTest();
 	afx_msg void OnFileOpenbinary();
+	afx_msg void OnTubemixPreparenominal();
 };
 

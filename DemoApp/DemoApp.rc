@@ -135,6 +135,10 @@ BEGIN
         MENUITEM "Open Colorer",                ID_FILE_OPENCOLORER
         MENUITEM "Exit",                        ID_FILE_EXIT
     END
+    POPUP "Tube Mix"
+    BEGIN
+        MENUITEM "Prepare Nominal",             ID_TUBEMIX_PREPARENOMINAL
+    END
     POPUP "Process"
     BEGIN
         MENUITEM "Smooth",                      ID_PROCESS_SMOOTH

@@ -4,6 +4,8 @@
 #include "stdafx.h"
 #include "DemoApp.h"
 #include "DemoAppDlg.h"
+#include "TubesMix.h"
+
 #include "..\..\yUtils\MyMath.h"
 #include "..\..\yUtils\MyFileDialog.h"
 #include "..\..\yUtils\NameGetDialog.h"
@@ -72,6 +74,7 @@ CDemoAppDlg::CDemoAppDlg(CWnd* pParent /*=NULL*/)
 	, mbDisplayReadyImages(false)
 	, mpImages(NULL)
 	, mpDataFiles(NULL)
+	, mpTubesMix(NULL)
 	, mpSmoothed(NULL)
 	, mpColors(NULL)
 	, mpSmoother(NULL)
@@ -140,6 +143,7 @@ BEGIN_MESSAGE_MAP(CDemoAppDlg, CDialog)
 	ON_COMMAND(ID_SET_WINDOWRANGE, &CDemoAppDlg::OnSetWindowrange)
 	ON_COMMAND(ID_GET_TEST, &CDemoAppDlg::OnGetTest)
 	ON_COMMAND(ID_FILE_OPENBINARY, &CDemoAppDlg::OnFileOpenbinary)
+	ON_COMMAND(ID_TUBEMIX_PREPARENOMINAL, &CDemoAppDlg::OnTubemixPreparenominal)
 END_MESSAGE_MAP()
 
 
@@ -994,4 +998,11 @@ void CDemoAppDlg::OnGetTest()
        double x = atof(var);
        ux = x; // heap error by return from the function
 	   */
+}
+
+
+void CDemoAppDlg::OnTubemixPreparenominal()
+{
+	if (!mpTubesMix)
+		mpTubesMix = new CTubesMix();
 }
