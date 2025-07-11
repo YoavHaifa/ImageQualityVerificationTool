@@ -57,6 +57,7 @@ public:
 
 	bool mbDisplayReadyImages;
 	class CArchivesImages *mpImages;
+	class CDataFiles* mpDataFiles;
 	CList<class CArchivesImages*,class CArchivesImages*> mImages;
 	CTSharedImage<unsigned short> *mpSmoothed;
 	CTSharedImage<COLORREF> *mpColors;
@@ -90,5 +91,6 @@ public:
 	afx_msg void OnFileOpencolorer();
 	afx_msg void OnSetWindowrange();
 	afx_msg void OnGetTest();
+	afx_msg void OnFileOpenbinary();
 };
 

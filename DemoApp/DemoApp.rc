@@ -130,7 +130,8 @@ IDR_MENU1 MENU
 BEGIN
     POPUP "File"
     BEGIN
-        MENUITEM "Open",                        ID_FILE_OPEN32771
+        MENUITEM "Open Dicom",                  ID_FILE_OPEN32771
+        MENUITEM "Open Binary",                 ID_FILE_OPENBINARY
         MENUITEM "Open Colorer",                ID_FILE_OPENCOLORER
         MENUITEM "Exit",                        ID_FILE_EXIT
     END
@@ -231,6 +232,7 @@ END
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
 IDR_MAINFRAME           ICON                    "res\\DemoApp.ico"
+
 #endif    // English (United Kingdom) resources
 /////////////////////////////////////////////////////////////////////////////
 

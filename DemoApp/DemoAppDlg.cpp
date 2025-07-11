@@ -17,6 +17,8 @@
 #include "..\..\ImageRLib\Smoother.h"
 #include "..\..\ImageRLib\Zoomer.h"
 #include "..\..\ImageRLib\Rle1read.h"
+#include "..\..\ImageRLib\DataFiles.h"
+
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -69,6 +71,7 @@ CDemoAppDlg::CDemoAppDlg(CWnd* pParent /*=NULL*/)
 	, mpfLog(NULL)
 	, mbDisplayReadyImages(false)
 	, mpImages(NULL)
+	, mpDataFiles(NULL)
 	, mpSmoothed(NULL)
 	, mpColors(NULL)
 	, mpSmoother(NULL)
@@ -136,6 +139,7 @@ BEGIN_MESSAGE_MAP(CDemoAppDlg, CDialog)
 	ON_COMMAND(ID_FILE_OPENCOLORER, &CDemoAppDlg::OnFileOpencolorer)
 	ON_COMMAND(ID_SET_WINDOWRANGE, &CDemoAppDlg::OnSetWindowrange)
 	ON_COMMAND(ID_GET_TEST, &CDemoAppDlg::OnGetTest)
+	ON_COMMAND(ID_FILE_OPENBINARY, &CDemoAppDlg::OnFileOpenbinary)
 END_MESSAGE_MAP()
 
 
@@ -225,7 +229,7 @@ LRESULT CDemoAppDlg::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
     {
 		CGraphicElement *pGE = NULL;
 		bool bChange = false;
-		if (mpImageRIF->GetGraphicMessage(message, wParam, bChange))
+		if (mpImageRIF->GetGraphicMessage(message, wParam, lParam, bChange))
 		{
 			//gCardiac.OnGraphicUpdate();
 			sprintf_s (zBuf,sizeof(zBuf), "<WindowProc> Graphic Messgae %d %d", (int)wParam, (int)lParam);
@@ -465,7 +469,7 @@ void CDemoAppDlg::OnBnClickedButtonUpPos()
 }
 void CDemoAppDlg::OnFileOpen32771()
 {
-	CMyFileDialog dlg(CMyFileDialog::FD_OPEN,"Open Images for Display","d:\\Cirs_Images");
+	CMyFileDialog dlg(CMyFileDialog::FD_OPEN,"Open Dicom Images for Display","d:\\Cirs_Images");
 	if (dlg.DoModal())
 	{
 		CString sImageName(dlg.m_ofn.lpstrFile);
@@ -495,6 +499,26 @@ void CDemoAppDlg::OnFileOpen32771()
 			}
 		}
 	}
+}
+void CDemoAppDlg::OnFileOpenbinary()
+{
+	CMyFileDialog dlg(CMyFileDialog::FD_OPEN, "Open Binary File for Display", "d:\\Dump");
+	if (dlg.DoModal())
+	{
+		CString sImageName(dlg.m_ofn.lpstrFile);
+
+		if (!mpImageRIF)
+		{
+			if (LoadViewerWithImages(sImageName))
+			{
+				mpDataFiles = new CDataFiles(sImageName);
+				miPos = mpDataFiles->GetCurrentPosition();
+				DisplayPos();
+				//mImages.AddTail(mpImages);
+			}
+		}
+	}
+
 }
 void CDemoAppDlg::OnFileOpencolorer()
 {
