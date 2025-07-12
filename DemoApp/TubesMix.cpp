@@ -1,23 +1,95 @@
 #include "stdafx.h"
 #include "TubesMix.h"
 #include "..\..\yUtils\MyWindows.h"
+#include <iostream>
+#include <fstream>
 
 CTubesMix::CTubesMix()
-	: mSizeS(450)
-	, mSizeZ(1024)
+	: mMergeTexSizeS(450)
+	, mMergeTexSizeZ(1024)
+	, mnParamsInitialized(0)
 	, mpData(NULL)
 	, msType("NULL")
 {
-	mnValues = mSizeS * mSizeZ;
+	mbAllParametersInitialized = ReadParametersFromFile();
+
+	mnValues = mMergeTexSizeS * mMergeTexSizeZ;
 	mpData = new float[mnValues];
 	memset(mpData, 0, mnValues * sizeof(float));
+}
+
+const char* CTubesMix::CheckName(const string& sLine, const char* zName)
+{
+	const char* zStart = sLine.c_str();
+	size_t nameLen = strlen(zName);
+	size_t nameInLineLen = sLine.find(' ');
+	if (nameLen != nameInLineLen)
+		return NULL;
+
+	if (strncmp(zName, zStart, nameLen) != 0)
+		return NULL;
+
+	mnParamsInitialized++;
+	return sLine.c_str() + nameLen + 1;
+}
+
+void CTubesMix::Check4Int(const string& sLine, const char* zName, int& oValue)
+{
+	const char *zValue = CheckName(sLine, zName);
+	if (zValue)
+		oValue = atoi(zValue);
+}
+
+void CTubesMix::Check4Double(const string& sLine, const char* zName, double& oValue)
+{
+	const char *zValue = CheckName(sLine, zName);
+	if (zValue)
+		oValue = atof(zValue);
+}
+
+bool CTubesMix::ReadParametersFromFile()
+{
+	CString sfName("d:\\Log\\BP_calcTube1MergeWeight_width1024_height450.txt");
+	ifstream file((const char*)sfName);
+	if (!file.is_open())
+	{
+		//mLogger->LogError(LOGGER_LOC, L"Failed to open ECG file " + ecgFilename + L" while trying to read ECG data from the scan plan");
+		return false;
+	}
+
+	string sLine;
+
+	while (getline(file, sLine))
+	{
+		Check4Int(sLine, "mergeTexSizeS", mMergeTexSizeS);
+		Check4Int(sLine, "mergeTexSizeZ", mMergeTexSizeZ);
+		Check4Int(sLine, "nSlices", mnSlices);
+
+		Check4Double(sLine, "totalTexSmm", mTotalTexSmm);
+		Check4Double(sLine, "totalTexZmm", mTotalTexZmm);
+		Check4Double(sLine, "distanceBetweenSensorsZ", mDistanceBetweenSensorsZ);
+		Check4Double(sLine, "distanceBetweenXrts", mDistanceBetweenXrts);
+		Check4Double(sLine, "tubeShiftZ_tube0", mTubeShiftZ_tube0);
+		Check4Double(sLine, "tubeShiftZ_tube1", mTubeShiftZ_tube1);
+		Check4Double(sLine, "DmsToCenterMm", mDmsToCenterMm);
+		Check4Double(sLine, "xrtToCenterMm", mXrtToCenterMm);
+
+		if (mnParamsInitialized == N_PARAMS_REQUIRED)
+			return true;
+	}
+
+	char zBuf[128];
+	sprintf_s(zBuf, sizeof(zBuf), "<CTubesMix::ReadParametersFromFile> Only %d parameters found - %d required",
+		mnParamsInitialized, N_PARAMS_REQUIRED);
+	CMyWindows::MessBox(zBuf, "Missing Parameters");
+	return false;
 }
 
 bool CTubesMix::Dump()
 {
 	char zBuf[128];
 	sprintf_s(zBuf, sizeof(zBuf), "d:\\Dump\\BP_TubesMergeWeights_%s_width%d_height%d.float.dat",
-		(const char *)msType, mSizeZ, mSizeS);
+		(const char *)msType, mMergeTexSizeZ, mMergeTexSizeS);
 	FILE* pf = NULL;
 	fopen_s(&pf, zBuf, "wb");
 	if (!pf)
@@ -62,18 +134,16 @@ bool CTubesMix::Dump()
 void CTubesMix::ComputeNominal()
 {
 	FILE* pfLog = NULL;
-	if (mDebug & 0x80)
-	{
-		char zBuf[128];
-		sprintf_s(zBuf, sizeof(zBuf), "d:\\Log\\BP_calcTube1MergeWeight_width%d_height%d.txt",
-			mSizeZ, mSizeS);
-		fopen_s(&pfLog, zBuf, "w");
-	}
+	char zBuf[128];
+	sprintf_s(zBuf, sizeof(zBuf), "d:\\Log\\CTubesMix__ComputeNominal_width%d_height%d.txt",
+		mMergeTexSizeZ, mMergeTexSizeS);
+	fopen_s(&pfLog, zBuf, "w");
+
 	if (pfLog)
 	{
 		fprintf(pfLog, "<calcTube1MergeWeight>\n");
-		fprintf(pfLog, "mergeTexSizeZ %d\n", mSizeZ);
-		fprintf(pfLog, "mergeTexSizeS %d\n", mSizeS);
+		fprintf(pfLog, "mergeTexSizeZ %d\n", mMergeTexSizeZ);
+		fprintf(pfLog, "mergeTexSizeS %d\n", mMergeTexSizeS);
 		fprintf(pfLog, "totalTexZmm %f\n", mTotalTexZmm);
 		fprintf(pfLog, "totalTexSmm %f\n", mTotalTexSmm);
 		fprintf(pfLog, "bpP.distanceBetweenSensorsZ %f\n", mDistanceBetweenSensorsZ);

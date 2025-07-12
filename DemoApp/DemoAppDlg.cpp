@@ -1005,4 +1005,6 @@ void CDemoAppDlg::OnTubemixPreparenominal()
 {
 	if (!mpTubesMix)
 		mpTubesMix = new CTubesMix();
+
+	mpTubesMix->ComputeNominal();
 }
