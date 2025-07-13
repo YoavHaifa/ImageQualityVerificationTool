@@ -8,8 +8,11 @@ CTubesMix::CTubesMix()
 	: mMergeTexSizeS(450)
 	, mMergeTexSizeZ(1024)
 	, mnParamsInitialized(0)
+	, mMarginsMm(20.0)
 	, mpData(NULL)
 	, msType("NULL")
+	, mpfLog(NULL)
+	, mpfCsv(NULL)
 {
 	mbAllParametersInitialized = ReadParametersFromFile();
 
@@ -109,112 +112,71 @@ bool CTubesMix::Dump()
 	return true;
 }
 
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// The function calculate Grid of weights: calcTube1MergeWeight
-// The function executed only in case of Dual Tube shot
-// Each pixel of the grid is calculates as if it is located directly on the path of the ray 
-// And its weight is calculated as 1 if the weight is affected from the left tube only
-// as 0 if the weight is affected from the right tube
-// and lineary interpolated in case of both tubes incluence
-//
-//   left
-//  ------
-//          \  both
-//           \        right
-//             -------------
-//
-// Parameters:
-//		buffer - Output Grid
-//		mergeTexSizeZ - Size of the Grid in Z direction (XRT_MERGE_TEXTURE_RESOLUTION_Z = 512*4)
-//		mergeTexSizeS - Size of the Grid in X direction (XRT_MERGE_TEXTURE_RESOLUTION_S	= 280*4)
-//		totalTexZmm - 
-//		totalTexSmm - 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void CTubesMix::ComputeNominal()
+void CTubesMix::ComputeInternalVariables()
 {
-	FILE* pfLog = NULL;
-	char zBuf[128];
-	sprintf_s(zBuf, sizeof(zBuf), "d:\\Log\\CTubesMix__ComputeNominal_width%d_height%d.txt",
-		mMergeTexSizeZ, mMergeTexSizeS);
-	fopen_s(&pfLog, zBuf, "w");
+	mZ_tube_0 = mDistanceBetweenXrts / 2.0 + mTubeShiftZ_tube0;
+	mZ_tube_1 = -mDistanceBetweenXrts / 2.0 + mTubeShiftZ_tube1;
 
-	if (pfLog)
+	mLocationOfLastZSensorCenterMm = (mnSlices / 2 - 0.5) * mDistanceBetweenSensorsZ;//in mm;
+	mTexelSizeSMm = mTotalTexSmm / mMergeTexSizeS;	// in mm
+	mTexelSizeZMm = mTotalTexZmm / mMergeTexSizeZ;	// in mm
+
+	mFirstTexelLocationS = -mTotalTexSmm / 2 + mTexelSizeSMm / 2;
+	mFirstTexelLocationZ = -mTotalTexZmm / 2 + mTexelSizeZMm / 2;
+
+	mMinStartMix = mZ_tube_1 + mMarginsMm;
+	mMaxEndMix = mZ_tube_0 - mMarginsMm;
+
+	if (mpfLog)
 	{
-		fprintf(pfLog, "<calcTube1MergeWeight>\n");
-		fprintf(pfLog, "mergeTexSizeZ %d\n", mMergeTexSizeZ);
-		fprintf(pfLog, "mergeTexSizeS %d\n", mMergeTexSizeS);
-		fprintf(pfLog, "totalTexZmm %f\n", mTotalTexZmm);
-		fprintf(pfLog, "totalTexSmm %f\n", mTotalTexSmm);
-		fprintf(pfLog, "bpP.distanceBetweenSensorsZ %f\n", mDistanceBetweenSensorsZ);
-		fprintf(pfLog, "debug %d 0x%x\n", mDebug, mDebug);
-		fprintf(pfLog, "\n");
+		fprintf(mpfLog, "<CTubesMix::ComputeInternalVariables>\n");
+		fprintf(mpfLog, "z_tube_0 %f\n", mZ_tube_0);
+		fprintf(mpfLog, "z_tube_1 %f\n", mZ_tube_1);
+		fprintf(mpfLog, "locationOfLastZSensorCenter %f\n", mLocationOfLastZSensorCenterMm);
+		fprintf(mpfLog, "texelSizeS %f\n", mTexelSizeSMm);
+		fprintf(mpfLog, "texelSizeZ %f\n", mTexelSizeZMm);
+		fprintf(mpfLog, "firstTexelLocationS %f\n", mFirstTexelLocationS);
+		fprintf(mpfLog, "firstTexelLocationZ %f\n", mFirstTexelLocationZ);
+		fprintf(mpfLog, "\n");
+		fprintf(mpfLog, "mMarginsMm %f\n", mMarginsMm);
+		fprintf(mpfLog, "mMinStartMix %f\n", mMinStartMix);
+		fprintf(mpfLog, "mMaxEndMix %f\n", mMaxEndMix);
+		fprintf(mpfLog, "\n");
+	}
+}
+
+void CTubesMix::ComputeColVariables(int iS, bool bSaveMargins)
+{
+	double positionS = mFirstTexelLocationS + iS * mTexelSizeSMm;	// position of texel, in mm, from iso-center.
+
+	// (abs(mZ_tube_1) + mZMixEnd) / (xrtToCenterMm - positionS) = (mLocationOfLastZSensorCenterMm + abs(mZ_tube_1)) / (DmsToCenterMm + xrtToCenterMm)
+	mZMixEnd = (mLocationOfLastZSensorCenterMm + abs(mZ_tube_1)) / (mDmsToCenterMm + mXrtToCenterMm) * (mXrtToCenterMm - positionS) - abs(mZ_tube_1);
+	mZMixStart = (mLocationOfLastZSensorCenterMm + abs(mZ_tube_0)) / (mDmsToCenterMm + mXrtToCenterMm) * (mXrtToCenterMm - positionS) - abs(mZ_tube_0);
+	mZMixStart *= -1;
+
+	if (bSaveMargins)
+	{
+		if (mZMixStart < mMinStartMix)
+			mZMixStart = mMinStartMix;
+		if (mZMixEnd > mMaxEndMix)
+			mZMixEnd = mMaxEndMix;
 	}
 
+	mZRangeBetweenTubesMm = mZMixEnd - mZMixStart;
 
-	double z_tube_0 = mDistanceBetweenXrts / 2.0 + mTubeShiftZ_tube0;
-	double z_tube_1 = -mDistanceBetweenXrts / 2.0 + mTubeShiftZ_tube1;
-
-	double locationOfLastZSensorCenter = (mnSlices / 2 - 0.5) * mDistanceBetweenSensorsZ;//in mm;
-		//                    ReconFOV      512*4
-	double texelSizeS = mTotalTexSmm / mMergeTexSizeS;	// in mm
-	double texelSizeZ = mTotalTexZmm / mMergeTexSizeZ;	// in mm
-
-	double firstTexelLocationS = -mTotalTexSmm / 2 + texelSizeS / 2;
-	double firstTexelLocationZ = -mTotalTexZmm / 2 + texelSizeZ / 2;
-
-	if (pfLog)
+	if (mpfLog)
 	{
-		fprintf(pfLog, "z_tube_0 %f\n", z_tube_0);
-		fprintf(pfLog, "z_tube_1 %f\n", z_tube_1);
-		fprintf(pfLog, "locationOfLastZSensorCenter %f\n", locationOfLastZSensorCenter);
-		fprintf(pfLog, "texelSizeS %f\n", texelSizeS);
-		fprintf(pfLog, "texelSizeZ %f\n", texelSizeZ);
-		fprintf(pfLog, "firstTexelLocationS %f\n", firstTexelLocationS);
-		fprintf(pfLog, "firstTexelLocationZ %f\n", firstTexelLocationZ);
-		fprintf(pfLog, "\n");
+		fprintf(mpfLog, "%3d: S %f - z_c %f - z_a %f\n", iS, positionS, mZMixEnd, mZMixStart);
 	}
 
-	for (int iS = 0; iS < mMergeTexSizeS; iS++)
-	{
-		double positionS = firstTexelLocationS + iS * texelSizeS;	// position of texel, in mm, from iso-center.
+}
 
-		// (abs(z_tube_1) + z_c_edge) / (xrtToCenterMm - positionS) = (locationOfLastZSensorCenter + abs(z_tube_1)) / (DmsToCenterMm + xrtToCenterMm)
-		double z_c_edge = (locationOfLastZSensorCenter + abs(z_tube_1)) / (mDmsToCenterMm + mXrtToCenterMm) * (mXrtToCenterMm - positionS) - abs(z_tube_1);
-		double z_a_edge = (locationOfLastZSensorCenter + abs(z_tube_0)) / (mDmsToCenterMm + mXrtToCenterMm) * (mXrtToCenterMm - positionS) - abs(z_tube_0);
-		z_a_edge *= -1;
-		if (pfLog)
-		{
-			fprintf(pfLog, "%3d: S %f - z_c %f - z_a %f\n", iS, positionS, z_c_edge, z_a_edge);
-		}
-
-		for (int iZ = 0; iZ < mMergeTexSizeZ; iZ++)
-		{
-			double positionZ = firstTexelLocationZ + iZ * texelSizeZ;	// position of texel, in mm, from center.
-
-			if (positionZ <= z_a_edge)	// w==1
-			{
-				if (iZ < mMergeTexSizeZ / 2)
-					mpData[mMergeTexSizeZ * iS + iZ] = 1.0f;
-				else
-					mpData[mMergeTexSizeZ * iS + iZ] = 0.0f;
-			}
-			else if (positionZ >= z_c_edge)
-			{
-				mpData[mMergeTexSizeZ * iS + iZ] = 0.0f;
-			}
-			else
-			{
-				mpData[mMergeTexSizeZ * iS + iZ] = (float)(positionZ / (z_a_edge - z_c_edge) + (z_c_edge / (z_c_edge - z_a_edge)));
-			}
-		}
-	}
-
-	if (pfLog)
-		fprintf(pfLog, "Start second pass, mergeTexSizeS %d, mergeTexSizeZ %d\n",
+void CTubesMix::GrowNoMixArea()
+{
+	if (mpfLog)
+		fprintf(mpfLog, "Start second pass, mergeTexSizeS %d, mergeTexSizeZ %d\n",
 			mMergeTexSizeS, mMergeTexSizeZ);
 
-	// "grow" the area where weight==1 and the area where weight==0.
 	int iFirstDichotomic = -1;
 	for (int iS = 0; iS < mMergeTexSizeS; iS++)
 	{
@@ -248,12 +210,12 @@ void CTubesMix::ComputeNominal()
 			nGrow++;
 		}
 
-		if (mDebug && pfLog)
+		if (mDebug && mpfLog)
 		{
-			fprintf(pfLog, "Second pass %3d: %3d - %3d", iS, iLast1, iFirst0);
+			fprintf(mpfLog, "Second pass %3d: %3d - %3d", iS, iLast1, iFirst0);
 			if (nGrow > 0)
-				fprintf(pfLog, " Grew %d", nGrow);
-			fprintf(pfLog, "\n");
+				fprintf(mpfLog, " Grew %d", nGrow);
+			fprintf(mpfLog, "\n");
 		}
 	}
 
@@ -263,8 +225,8 @@ void CTubesMix::ComputeNominal()
 		int iCorrect = iFirstDichotomic - 1;
 		while (n-- > 0 && iCorrect >= 0)
 		{
-			if (pfLog)
-				fprintf(pfLog, "<DEBUG> correcting line %d\n", iCorrect);
+			if (mpfLog)
+				fprintf(mpfLog, "<DEBUG> correcting line %d\n", iCorrect);
 
 			float* pLine = mpData + mMergeTexSizeZ * iCorrect;
 			for (int iZ = 0; iZ < mMergeTexSizeZ; iZ++)
@@ -277,10 +239,135 @@ void CTubesMix::ComputeNominal()
 			iCorrect--;
 		}
 	}
-	if (pfLog)
-		fclose(pfLog);
+}
 
-	msType = "Nominal";
-	if (mDump)
-		Dump();
+void CTubesMix::ComputeLineWeights(int iS)
+{
+	if (mpfCsv)
+		fprintf(mpfCsv, "%d, %.3f, %.3f\n", iS, mZMixStart, mZMixEnd);
+
+	float* pLine = mpData + iS * mMergeTexSizeZ;
+
+	for (int iZ = 0; iZ < mMergeTexSizeZ; iZ++)
+	{
+		double positionZ = mFirstTexelLocationZ + iZ * mTexelSizeZMm;	// position of texel, in mm, from center.
+
+		if (positionZ <= mZMixStart)	// w==1
+		{
+			if (iZ < mMergeTexSizeZ / 2)
+				pLine[iZ] = 1.0f;
+			else
+				pLine[iZ] = 0.0f;
+		}
+		else if (positionZ >= mZMixEnd)
+		{
+			pLine[iZ] = 0.0f;
+		}
+		else
+		{
+			// pLine[iZ] = (float)(positionZ / (mZMixStart - mZMixEnd) + (mZMixEnd / (mZMixEnd - mZMixStart)));
+			pLine[iZ] = (float)((mZMixEnd - positionZ) / mZRangeBetweenTubesMm);
+		}
+	}
+}
+void CTubesMix::CloseLog()
+{
+	if (mpfLog)
+	{
+		fclose(mpfLog);
+		mpfLog = NULL;
+	}
+	if (mpfCsv)
+	{
+		fclose(mpfCsv);
+		mpfCsv = NULL;
+	}
+}
+void CTubesMix::OpenLog(const char* zFunc)
+{
+	char zBuf[128];
+	CloseLog();
+
+	// Log for debug
+	sprintf_s(zBuf, sizeof(zBuf), "d:\\Log\\CTubesMix__%s_width%d_height%d.txt",
+		zFunc, mMergeTexSizeZ, mMergeTexSizeS);
+	fopen_s(&mpfLog, zBuf, "w");
+
+	// CSV with limits of mix area in each line
+	sprintf_s(zBuf, sizeof(zBuf), "d:\\Log\\CTubesMix__%s_width%d_height%d.csv",
+		zFunc, mMergeTexSizeZ, mMergeTexSizeS);
+	fopen_s(&mpfCsv, zBuf, "w");
+
+	if (mpfLog)
+	{
+		fprintf(mpfLog, "<calcTube1MergeWeight>\n");
+		fprintf(mpfLog, "mergeTexSizeZ %d\n", mMergeTexSizeZ);
+		fprintf(mpfLog, "mergeTexSizeS %d\n", mMergeTexSizeS);
+		fprintf(mpfLog, "totalTexZmm %f\n", mTotalTexZmm);
+		fprintf(mpfLog, "totalTexSmm %f\n", mTotalTexSmm);
+		fprintf(mpfLog, "bpP.distanceBetweenSensorsZ %f\n", mDistanceBetweenSensorsZ);
+		fprintf(mpfLog, "debug %d 0x%x\n", mDebug, mDebug);
+		fprintf(mpfLog, "\n");
+	}
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// The function calculate Grid of weights: calcTube1MergeWeight
+// The function executed only in case of Dual Tube shot
+// Each pixel of the grid is calculates as if it is located directly on the path of the ray 
+// And its weight is calculated as 1 if the weight is affected from the left tube only
+// as 0 if the weight is affected from the right tube
+// and lineary interpolated in case of both tubes incluence
+//
+//   left
+//  ------
+//          \  both
+//           \        right
+//             -------------
+//
+// Parameters:
+//		buffer - Output Grid
+//		mergeTexSizeZ - Size of the Grid in Z direction (XRT_MERGE_TEXTURE_RESOLUTION_Z = 512*4)
+//		mergeTexSizeS - Size of the Grid in X direction (XRT_MERGE_TEXTURE_RESOLUTION_S	= 280*4)
+//		totalTexZmm - 
+//		totalTexSmm - 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void CTubesMix::ComputeNominal()
+{
+	OpenLog("ComputeNominal");
+
+	ComputeInternalVariables();
+
+	for (int iS = 0; iS < mMergeTexSizeS; iS++)
+	{
+		ComputeColVariables(iS);
+		ComputeLineWeights(iS);
+	}
+
+	// "grow" the area where weight==1 and the area where weight==0.
+	GrowNoMixArea();
+
+	msType = "Nominal1";
+	Dump();
+	CloseLog();
+}
+
+void CTubesMix::ComputeLimited()
+{
+	OpenLog("ComputeLimited");
+
+	ComputeInternalVariables();
+
+	for (int iS = 0; iS < mMergeTexSizeS; iS++)
+	{
+		ComputeColVariables(iS, true /*bSaveMargins*/);
+
+		ComputeLineWeights(iS);
+	}
+
+	char zType[128];
+	sprintf_s(zType, sizeof(zType), "Limited%.2fmm", mMarginsMm);
+	msType = zType;
+	Dump();
+	CloseLog();
 }

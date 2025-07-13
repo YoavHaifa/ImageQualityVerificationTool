@@ -144,6 +144,7 @@ BEGIN_MESSAGE_MAP(CDemoAppDlg, CDialog)
 	ON_COMMAND(ID_GET_TEST, &CDemoAppDlg::OnGetTest)
 	ON_COMMAND(ID_FILE_OPENBINARY, &CDemoAppDlg::OnFileOpenbinary)
 	ON_COMMAND(ID_TUBEMIX_PREPARENOMINAL, &CDemoAppDlg::OnTubemixPreparenominal)
+	ON_COMMAND(ID_TUBEMIX_PREPARELIMITED, &CDemoAppDlg::OnTubemixPreparelimited)
 END_MESSAGE_MAP()
 
 
@@ -958,8 +959,6 @@ void CDemoAppDlg::OnSetTitle()
 		}
 	}
 }
-
-
 void CDemoAppDlg::OnSetTogglecolormap()
 {
 	if (!mpImageRIF)
@@ -968,8 +967,6 @@ void CDemoAppDlg::OnSetTogglecolormap()
 	mbColormapOn = !mbColormapOn;
 	mpImageRIF->SetColorMap(mbColormapOn);
 }
-
-
 void CDemoAppDlg::OnSetWindowrange()
 {
 	if (!mpImageRIF)
@@ -987,7 +984,6 @@ void CDemoAppDlg::OnSetWindowrange()
 }
 
 static double ux = 0;
-
 void CDemoAppDlg::OnGetTest()
 {
        CArchivesImages Image("F:\\MyViewer\\_From_Users\\Decode error\\S20190\\00001\\Image0001.dcm"); //file = path of S20190 Iodine series
@@ -999,8 +995,6 @@ void CDemoAppDlg::OnGetTest()
        ux = x; // heap error by return from the function
 	   */
 }
-
-
 void CDemoAppDlg::OnTubemixPreparenominal()
 {
 	if (!mpTubesMix)
@@ -1008,3 +1002,11 @@ void CDemoAppDlg::OnTubemixPreparenominal()
 
 	mpTubesMix->ComputeNominal();
 }
+void CDemoAppDlg::OnTubemixPreparelimited()
+{
+	if (!mpTubesMix)
+		mpTubesMix = new CTubesMix();
+
+	mpTubesMix->ComputeLimited();
+}
+

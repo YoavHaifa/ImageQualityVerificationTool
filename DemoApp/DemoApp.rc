@@ -138,6 +138,7 @@ BEGIN
     POPUP "Tube Mix"
     BEGIN
         MENUITEM "Prepare Nominal",             ID_TUBEMIX_PREPARENOMINAL
+        MENUITEM "Prepare Limited",             ID_TUBEMIX_PREPARELIMITED
     END
     POPUP "Process"
     BEGIN

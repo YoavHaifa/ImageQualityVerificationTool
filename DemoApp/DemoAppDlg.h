@@ -95,5 +95,6 @@ public:
 	afx_msg void OnGetTest();
 	afx_msg void OnFileOpenbinary();
 	afx_msg void OnTubemixPreparenominal();
+	afx_msg void OnTubemixPreparelimited();
 };
 
