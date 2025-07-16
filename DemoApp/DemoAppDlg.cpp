@@ -12,6 +12,7 @@
 #include "..\..\yUtils\MyProgress.h"
 #include "..\..\yUtils\MyDicomWriter.h"
 #include "..\..\yUtils\UserTextDialog.h"
+#include "..\..\yUtils\NameGetDialog.h"
 
 #include "..\..\ImageRLib\ImageRIF.h"
 #include "..\..\ImageRLib\DataRoi.h"
@@ -1004,9 +1005,14 @@ void CDemoAppDlg::OnTubemixPreparenominal()
 }
 void CDemoAppDlg::OnTubemixPreparelimited()
 {
+	int marginsMm = 20;
+
+	if (!CNameGetDialog::GetIntValue("Set margins width (in mm)", marginsMm))
+		return;
+
 	if (!mpTubesMix)
 		mpTubesMix = new CTubesMix();
 
-	mpTubesMix->ComputeLimited();
+	mpTubesMix->ComputeLimited(marginsMm);
 }
 

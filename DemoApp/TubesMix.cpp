@@ -109,6 +109,10 @@ bool CTubesMix::Dump()
 		CMyWindows::MessBox("Failed to write dump file", zBuf);
 		return false;
 	}
+
+	CString s("Table ready: ");
+	s += zBuf;
+	CMyWindows::PrintStatus(s);
 	return true;
 }
 
@@ -352,8 +356,10 @@ void CTubesMix::ComputeNominal()
 	CloseLog();
 }
 
-void CTubesMix::ComputeLimited()
+void CTubesMix::ComputeLimited(int marginsMm)
 {
+	mMarginsMm = marginsMm;
+
 	OpenLog("ComputeLimited");
 
 	ComputeInternalVariables();

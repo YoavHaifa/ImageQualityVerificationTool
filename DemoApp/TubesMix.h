@@ -11,7 +11,7 @@ public:
 	bool ReadParametersFromFile();
 
 	void ComputeNominal();
-	void ComputeLimited();
+	void ComputeLimited(int marginsMm);
 
 	bool Dump();
 
