@@ -4,6 +4,8 @@
 #include "stdafx.h"
 #include "DemoApp.h"
 #include "DemoAppDlg.h"
+#include "ArinetaImages.h"
+
 #include "..\..\yUtils\MyMath.h"
 #include "..\..\yUtils\MyFileDialog.h"
 #include "..\..\yUtils\NameGetDialog.h"
@@ -483,10 +485,11 @@ void CDemoAppDlg::OnFileOpen32771()
 			{
 				if (LoadViewerWithImages(sImageName))
 				{
-					mpImages = new CArchivesImages(sImageName);
+					mpImages = new CArinetaImages(sImageName);
 					miPos = mpImages->GetCurrentPosition();
 					DisplayPos();
 					mImages.AddTail(mpImages);
+					mpImages->ComputeRotationCenter();
 				}
 			}
 			else // Add Extra Images' series

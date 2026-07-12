@@ -56,7 +56,7 @@ public:
 	afx_msg void OnProcessSmooth();
 
 	bool mbDisplayReadyImages;
-	class CArchivesImages *mpImages;
+	class CArinetaImages *mpImages;
 	class CDataFiles* mpDataFiles;
 	CList<class CArchivesImages*,class CArchivesImages*> mImages;
 	CTSharedImage<unsigned short> *mpSmoothed;
