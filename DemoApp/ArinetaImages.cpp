@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "ArinetaImages.h"
+#include "DemoAppDlg.h"
 #include "..\..\yUtils\MyDicom.h"
 #include "..\..\yUtils\MyWindows.h"
 #include <string>
@@ -19,7 +20,7 @@ CArinetaImages::CArinetaImages(const char* zfName)
 {
 
 }
-bool CArinetaImages::ComputeRotationCenter()
+bool CArinetaImages::ComputeRotationCenter(CDemoAppDlg* pDlg)
 {
 	mRotationCenter.mpImage = mCurrentImage.mpImage;
 	CMyDicom* pDicom = mCurrentImage.mpDicom;
@@ -39,6 +40,8 @@ bool CArinetaImages::ComputeRotationCenter()
 
 	mRotationCenter.fx = (float)((mCurrentImage.mpImage->GetNCols() - 1) / 2.0 - xOffset / mCurrentImage.mpImage->mMmPerPixelWidth);
 	mRotationCenter.fy = (float)((mCurrentImage.mpImage->GetNLines() - 1) / 2.0 + yOffset / mCurrentImage.mpImage->mMmPerPixelHeight);
+
+	pDlg->DisplayCircle(mRotationCenter);
 	return true;
 }
 bool CArinetaImages::GetFloatValueFromDicomString(unsigned short group, unsigned short num, float& value, const char* zFor)

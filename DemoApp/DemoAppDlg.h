@@ -1,8 +1,10 @@
+#pragma once
+
 // DemoAppDlg.h : header file
 //
 
-#pragma once
 #include "..\..\ImageRLib\TSharedImage.h"
+#include "resource.h"		// main symbols
 
 // CDemoAppDlg dialog
 class CDemoAppDlg : public CDialog
@@ -56,7 +58,8 @@ public:
 	afx_msg void OnProcessSmooth();
 
 	bool mbDisplayReadyImages;
-	class CArinetaImages *mpImages;
+	class CArinetaImages* mpImages;
+	class CRingsScorer* mpRingsScorer;
 	class CDataFiles* mpDataFiles;
 	CList<class CArchivesImages*,class CArchivesImages*> mImages;
 	CTSharedImage<unsigned short> *mpSmoothed;
@@ -92,5 +95,7 @@ public:
 	afx_msg void OnSetWindowrange();
 	afx_msg void OnGetTest();
 	afx_msg void OnFileOpenbinary();
+
+	void DisplayCircle(CDataCoordinates& center);
 };
 

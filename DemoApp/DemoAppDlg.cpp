@@ -5,6 +5,7 @@
 #include "DemoApp.h"
 #include "DemoAppDlg.h"
 #include "ArinetaImages.h"
+#include "RingsScorer.h"
 
 #include "..\..\yUtils\MyMath.h"
 #include "..\..\yUtils\MyFileDialog.h"
@@ -15,7 +16,7 @@
 
 #include "..\..\ImageRLib\ImageRIF.h"
 #include "..\..\ImageRLib\DataRoi.h"
-#include "..\..\ImageRLib\ArchivesImages.h"
+//#include "..\..\ImageRLib\ArchivesImages.h"
 #include "..\..\ImageRLib\Smoother.h"
 #include "..\..\ImageRLib\Zoomer.h"
 #include "..\..\ImageRLib\Rle1read.h"
@@ -489,7 +490,8 @@ void CDemoAppDlg::OnFileOpen32771()
 					miPos = mpImages->GetCurrentPosition();
 					DisplayPos();
 					mImages.AddTail(mpImages);
-					mpImages->ComputeRotationCenter();
+					mpImages->ComputeRotationCenter(this);
+					mpRingsScorer = new CRingsScorer(mpImages);
 				}
 			}
 			else // Add Extra Images' series
@@ -997,4 +999,22 @@ void CDemoAppDlg::OnGetTest()
        double x = atof(var);
        ux = x; // heap error by return from the function
 	   */
+}
+void CDemoAppDlg::DisplayCircle(CDataCoordinates& center)
+{
+	static int count = 0;
+	if (count > 0)
+		return;
+	count++;
+
+	//char zName[128];
+	//sprintf_s(zName, "CenteredCircle", count, miPos + 1, miPos2d + 1);
+	CDataRoi* pCircle = new CDataRoi(NULL, "CenteredCircle", 0xff0080);
+	pCircle->InitEllipse(center, 100.0f + count);
+	pCircle->SetCircle();
+	pCircle->SetFixedCenter();
+	//pCircle->LockToPosition2d(miPos, miPos2d);
+	pCircle->SetSaveToXml(true);
+	pCircle->mbReportClientOnActivation = true;
+	mpImageRIF->DisplayGraphic(pCircle);
 }
