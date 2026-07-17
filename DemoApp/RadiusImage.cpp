@@ -40,6 +40,8 @@ void CRadiusImage::Init(CDataCoordinates& center)
 			float radius2 = x * x + y * y;
 			float radius = sqrtf(radius2);
 			*pSave++ = radius;
+			if (radius > mMaxRadius)
+				mMaxRadius = radius;
 		}
 	}
 }

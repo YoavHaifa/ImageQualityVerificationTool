@@ -7,9 +7,11 @@ public:
 	CRingsScorer(class CArinetaImages* pImages);
 	~CRingsScorer();
 
-	class CArinetaImages* mpImages;
-	class CRadiusImage* mpRadiusImage;
+	float ScoreCurrentImage();
 
-
+private:
+	class CArinetaImages* mpImages = nullptr;
+	class CRadiusImage* mpRadiusImage = nullptr;
+	class CImageRingScorer* mpImageScorer = nullptr;
 };
 

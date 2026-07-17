@@ -7,12 +7,14 @@ public:
 	~CRadiusImage();
 
 	void Init(class CDataCoordinates& center);
+	void Dump();
+	float* GetData() { return mpData; }
 
 	int mnLines = 0;
 	int mnCols = 0;
 	int mnPixels = 0;
 	float* mpData = nullptr;
-	void Dump();
+	float mMaxRadius = 0;
 };
 
 

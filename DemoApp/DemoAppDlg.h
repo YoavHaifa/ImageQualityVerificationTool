@@ -4,10 +4,11 @@
 //
 
 #include "..\..\ImageRLib\TSharedImage.h"
+#include "..\..\yUtils\MyDialogEx.h"
 #include "resource.h"		// main symbols
 
 // CDemoAppDlg dialog
-class CDemoAppDlg : public CDialog
+class CDemoAppDlg : public CMyDialogEx
 {
 // Construction
 public:

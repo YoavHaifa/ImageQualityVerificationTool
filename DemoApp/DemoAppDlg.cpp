@@ -62,7 +62,7 @@ END_MESSAGE_MAP()
 
 
 CDemoAppDlg::CDemoAppDlg(CWnd* pParent /*=NULL*/)
-	: CDialog(CDemoAppDlg::IDD, pParent)
+	: CMyDialogEx(CDemoAppDlg::IDD, pParent)
 	, mpImageRIF(NULL)
 	, mpSharedVolume(NULL)
 	, mnImagesInRow(10)
@@ -289,6 +289,9 @@ LRESULT CDemoAppDlg::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
 				}
 				if (mpSmoother)
 					UpdateSmooth();
+
+				if (mpRingsScorer)
+					mpRingsScorer->ScoreCurrentImage();
 			}
 		    return 0;
         }
