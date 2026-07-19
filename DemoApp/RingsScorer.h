@@ -7,7 +7,7 @@ public:
 	CRingsScorer(class CArinetaImages* pImages);
 	~CRingsScorer();
 
-	float ScoreCurrentImage();
+	float ScoreCurrentImage(int& oAtRing);
 
 private:
 	class CArinetaImages* mpImages = nullptr;

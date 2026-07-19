@@ -13,12 +13,13 @@ CRingsScorer::~CRingsScorer()
 {
 	delete mpRadiusImage;
 }
-float CRingsScorer::ScoreCurrentImage()
+float CRingsScorer::ScoreCurrentImage(int& oAtRing)
 {
 	CTImage<unsigned short>* pImage = mpImages->GetImage();
 	
 	CImageRingScorer scorer(pImage, mpRadiusImage);
 	float score = scorer.Score();
+	oAtRing = scorer.miRingOfScore;
 	return score;
 
 }

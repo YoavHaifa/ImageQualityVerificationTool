@@ -41,7 +41,7 @@ bool CArinetaImages::ComputeRotationCenter(CDemoAppDlg* pDlg)
 	mRotationCenter.fx = (float)((mCurrentImage.mpImage->GetNCols() - 1) / 2.0 - xOffset / mCurrentImage.mpImage->mMmPerPixelWidth);
 	mRotationCenter.fy = (float)((mCurrentImage.mpImage->GetNLines() - 1) / 2.0 + yOffset / mCurrentImage.mpImage->mMmPerPixelHeight);
 
-	pDlg->DisplayCircle(mRotationCenter);
+	pDlg->DisplayCircle(mRotationCenter, 100.0f);
 	return true;
 }
 bool CArinetaImages::GetFloatValueFromDicomString(unsigned short group, unsigned short num, float& value, const char* zFor)

@@ -291,7 +291,13 @@ LRESULT CDemoAppDlg::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
 					UpdateSmooth();
 
 				if (mpRingsScorer)
-					mpRingsScorer->ScoreCurrentImage();
+				{
+					int iAtRing;
+					float score = mpRingsScorer->ScoreCurrentImage(iAtRing);
+					SetParameter(IDC_EDIT_SCORE, score);
+					SetParameter(IDC_EDIT_RADIUS, iAtRing);
+					DisplayCircle(mpImages->GetRotationCenter(), (float)iAtRing);
+				}
 			}
 		    return 0;
         }
@@ -1003,17 +1009,17 @@ void CDemoAppDlg::OnGetTest()
        ux = x; // heap error by return from the function
 	   */
 }
-void CDemoAppDlg::DisplayCircle(CDataCoordinates& center)
+void CDemoAppDlg::DisplayCircle(CDataCoordinates& center, float radius)
 {
 	static int count = 0;
-	if (count > 0)
-		return;
+	//if (count > 0)
+	//	return;
 	count++;
 
 	//char zName[128];
 	//sprintf_s(zName, "CenteredCircle", count, miPos + 1, miPos2d + 1);
 	CDataRoi* pCircle = new CDataRoi(NULL, "CenteredCircle", 0xff0080);
-	pCircle->InitEllipse(center, 100.0f + count);
+	pCircle->InitEllipse(center, radius);
 	pCircle->SetCircle();
 	pCircle->SetFixedCenter();
 	//pCircle->LockToPosition2d(miPos, miPos2d);

@@ -1,5 +1,6 @@
 #pragma once
 #include "..\..\ImageRLib\TSharedImage.h"
+#include <vector>
 
 // Compute the rings scores for a single image
 
@@ -9,12 +10,14 @@ public:
 	CRingInfo() {}
 	void Add(int value)
 	{
-		mnValues++;
+		mnPixelsInRange++;
 		mSum += value;
 	}
 
-	int mnValues = 0;
+	int mnPixelsInRaster = 0;
+	int mnPixelsInRange = 0;
 	float mSum = 0;
+	float mDiff = 0;
 };
 
 class CImageRingScorer
@@ -25,8 +28,11 @@ public:
 
 	float Score();
 
+	float mScore = 0;
+	int miRingOfScore = -1;
+
 private:
-	void CollectRingsInfo();
+	void CollectRingsInfo(std::vector<float>& vMean);
 
 	CTImage<unsigned short>* mpImage = nullptr;
 	class CRadiusImage* mpRadiusImage;
@@ -34,8 +40,10 @@ private:
 	int mnRings = 0;
 	int mnPixelsWithinThreshold = 0;
 
-	static constexpr int umMinThreshold = -50;
-	static constexpr int umMaxThreshold = 150;
+	static constexpr int umMinThreshold = 980;
+	static constexpr int umMaxThreshold = 1050;
+
+	static constexpr float IGNORE_RING = -100.0;
 
 	bool mbLog = true;
 };

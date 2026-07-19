@@ -97,6 +97,6 @@ public:
 	afx_msg void OnGetTest();
 	afx_msg void OnFileOpenbinary();
 
-	void DisplayCircle(CDataCoordinates& center);
+	void DisplayCircle(CDataCoordinates& center, float radius);
 };
 
