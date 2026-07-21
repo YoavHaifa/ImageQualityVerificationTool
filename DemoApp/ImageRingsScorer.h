@@ -40,8 +40,8 @@ private:
 	int mnRings = 0;
 	int mnPixelsWithinThreshold = 0;
 
-	static constexpr int umMinThreshold = 980;
-	static constexpr int umMaxThreshold = 1050;
+	static constexpr unsigned short umMinThreshold = 980;
+	static constexpr unsigned short umMaxThreshold = 1050;
 
 	static constexpr float IGNORE_RING = -100.0;
 

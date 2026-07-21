@@ -3,6 +3,7 @@
 #include "RadiusImage.h"
 #include <string>
 #include <cmath>
+#include "..\..\ImageRLib\Mask.h"
 
 
 using namespace std;
@@ -64,13 +65,21 @@ void CImageRingScorer::CollectRingsInfo(vector<float>& vMean)
 	unsigned short* pImageRaster = mpImage->GetData();
 	vector<CRingInfo> vRingsInfo(mnRings+1);
 
-	// Checvk all pixels in image
+	int nLines = mpImage->GetNLines();
+	int nCols = mpImage->GetNCols();
+	CMask thresholdMask(nLines, nCols);
+	CMask erodedMask(nLines, nCols);
+	thresholdMask.Threshold(pImageRaster, umMinThreshold, umMaxThreshold);
+	erodedMask.Erode(thresholdMask, 4);
+	unsigned char* mpMask = erodedMask.GetMaskRaster();
+
+	// Check all pixels in image
 	for (int i = 0; i < nToCheck; i++)
 	{
 		int iRadius = (int)pRadiusRaster[i];
 		vRingsInfo[iRadius].mnPixelsInRaster++;
 		unsigned short value = pImageRaster[i];
-		if (value >= umMinThreshold && value <= umMaxThreshold)
+		if (mpMask[i])
 		{
 			mnPixelsWithinThreshold++;
 			vRingsInfo[iRadius].Add(value);
