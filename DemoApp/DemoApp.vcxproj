@@ -201,6 +201,7 @@ copy ..\..\ImageRLib\$(Platform)\$(Configuration)\ImageRLib.dll $(OutDir)
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="ArinetaImages.h" />
+    <ClInclude Include="Config.h" />
     <ClInclude Include="DemoApp.h" />
     <ClInclude Include="DemoAppDlg.h" />
     <ClInclude Include="framework.h" />
@@ -213,6 +214,7 @@ copy ..\..\ImageRLib\$(Platform)\$(Configuration)\ImageRLib.dll $(OutDir)
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ArinetaImages.cpp" />
+    <ClCompile Include="Config.cpp" />
     <ClCompile Include="DemoApp.cpp" />
     <ClCompile Include="DemoAppDlg.cpp" />
     <ClCompile Include="ImageRingsScorer.cpp" />

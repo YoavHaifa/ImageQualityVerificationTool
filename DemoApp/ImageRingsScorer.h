@@ -40,11 +40,11 @@ private:
 	int mnRings = 0;
 	int mnPixelsWithinThreshold = 0;
 
-	static constexpr unsigned short umMinThreshold = 980;
-	static constexpr unsigned short umMaxThreshold = 1050;
-
 	static constexpr float IGNORE_RING = -100.0;
+	bool mbComputeByDiff = false;
 
 	bool mbLog = true;
+	void ComputeScoreByDiff(std::vector<float>& vRingMean);
+	void ComputeScoreByMinMaxDiff(std::vector<float>& vRingMean);
 };
 

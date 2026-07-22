@@ -123,7 +123,7 @@ BEGIN_MESSAGE_MAP(CDemoAppDlg, CDialog)
 	ON_BN_CLICKED(IDC_BUTTON_UP_POS, &CDemoAppDlg::OnBnClickedButtonUpPos)
 	ON_COMMAND(ID_FILE_OPEN32771, &CDemoAppDlg::OnFileOpen32771)
 	ON_COMMAND(ID_FILE_EXIT, &CDemoAppDlg::OnFileExit)
-	ON_COMMAND(ID_PROCESS_SMOOTH, &CDemoAppDlg::OnProcessSmooth)
+	//ON_COMMAND(ID_PROCESS_SMOOTH, &CDemoAppDlg::OnProcessSmooth)
 	ON_COMMAND(ID_GET_WINDOW, &CDemoAppDlg::OnGetWindow)
 	ON_COMMAND(ID_SET_WINDOW, &CDemoAppDlg::OnSetWindow)
 	ON_COMMAND(ID_SET_AUTOWINDOW, &CDemoAppDlg::OnSetAutoWindow)
@@ -139,10 +139,10 @@ BEGIN_MESSAGE_MAP(CDemoAppDlg, CDialog)
 	ON_COMMAND(ID_SET_TITLE, &CDemoAppDlg::OnSetTitle)
 	ON_BN_CLICKED(IDC_BUTTON_ADD_COLOR_MAP, &CDemoAppDlg::OnBnClickedButtonAddColorMap)
 	ON_COMMAND(ID_SET_TOGGLECOLORMAP, &CDemoAppDlg::OnSetTogglecolormap)
-	ON_COMMAND(ID_FILE_OPENCOLORER, &CDemoAppDlg::OnFileOpencolorer)
+	//ON_COMMAND(ID_FILE_OPENCOLORER, &CDemoAppDlg::OnFileOpencolorer)
 	ON_COMMAND(ID_SET_WINDOWRANGE, &CDemoAppDlg::OnSetWindowrange)
 	ON_COMMAND(ID_GET_TEST, &CDemoAppDlg::OnGetTest)
-	ON_COMMAND(ID_FILE_OPENBINARY, &CDemoAppDlg::OnFileOpenbinary)
+	//ON_COMMAND(ID_FILE_OPENBINARY, &CDemoAppDlg::OnFileOpenbinary)
 END_MESSAGE_MAP()
 
 
@@ -270,34 +270,26 @@ LRESULT CDemoAppDlg::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
         {
 			if (mpfLog && bChange)
 			{
-				if (message == CPosition::umaPositionMsg[0])
-					fprintf (mpfLog, "<WindowProc> PositionMsg 0 ID %d pos %d\n", 
-						(int)lParam, (int)wParam);
-				else if (message == CPosition::umaPositionMsg[1])
-					fprintf (mpfLog, "<WindowProc> PositionMsg 1 ID %d pos %d\n", 
-						(int)lParam, (int)wParam);
-				fprintf (mpfLog, "<WindowProc> Pos (%3d %3d)\n", miPos, miPos2d);
+				//if (message == CPosition::umaPositionMsg[0])
+				//	fprintf (mpfLog, "<WindowProc> PositionMsg 0 ID %d pos %d\n", 
+				//		(int)lParam, (int)wParam);
+				//else if (message == CPosition::umaPositionMsg[1])
+				//	fprintf (mpfLog, "<WindowProc> PositionMsg 1 ID %d pos %d\n", 
+				//		(int)lParam, (int)wParam);
+				//fprintf (mpfLog, "<WindowProc> Pos %3d\n", miPos);
 
-				DisplayPos();
-				sprintf_s (zBuf,sizeof(zBuf), "<WindowProc> Position Messgae %d %d", (int)wParam, (int)lParam);
-				CMyWindows::PrintStatus(zBuf);
-				if (mpImages)
-				{
-					CPosition *pPosition = mpImages->GetPosition();
-					if (miPos >= pPosition->miFirst && miPos <= pPosition->miLast)
-						mpImages->SetCurrent(miPos);
-				}
-				if (mpSmoother)
-					UpdateSmooth();
+				//DisplayPos();
+				//sprintf_s (zBuf,sizeof(zBuf), "<WindowProc> Position Messgae %d %d", (int)wParam, (int)lParam);
+				//CMyWindows::PrintStatus(zBuf);
+				//if (mpImages)
+				//{
+				//	CPosition *pPosition = mpImages->GetPosition();
+				//	if (miPos >= pPosition->miFirst && miPos <= pPosition->miLast)
+				//		mpImages->SetCurrent(miPos);
+				//}
 
-				if (mpRingsScorer)
-				{
-					int iAtRing;
-					float score = mpRingsScorer->ScoreCurrentImage(iAtRing);
-					SetParameter(IDC_EDIT_SCORE, score);
-					SetParameter(IDC_EDIT_RADIUS, iAtRing);
-					DisplayCircle(mpImages->GetRotationCenter(), (float)iAtRing);
-				}
+				//if (mpRingsScorer)
+				//	DisplayScore();
 			}
 		    return 0;
         }
@@ -501,6 +493,9 @@ void CDemoAppDlg::OnFileOpen32771()
 					mImages.AddTail(mpImages);
 					mpImages->ComputeRotationCenter(this);
 					mpRingsScorer = new CRingsScorer(mpImages);
+					miPos = mpRingsScorer->ScoreAllImages();
+					mpImageRIF->SetPosition(mpImages->GetPatternName(), miPos);
+					DisplayScore();
 				}
 			}
 			else // Add Extra Images' series
@@ -514,74 +509,74 @@ void CDemoAppDlg::OnFileOpen32771()
 		}
 	}
 }
-void CDemoAppDlg::OnFileOpenbinary()
-{
-	CMyFileDialog dlg(CMyFileDialog::FD_OPEN, "Open Binary File for Display", "d:\\Dump");
-	if (dlg.DoModal())
-	{
-		CString sImageName(dlg.m_ofn.lpstrFile);
-
-		if (!mpImageRIF)
-		{
-			if (LoadViewerWithImages(sImageName))
-			{
-				mpDataFiles = new CDataFiles(sImageName);
-				miPos = mpDataFiles->GetCurrentPosition();
-				DisplayPos();
-				//mImages.AddTail(mpImages);
-			}
-		}
-	}
-
-}
-void CDemoAppDlg::OnFileOpencolorer()
-{
-	if (!mpImageRIF || !mpImages)
-	{
-		CMyWindows::MessBox("Please load some base images first","Notice");
-		return;
-	}
-	
-	CMyFileDialog dlg(CMyFileDialog::FD_OPEN,"Open Coloring Images","d:\\Cirs_Images");
-	if (dlg.DoModal())
-	{
-		CString sImageName(dlg.m_ofn.lpstrFile);
-		mpImageRIF->FileOpenColorer(sImageName);
-	}
-}
+//void CDemoAppDlg::OnFileOpenbinary()
+//{
+//	CMyFileDialog dlg(CMyFileDialog::FD_OPEN, "Open Binary File for Display", "d:\\Dump");
+//	if (dlg.DoModal())
+//	{
+//		CString sImageName(dlg.m_ofn.lpstrFile);
+//
+//		if (!mpImageRIF)
+//		{
+//			if (LoadViewerWithImages(sImageName))
+//			{
+//				mpDataFiles = new CDataFiles(sImageName);
+//				miPos = mpDataFiles->GetCurrentPosition();
+//				DisplayPos();
+//				//mImages.AddTail(mpImages);
+//			}
+//		}
+//	}
+//
+//}
+//void CDemoAppDlg::OnFileOpencolorer()
+//{
+//	if (!mpImageRIF || !mpImages)
+//	{
+//		CMyWindows::MessBox("Please load some base images first","Notice");
+//		return;
+//	}
+//	
+//	CMyFileDialog dlg(CMyFileDialog::FD_OPEN,"Open Coloring Images","d:\\Cirs_Images");
+//	if (dlg.DoModal())
+//	{
+//		CString sImageName(dlg.m_ofn.lpstrFile);
+//		mpImageRIF->FileOpenColorer(sImageName);
+//	}
+//}
 void CDemoAppDlg::OnFileExit()
 {
 	OnCancel();
 }
-void CDemoAppDlg::OnProcessSmooth()
-{
-	if (!mpImages)
-		return;
-	if (!mpImages->GetDicom())
-	{
-		CMyWindows::MessBox("This function requires DICOM images", "Input Error");
-		return;
-	}
-	if (mpSmoother)
-		return;
-
-	mpSmoother = new CSmoother(mpImages->GetNLines(), mpImages->GetNCols());
-
-	if (!mpSmoothed)
-	{
-		mpSmoothed = mpImages->CreateSharedImage("Smoothed");
-		if (!mpSmoothed)
-		{
-			CMyWindows::MessBox("Failed to creat shared image", "SW Error");
-			return;
-		}
-	}
-	
-	unsigned short *pInput = mpImages->GetImageDataStart(miPos);
-	mpSmoother->Smooth((unsigned short *)mpSmoothed->GetDataStart(), pInput);
-	mpImageRIF->DisplayShared(mpSmoothed);
-	mpImageRIF->AddDiff();
-}
+//void CDemoAppDlg::OnProcessSmooth()
+//{
+//	if (!mpImages)
+//		return;
+//	if (!mpImages->GetDicom())
+//	{
+//		CMyWindows::MessBox("This function requires DICOM images", "Input Error");
+//		return;
+//	}
+//	if (mpSmoother)
+//		return;
+//
+//	mpSmoother = new CSmoother(mpImages->GetNLines(), mpImages->GetNCols());
+//
+//	if (!mpSmoothed)
+//	{
+//		mpSmoothed = mpImages->CreateSharedImage("Smoothed");
+//		if (!mpSmoothed)
+//		{
+//			CMyWindows::MessBox("Failed to creat shared image", "SW Error");
+//			return;
+//		}
+//	}
+//	
+//	unsigned short *pInput = mpImages->GetImageDataStart(miPos);
+//	mpSmoother->Smooth((unsigned short *)mpSmoothed->GetDataStart(), pInput);
+//	mpImageRIF->DisplayShared(mpSmoothed);
+//	mpImageRIF->AddDiff();
+//}
 bool CDemoAppDlg::InitProcessVolume(void)
 {
 	if (!mpImages)
@@ -1026,4 +1021,14 @@ void CDemoAppDlg::DisplayCircle(CDataCoordinates& center, float radius)
 	pCircle->SetSaveToXml(true);
 	pCircle->mbReportClientOnActivation = true;
 	mpImageRIF->DisplayGraphic(pCircle);
+}
+void CDemoAppDlg::DisplayScore()
+{
+	int iAtRing = -1;
+	float score = mpRingsScorer->ScoreCurrentImage(iAtRing);
+	SetParameter(IDC_EDIT_I_IMAGE, miPos);
+	SetParameter(IDC_EDIT_SCORE, score);
+	SetParameter(IDC_EDIT_RADIUS, iAtRing);
+	if (iAtRing >= 1)
+		DisplayCircle(mpImages->GetRotationCenter(), (float)iAtRing);
 }

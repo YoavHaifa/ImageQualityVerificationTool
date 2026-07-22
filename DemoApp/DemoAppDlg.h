@@ -35,6 +35,8 @@ protected:
 	DECLARE_MESSAGE_MAP()
 	virtual void OnOK();
 
+	void DisplayScore();
+
 	CTSharedImage<short> *mpSharedVolume;
 
 public:
@@ -56,7 +58,7 @@ public:
 	afx_msg void OnBnClickedButtonUpPos();
 	afx_msg void OnFileOpen32771();
 	afx_msg void OnFileExit();
-	afx_msg void OnProcessSmooth();
+	//afx_msg void OnProcessSmooth();
 
 	bool mbDisplayReadyImages;
 	class CArinetaImages* mpImages;
@@ -92,10 +94,10 @@ public:
 	afx_msg void OnBnClickedButtonAddColorMap();
 	afx_msg void OnSetTogglecolormap();
 	bool mbColormapOn;
-	afx_msg void OnFileOpencolorer();
+	//afx_msg void OnFileOpencolorer();
 	afx_msg void OnSetWindowrange();
 	afx_msg void OnGetTest();
-	afx_msg void OnFileOpenbinary();
+	//afx_msg void OnFileOpenbinary();
 
 	void DisplayCircle(CDataCoordinates& center, float radius);
 };

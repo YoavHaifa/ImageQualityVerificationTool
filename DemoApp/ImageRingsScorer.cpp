@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "ImageRingsScorer.h"
+#include "Config.h"
 #include "RadiusImage.h"
 #include <string>
 #include <cmath>
@@ -36,26 +37,11 @@ float CImageRingScorer::Score()
 			vRingMean[iR] = vRingMean0[iR];
 	}
 
-	// Compute score on rings
-	// As first trial, just find the heighest jump in the function
-	// where number of pixels in range is at least 50% OR bigger han 20
-	float maxDiff = 0;
-	for (int iRing = 1; iRing < mnRings - 2; iRing++)
-	{
-		float mean = vRingMean[iRing];
-		float nextMean = vRingMean[iRing+3];
-		if (mean != IGNORE_RING && nextMean != IGNORE_RING)
-		{
-			float absDiff = abs(nextMean - mean);
-			if (absDiff > maxDiff)
-			{
-				maxDiff = absDiff;
-				miRingOfScore = iRing;
-			}
-		}
-	}
+	if (mbComputeByDiff)
+		ComputeScoreByDiff(vRingMean);
+	else
+		ComputeScoreByMinMaxDiff(vRingMean);
 
-	mScore = maxDiff;
 	return mScore;
 }
 void CImageRingScorer::CollectRingsInfo(vector<float>& vMean)
@@ -69,8 +55,8 @@ void CImageRingScorer::CollectRingsInfo(vector<float>& vMean)
 	int nCols = mpImage->GetNCols();
 	CMask thresholdMask(nLines, nCols);
 	CMask erodedMask(nLines, nCols);
-	thresholdMask.Threshold(pImageRaster, umMinThreshold, umMaxThreshold);
-	erodedMask.Erode(thresholdMask, 4);
+	thresholdMask.Threshold(pImageRaster, gConfig.mMinThreshold, gConfig.mMaxThreshold);
+	erodedMask.FastErode(thresholdMask, gConfig.mErodeLevel);
 	unsigned char* mpMask = erodedMask.GetMaskRaster();
 
 	// Check all pixels in image
@@ -124,4 +110,67 @@ void CImageRingScorer::CollectRingsInfo(vector<float>& vMean)
 				vRingsInfo[iLog].mSum, vMean[iLog], vRingsInfo[iLog].mDiff);
 		fclose(pf);
 	}
+}
+void CImageRingScorer::ComputeScoreByDiff(vector<float>& vRingMean)
+{
+	// Compute score on rings
+	// As first trial, just find the heighest jump in the function
+	// where number of pixels in range is at least 50% OR bigger han 20
+	float maxDiff = 0;
+	for (int iRing = 1; iRing < mnRings - 2; iRing++)
+	{
+		float mean = vRingMean[iRing];
+		float nextMean = vRingMean[iRing + 3];
+		if (mean != IGNORE_RING && nextMean != IGNORE_RING)
+		{
+			float absDiff = abs(nextMean - mean);
+			if (absDiff > maxDiff)
+			{
+				maxDiff = absDiff;
+				miRingOfScore = iRing;
+			}
+		}
+	}
+	mScore = maxDiff;
+}
+void CImageRingScorer::ComputeScoreByMinMaxDiff(vector<float>& vRingMean)
+{
+	//vector<float> vMax5(mnRings + 1);
+	//vector<float> vMin5(mnRings + 1);
+
+	float maxDiff = 0;
+	for (int iRing = 0; iRing <= mnRings; iRing++)
+	{
+		int iStart = max(0, iRing - 2);
+		int iLast = min(iRing + 2, mnRings);
+		float maxVal = IGNORE_RING;
+		float minVal = IGNORE_RING;
+		for (int iVal = iStart; iVal <= iLast; iVal++)
+		{
+			float value = vRingMean[iVal];
+			if (value != IGNORE_RING)
+			{
+				if (maxVal == IGNORE_RING)
+				{
+					maxVal = value;
+					minVal = value;
+				}
+				else
+				{
+					if (value > maxVal)
+						maxVal = value;
+					else if (value < minVal)
+						minVal = value;
+				}
+			}
+		}
+		float diff = maxVal - minVal;
+		if (diff > maxDiff)
+		{
+			maxDiff = diff;
+			miRingOfScore = iRing;
+		}
+
+	}
+	mScore = maxDiff;
 }

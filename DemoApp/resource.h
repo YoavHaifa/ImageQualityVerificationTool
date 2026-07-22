@@ -14,12 +14,14 @@
 #define IDC_EDIT_POS2                   1002
 #define IDC_EDIT_SCORE                  1002
 #define IDC_BUTTON_ADD_ROI              1003
+#define IDC_BUTTON_MAX                  1003
 #define IDC_BUTTON_ADD_ROI2             1004
 #define IDC_BUTTON_UP_POS               1004
 #define IDC_STATIC_STATUS               1005
 #define IDC_BUTTON_ADD_COLORS           1006
+#define IDC_BUTTON_PREV                 1006
 #define IDC_BUTTON_ADD_COLOR_MAP        1007
-#define IDC_EDIT_POS3                   1008
+#define IDC_BUTTON_NEXT                 1007
 #define IDC_EDIT_RADIUS                 1008
 #define ID_FILE_OPEN32771               32771
 #define ID_FILE_EXIT                    32772
