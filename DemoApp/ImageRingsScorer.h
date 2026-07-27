@@ -23,7 +23,7 @@ public:
 class CImageRingScorer
 {
 public:
-	CImageRingScorer(CTImage<unsigned short>* pImage, class CRadiusImage* pRadiusImage);
+	CImageRingScorer(CTImage<short>* pImage, class CRadiusImage* pRadiusImage);
 	~CImageRingScorer();
 
 	float Score();
@@ -34,7 +34,7 @@ public:
 private:
 	void CollectRingsInfo(std::vector<float>& vMean);
 
-	CTImage<unsigned short>* mpImage = nullptr;
+	CTImage<short>* mpImage = nullptr;
 	class CRadiusImage* mpRadiusImage;
 
 	int mnRings = 0;

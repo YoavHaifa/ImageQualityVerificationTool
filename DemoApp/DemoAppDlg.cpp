@@ -492,6 +492,7 @@ void CDemoAppDlg::OnFileOpen32771()
 					DisplayPos();
 					mImages.AddTail(mpImages);
 					mpImages->ComputeRotationCenter(this);
+					mpImages->PrepareOnInit();
 					mpRingsScorer = new CRingsScorer(mpImages);
 					miPos = mpRingsScorer->ScoreAllImages();
 					mpImageRIF->SetPosition(mpImages->GetPatternName(), miPos);
@@ -572,8 +573,8 @@ void CDemoAppDlg::OnFileExit()
 //		}
 //	}
 //	
-//	unsigned short *pInput = mpImages->GetImageDataStart(miPos);
-//	mpSmoother->Smooth((unsigned short *)mpSmoothed->GetDataStart(), pInput);
+//	short *pInput = mpImages->GetImageDataStart(miPos);
+//	mpSmoother->Smooth((short *)mpSmoothed->GetDataStart(), pInput);
 //	mpImageRIF->DisplayShared(mpSmoothed);
 //	mpImageRIF->AddDiff();
 //}
@@ -623,15 +624,15 @@ void CDemoAppDlg::ProcessImageInVolume(int iImage)
 	mpImages->SetCurrent(iImage);
 
 	short * pProcessed = mpSharedVolume->GetImageStart(iImage);
-	unsigned short *pImageRaster = mpImages->GetImageDataStart(iImage);
+	short *pImageRaster = mpImages->GetImageDataStart(iImage);
 	int n = mpImages->GetNLines() * mpImages->GetNCols();
 
-	CTImage<unsigned short> *pImage = mpImages->GetImage();
+	CTImage<short> *pImage = mpImages->GetImage();
 
-	unsigned short avg = (unsigned short)pImage->Average();
+	short avg = (short)pImage->Average();
 	while (n-- > 0)
 	{
-		unsigned short value = *pImageRaster++;
+		short value = *pImageRaster++;
 		if (value > avg)
 			*pProcessed++ = (short)(value * mHighFactor);
 		else
@@ -642,9 +643,9 @@ void CDemoAppDlg::UpdateSmooth(void)
 {
 	if (!mpSmoother)
 		return;
-	unsigned short *pInput = mpImages->GetImageDataStart(miPos);
+	short *pInput = mpImages->GetImageDataStart(miPos);
 	mpSmoothed->StartWriteSync();
-	mpSmoother->Smooth((unsigned short *)mpSmoothed->GetDataStart(), pInput);
+	mpSmoother->Smooth((short *)mpSmoothed->GetDataStart(), pInput);
 	mpSmoothed->EndWriteSync();
 	mpImageRIF->DisplayShared(mpSmoothed);
 }
@@ -703,7 +704,7 @@ void CDemoAppDlg::OnProcessSave()
 	if (!mpSmoothed)
 		return;
 
-	unsigned short *pRaster = mpSmoothed->GetData();
+	short *pRaster = mpSmoothed->GetData();
 	
 	mpImages->SaveDicomWithNewRaster(mpImages->GetCurrentPosition(), (short *)pRaster, "Smoothed");
 }
@@ -744,9 +745,9 @@ void CDemoAppDlg::OnProcessSaveall()
 	int nSaved = 0;
 	for (int iSave = iFirst; iSave <= iLast; iSave += step)
 	{
-		unsigned short *pInput = mpImages->GetImageDataStart(iSave);
-		mpSmoother->Smooth((unsigned short *)mpSmoothed->GetDataStart(), pInput);
-		unsigned short *pRaster = mpSmoothed->GetData();
+		short *pInput = mpImages->GetImageDataStart(iSave);
+		mpSmoother->Smooth((short *)mpSmoothed->GetDataStart(), pInput);
+		short *pRaster = mpSmoothed->GetData();
 
 		//CMyDicom *pDicom = mpImages->GetDicom();
 		//CFileName fName = pDicom->Name();
@@ -809,7 +810,7 @@ void CDemoAppDlg::OnProcessSavewithnewmatrix()
 
 	CMyProgress sand(iFirst,iLast);
 	CTImage<float> zoomedRaster("zoomedFloat", matrix, matrix);
-	CTImage<unsigned short> zoomedRasterUShort("zoomedShort", matrix, matrix);
+	CTImage<short> zoomedRasterUShort("zoomedShort", matrix, matrix);
 
 	CZoomPanParams params("zoomParams");
 	float originalMmPerPixel = mpImages->MmPerPixel();
@@ -819,17 +820,17 @@ void CDemoAppDlg::OnProcessSavewithnewmatrix()
 	for (int iSave = iFirst; iSave <= iLast; iSave += step)
 	{
 		mpImages->SetCurrent(iSave);
-		CTImage<unsigned short> *pInputImage = mpImages->GetImage();
+		CTImage<short> *pInputImage = mpImages->GetImage();
 		CZoomer::Zoom(zoomedRaster, pInputImage, &params);
 
-		// Float to unsigned short
+		// Float to short
 		int count = zoomedRaster.GetNPixels();
 		float *pZoomed = zoomedRaster.GetData();
-		unsigned short *pResultRaster = zoomedRasterUShort.GetData();
-		unsigned short *pResult = pResultRaster;
+		short *pResultRaster = zoomedRasterUShort.GetData();
+		short *pResult = pResultRaster;
 		while (count--)
 		{
-			*pResult++ = (unsigned short)*pZoomed++;
+			*pResult++ = (short)*pZoomed++;
 		}
 
 		mpImages->SaveDicomInSeries(iSave, NULL, (short *)pResultRaster);

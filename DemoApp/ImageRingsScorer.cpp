@@ -9,7 +9,7 @@
 
 using namespace std;
 
-CImageRingScorer::CImageRingScorer(CTImage<unsigned short>* pImage, CRadiusImage* pRadiusImage)
+CImageRingScorer::CImageRingScorer(CTImage<short>* pImage, CRadiusImage* pRadiusImage)
 	: mpImage(pImage)
 	, mpRadiusImage(pRadiusImage)
 {
@@ -48,7 +48,7 @@ void CImageRingScorer::CollectRingsInfo(vector<float>& vMean)
 {
 	int nToCheck = mpRadiusImage->mnPixels;
 	float* pRadiusRaster = mpRadiusImage->GetData();
-	unsigned short* pImageRaster = mpImage->GetData();
+	short* pImageRaster = mpImage->GetData();
 	vector<CRingInfo> vRingsInfo(mnRings+1);
 
 	int nLines = mpImage->GetNLines();
@@ -64,7 +64,7 @@ void CImageRingScorer::CollectRingsInfo(vector<float>& vMean)
 	{
 		int iRadius = (int)pRadiusRaster[i];
 		vRingsInfo[iRadius].mnPixelsInRaster++;
-		unsigned short value = pImageRaster[i];
+		short value = pImageRaster[i];
 		if (mpMask[i])
 		{
 			mnPixelsWithinThreshold++;

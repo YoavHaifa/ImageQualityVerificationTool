@@ -26,7 +26,7 @@ float CRingsScorer::ScoreCurrentImage(int& oAtRing)
 		return mvScores[iCurrent - 1].mScore;
 	}
 
-	CTImage<unsigned short>* pImage = mpImages->GetImage();
+	CTImage<short>* pImage = mpImages->GetImage();
 	
 	CImageRingScorer scorer(pImage, mpRadiusImage);
 	float score = scorer.Score();

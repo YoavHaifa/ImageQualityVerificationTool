@@ -65,7 +65,7 @@ public:
 	class CRingsScorer* mpRingsScorer;
 	class CDataFiles* mpDataFiles;
 	CList<class CArchivesImages*,class CArchivesImages*> mImages;
-	CTSharedImage<unsigned short> *mpSmoothed;
+	CTSharedImage<short> *mpSmoothed;
 	CTSharedImage<COLORREF> *mpColors;
 
 	class CSmoother *mpSmoother;

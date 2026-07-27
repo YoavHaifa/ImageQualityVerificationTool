@@ -13,8 +13,20 @@ public:
 
 	CDataCoordinates& GetRotationCenter() { return mRotationCenter; }
 
-private:
-	CDataCoordinates mRotationCenter;
+	bool PrepareOnInit();
 
+private:
+	void ComputeWideImages();
+
+	CTSharedImage<short>* mpWideVolume = nullptr;
+
+	int mnPixelsInImage = 1;
+
+	int miFirst = -1;
+	int miLast = -1;
+	//int mStep;
+
+	CDataCoordinates mRotationCenter;
+	unsigned short mnSliceWidth = 1; // Number of consecutive input slices to average
 };
 
