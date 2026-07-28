@@ -487,6 +487,7 @@ void CDemoAppDlg::OnFileOpen32771()
 			{
 				if (LoadViewerWithImages(sImageName))
 				{
+					CArinetaImages::SetDebug(0xff);
 					mpImages = new CArinetaImages(sImageName);
 					miPos = mpImages->GetCurrentPosition();
 					DisplayPos();
@@ -1026,7 +1027,7 @@ void CDemoAppDlg::DisplayCircle(CDataCoordinates& center, float radius)
 void CDemoAppDlg::DisplayScore()
 {
 	int iAtRing = -1;
-	float score = mpRingsScorer->ScoreCurrentImage(iAtRing);
+	float score = mpRingsScorer->ScoreCurrentImage(miPos, iAtRing);
 	SetParameter(IDC_EDIT_I_IMAGE, miPos);
 	SetParameter(IDC_EDIT_SCORE, score);
 	SetParameter(IDC_EDIT_RADIUS, iAtRing);

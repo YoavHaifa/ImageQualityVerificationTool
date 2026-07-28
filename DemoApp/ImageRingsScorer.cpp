@@ -1,16 +1,19 @@
 #include "stdafx.h"
 #include "ImageRingsScorer.h"
 #include "Config.h"
+#include "ArinetaImages.h"
 #include "RadiusImage.h"
 #include <string>
 #include <cmath>
+#include <format>
 #include "..\..\ImageRLib\Mask.h"
 
 
 using namespace std;
 
-CImageRingScorer::CImageRingScorer(CTImage<short>* pImage, CRadiusImage* pRadiusImage)
-	: mpImage(pImage)
+CImageRingScorer::CImageRingScorer(CArinetaImages* pImages, int iImage, CRadiusImage* pRadiusImage)
+	: mpImages(pImages)
+	, miImage(iImage)
 	, mpRadiusImage(pRadiusImage)
 {
 	mnRings = (int)mpRadiusImage->mMaxRadius;
@@ -20,39 +23,39 @@ CImageRingScorer::~CImageRingScorer()
 }
 float CImageRingScorer::Score()
 {
-	vector<float> vRingMean0(mnRings + 1);
-	CollectRingsInfo(vRingMean0);
+	CollectRingsInfo();
 
 	// Expand area of illegal samples
-	vector<float> vRingMean(mnRings + 1);
-	vRingMean[0] = vRingMean0[0];
-	vRingMean[mnRings] = vRingMean0[mnRings];
+	mvRingMean.resize(mnRings + 1);
+	mvRingMean[0] = mvRingMean0[0];
+	mvRingMean[mnRings] = mvRingMean0[mnRings];
 	for (int iR = 1; iR < mnRings; iR++)
 	{
-		float prev = vRingMean0[iR - 1];
-		float next = vRingMean0[iR + 1];
+		float prev = mvRingMean0[iR - 1];
+		float next = mvRingMean0[iR + 1];
 		if (prev == IGNORE_RING && next == IGNORE_RING)
-			vRingMean[iR] = IGNORE_RING;
+			mvRingMean[iR] = IGNORE_RING;
 		else
-			vRingMean[iR] = vRingMean0[iR];
+			mvRingMean[iR] = mvRingMean0[iR];
 	}
 
 	if (mbComputeByDiff)
-		ComputeScoreByDiff(vRingMean);
+		ComputeScoreByDiff();
 	else
-		ComputeScoreByMinMaxDiff(vRingMean);
+		ComputeScoreByMinMaxDiff();
 
 	return mScore;
 }
-void CImageRingScorer::CollectRingsInfo(vector<float>& vMean)
+void CImageRingScorer::CollectRingsInfo()
 {
+	mvRingMean0.resize(mnRings + 1);
 	int nToCheck = mpRadiusImage->mnPixels;
 	float* pRadiusRaster = mpRadiusImage->GetData();
-	short* pImageRaster = mpImage->GetData();
-	vector<CRingInfo> vRingsInfo(mnRings+1);
+	short* pImageRaster = mpImages->GetImageRaster(miImage);
+	mvRingsInfo.resize(mnRings+1);
 
-	int nLines = mpImage->GetNLines();
-	int nCols = mpImage->GetNCols();
+	int nLines = mpImages->GetNLines();
+	int nCols = mpImages->GetNCols();
 	CMask thresholdMask(nLines, nCols);
 	CMask erodedMask(nLines, nCols);
 	thresholdMask.Threshold(pImageRaster, gConfig.mMinThreshold, gConfig.mMaxThreshold);
@@ -63,55 +66,44 @@ void CImageRingScorer::CollectRingsInfo(vector<float>& vMean)
 	for (int i = 0; i < nToCheck; i++)
 	{
 		int iRadius = (int)pRadiusRaster[i];
-		vRingsInfo[iRadius].mnPixelsInRaster++;
+		mvRingsInfo[iRadius].mnPixelsInRaster++;
 		short value = pImageRaster[i];
 		if (mpMask[i])
 		{
 			mnPixelsWithinThreshold++;
-			vRingsInfo[iRadius].Add(value);
+			mvRingsInfo[iRadius].Add(value);
 		}
 	}
 
 	for (int iRing = 0; iRing < mnRings; iRing++)
 	{
-		int nSummed = vRingsInfo[iRing].mnPixelsInRange;
+		int nSummed = mvRingsInfo[iRing].mnPixelsInRange;
 		if (nSummed < 2)
 		{
-			vMean[iRing] = IGNORE_RING;
+			mvRingMean0[iRing] = IGNORE_RING;
 		}
-		else if (nSummed < (vRingsInfo[iRing].mnPixelsInRaster / 2) && nSummed < 50)
+		else if (nSummed < (mvRingsInfo[iRing].mnPixelsInRaster / 2) && nSummed < 50)
 		{
-			vMean[iRing] = IGNORE_RING;
+			mvRingMean0[iRing] = IGNORE_RING;
 		}
 		else
 		{
-			vMean[iRing] = vRingsInfo[iRing].mSum / nSummed;
+			mvRingMean0[iRing] = mvRingsInfo[iRing].mSum / nSummed;
 			if (iRing > 0)
 			{
-				float prev = vMean[iRing - 1];
+				float prev = mvRingMean0[iRing - 1];
 				if (prev != IGNORE_RING)
-					vRingsInfo[iRing].mDiff = abs(vMean[iRing] - prev);
+					mvRingsInfo[iRing].mDiff = abs(mvRingMean0[iRing] - prev);
 			}
 		}
 	}
 
 	if (mbLog)
+		Log();
 	{
-		string sfName("d:\\Log\\ImageScorer.csv");
-		FILE* pf = NULL;
-		fopen_s(&pf, sfName.c_str(), "w");
-		if (!pf)
-			return;
-
-		fprintf(pf, "i, n check, n summed, sum, avg, diff\n");
-		for (int iLog = 0; iLog < mnRings; iLog++)
-			fprintf(pf, "%d, %d, %d, %.2f, %.2f, %.2f\n",
-				iLog, vRingsInfo[iLog].mnPixelsInRaster, vRingsInfo[iLog].mnPixelsInRange,
-				vRingsInfo[iLog].mSum, vMean[iLog], vRingsInfo[iLog].mDiff);
-		fclose(pf);
 	}
 }
-void CImageRingScorer::ComputeScoreByDiff(vector<float>& vRingMean)
+void CImageRingScorer::ComputeScoreByDiff()
 {
 	// Compute score on rings
 	// As first trial, just find the heighest jump in the function
@@ -119,8 +111,8 @@ void CImageRingScorer::ComputeScoreByDiff(vector<float>& vRingMean)
 	float maxDiff = 0;
 	for (int iRing = 1; iRing < mnRings - 2; iRing++)
 	{
-		float mean = vRingMean[iRing];
-		float nextMean = vRingMean[iRing + 3];
+		float mean = mvRingMean[iRing];
+		float nextMean = mvRingMean[iRing + 3];
 		if (mean != IGNORE_RING && nextMean != IGNORE_RING)
 		{
 			float absDiff = abs(nextMean - mean);
@@ -133,7 +125,7 @@ void CImageRingScorer::ComputeScoreByDiff(vector<float>& vRingMean)
 	}
 	mScore = maxDiff;
 }
-void CImageRingScorer::ComputeScoreByMinMaxDiff(vector<float>& vRingMean)
+void CImageRingScorer::ComputeScoreByMinMaxDiff()
 {
 	//vector<float> vMax5(mnRings + 1);
 	//vector<float> vMin5(mnRings + 1);
@@ -147,7 +139,7 @@ void CImageRingScorer::ComputeScoreByMinMaxDiff(vector<float>& vRingMean)
 		float minVal = IGNORE_RING;
 		for (int iVal = iStart; iVal <= iLast; iVal++)
 		{
-			float value = vRingMean[iVal];
+			float value = mvRingMean[iVal];
 			if (value != IGNORE_RING)
 			{
 				if (maxVal == IGNORE_RING)
@@ -173,4 +165,20 @@ void CImageRingScorer::ComputeScoreByMinMaxDiff(vector<float>& vRingMean)
 
 	}
 	mScore = maxDiff;
+}
+void CImageRingScorer::Log()
+{
+	string sfName(format("{}\\ImageScorer_{:03d}.csv", gConfig.msScoreGraphsDir.c_str(), miImage));
+	FILE* pf = NULL;
+	fopen_s(&pf, sfName.c_str(), "w");
+	if (!pf)
+		return;
+
+	fprintf(pf, "i, n check, n summed, sum, avg, diff\n");
+	for (int iLog = 0; iLog < mnRings; iLog++)
+		fprintf(pf, "%d, %d, %d, %.2f, %.2f, %.2f\n",
+			iLog, mvRingsInfo[iLog].mnPixelsInRaster, mvRingsInfo[iLog].mnPixelsInRange,
+			mvRingsInfo[iLog].mSum, mvRingMean0[iLog], mvRingsInfo[iLog].mDiff);
+	fclose(pf);
+
 }

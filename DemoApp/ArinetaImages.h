@@ -15,6 +15,8 @@ public:
 
 	bool PrepareOnInit();
 
+	short* GetImageRaster(int iImage);
+
 private:
 	void ComputeWideImages();
 

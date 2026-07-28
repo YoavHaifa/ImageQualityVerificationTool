@@ -23,7 +23,7 @@ public:
 class CImageRingScorer
 {
 public:
-	CImageRingScorer(CTImage<short>* pImage, class CRadiusImage* pRadiusImage);
+	CImageRingScorer(class CArinetaImages* pImages, int iImage, class CRadiusImage* pRadiusImage);
 	~CImageRingScorer();
 
 	float Score();
@@ -32,10 +32,14 @@ public:
 	int miRingOfScore = -1;
 
 private:
-	void CollectRingsInfo(std::vector<float>& vMean);
+	void CollectRingsInfo();
+	void ComputeScoreByDiff();
+	void ComputeScoreByMinMaxDiff();
+	void Log();
 
-	CTImage<short>* mpImage = nullptr;
+	class CArinetaImages* mpImages = nullptr;
 	class CRadiusImage* mpRadiusImage;
+	int miImage = -1;
 
 	int mnRings = 0;
 	int mnPixelsWithinThreshold = 0;
@@ -43,8 +47,10 @@ private:
 	static constexpr float IGNORE_RING = -100.0;
 	bool mbComputeByDiff = false;
 
+	std::vector<float> mvRingMean;
+	std::vector<float> mvRingMean0;
+	std::vector<CRingInfo> mvRingsInfo;
+
 	bool mbLog = true;
-	void ComputeScoreByDiff(std::vector<float>& vRingMean);
-	void ComputeScoreByMinMaxDiff(std::vector<float>& vRingMean);
 };
 

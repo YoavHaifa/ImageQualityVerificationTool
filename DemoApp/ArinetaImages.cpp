@@ -154,8 +154,25 @@ void CArinetaImages::ComputeWideImages()
 	}
 
 	delete[] pSumBuf;
-	mpSharedVolume->Dump();
+	mpWideVolume->Dump();
 
 	string s(format("All {} wide images computed", GetNFiles()));
 	CMyWindows::PrintStatus(s.c_str());
+}
+short* CArinetaImages::GetImageRaster(int iImage)
+{
+	if (iImage < miFirst || iImage > miLast)
+	{
+		string s(format("<CArinetaImages::GetImageRaster> illegal index {}", iImage));
+		CMyWindows::MessBox(s.c_str(), "SW Error");
+		return NULL;
+	}
+
+	if (mnSliceWidth > 1)
+		return mpWideVolume->GetImageStart(iImage);
+	if (mpSharedVolume)
+		return mpSharedVolume->GetImageStart(iImage);
+
+	SetCurrent(iImage);
+	return (short*)mCurrentImage.mpImage->GetDataStart();
 }

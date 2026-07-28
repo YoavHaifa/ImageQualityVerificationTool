@@ -19,7 +19,7 @@ public:
 	CRingsScorer(class CArinetaImages* pImages);
 	~CRingsScorer();
 
-	float ScoreCurrentImage(int& oAtRing);
+	float ScoreCurrentImage(int iImage, int& oAtRing);
 
 	// Compute score of all images
 	// Return miPos of image with max score (to be displayed)
@@ -34,6 +34,6 @@ private:
 
 	class CArinetaImages* mpImages = nullptr;
 	class CRadiusImage* mpRadiusImage = nullptr;
-	class CImageRingScorer* mpImageScorer = nullptr;
+	// class CImageRingScorer* mpImageScorer = nullptr;
 };
 
