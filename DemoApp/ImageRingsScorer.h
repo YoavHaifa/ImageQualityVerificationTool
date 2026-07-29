@@ -50,6 +50,7 @@ private:
 	std::vector<float> mvRingMean;
 	std::vector<float> mvRingMean0;
 	std::vector<CRingInfo> mvRingsInfo;
+	std::vector<float> mvRingScore;
 
 	bool mbLog = true;
 };

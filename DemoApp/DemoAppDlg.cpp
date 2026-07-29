@@ -6,6 +6,7 @@
 #include "DemoAppDlg.h"
 #include "ArinetaImages.h"
 #include "RingsScorer.h"
+#include "Config.h"
 
 #include "..\..\yUtils\MyMath.h"
 #include "..\..\yUtils\MyFileDialog.h"
@@ -143,6 +144,8 @@ BEGIN_MESSAGE_MAP(CDemoAppDlg, CDialog)
 	ON_COMMAND(ID_SET_WINDOWRANGE, &CDemoAppDlg::OnSetWindowrange)
 	ON_COMMAND(ID_GET_TEST, &CDemoAppDlg::OnGetTest)
 	//ON_COMMAND(ID_FILE_OPENBINARY, &CDemoAppDlg::OnFileOpenbinary)
+	ON_BN_CLICKED(IDC_OK, &CDemoAppDlg::OnBnClickedOk)
+	ON_BN_CLICKED(IDC_CANCEL, &CDemoAppDlg::OnBnClickedCancel)
 END_MESSAGE_MAP()
 
 
@@ -497,6 +500,7 @@ void CDemoAppDlg::OnFileOpen32771()
 					mpRingsScorer = new CRingsScorer(mpImages);
 					miPos = mpRingsScorer->ScoreAllImages();
 					mpImageRIF->SetPosition(mpImages->GetPatternName(), miPos);
+					mpImageRIF->DisplayShared(mpImages->GetSharedWideVolume());
 					DisplayScore();
 				}
 			}
@@ -1022,6 +1026,7 @@ void CDemoAppDlg::DisplayCircle(CDataCoordinates& center, float radius)
 	//pCircle->LockToPosition2d(miPos, miPos2d);
 	pCircle->SetSaveToXml(true);
 	pCircle->mbReportClientOnActivation = true;
+	mpImageRIF->SetCurrentDR(0);
 	mpImageRIF->DisplayGraphic(pCircle);
 }
 void CDemoAppDlg::DisplayScore()
@@ -1033,4 +1038,13 @@ void CDemoAppDlg::DisplayScore()
 	SetParameter(IDC_EDIT_RADIUS, iAtRing);
 	if (iAtRing >= 1)
 		DisplayCircle(mpImages->GetRotationCenter(), (float)iAtRing);
+}
+void CDemoAppDlg::OnBnClickedOk()
+{
+	gConfig.SaveToFile();
+	CMyDialogEx::OnOK();
+}
+void CDemoAppDlg::OnBnClickedCancel()
+{
+	CMyDialogEx::OnCancel();
 }

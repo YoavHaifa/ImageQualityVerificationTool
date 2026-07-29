@@ -23,6 +23,9 @@
 #define IDC_BUTTON_ADD_COLOR_MAP        1007
 #define IDC_BUTTON_NEXT                 1007
 #define IDC_EDIT_RADIUS                 1008
+#define IDC_OK                          1009
+#define IDC_BUTTON2                     1010
+#define IDC_CANCEL                      1010
 #define ID_FILE_OPEN32771               32771
 #define ID_FILE_EXIT                    32772
 #define ID_HELP_DEMOAPPV1               32773
@@ -51,7 +54,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        131
 #define _APS_NEXT_COMMAND_VALUE         32792
-#define _APS_NEXT_CONTROL_VALUE         1007
+#define _APS_NEXT_CONTROL_VALUE         1011
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

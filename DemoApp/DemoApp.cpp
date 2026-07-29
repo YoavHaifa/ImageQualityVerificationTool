@@ -4,6 +4,7 @@
 #include "stdafx.h"
 #include "DemoApp.h"
 #include "DemoAppDlg.h"
+#include "Config.h"
 #include "..\..\yUtils\MyWindows.h"
 
 #ifdef _DEBUG
@@ -61,6 +62,7 @@ BOOL CDemoAppApp::InitInstance()
 
 	CString sCommandLine = GetCommandLine();
     CMyWindows::SetApplicationPath (sCommandLine);
+	gConfig.ReadFromFile();
 
 	CDemoAppDlg dlg;
 	m_pMainWnd = &dlg;
@@ -68,8 +70,6 @@ BOOL CDemoAppApp::InitInstance()
 	INT_PTR nResponse = dlg.DoModal();
 	if (nResponse == IDOK)
 	{
-		// TODO: Place code here to handle when the dialog is
-		//  dismissed with OK
 	}
 	else if (nResponse == IDCANCEL)
 	{

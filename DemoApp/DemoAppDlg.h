@@ -100,5 +100,7 @@ public:
 	//afx_msg void OnFileOpenbinary();
 
 	void DisplayCircle(CDataCoordinates& center, float radius);
+	afx_msg void OnBnClickedOk();
+	afx_msg void OnBnClickedCancel();
 };
 

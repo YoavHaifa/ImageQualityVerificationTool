@@ -16,6 +16,7 @@ public:
 	bool PrepareOnInit();
 
 	short* GetImageRaster(int iImage);
+	CTSharedImage<short>* GetSharedWideVolume() { return mpWideVolume; }
 
 private:
 	void ComputeWideImages();

@@ -27,6 +27,8 @@ float CImageRingScorer::Score()
 
 	// Expand area of illegal samples
 	mvRingMean.resize(mnRings + 1);
+	mvRingScore.resize(mnRings + 1);
+
 	mvRingMean[0] = mvRingMean0[0];
 	mvRingMean[mnRings] = mvRingMean0[mnRings];
 	for (int iR = 1; iR < mnRings; iR++)
@@ -43,6 +45,9 @@ float CImageRingScorer::Score()
 		ComputeScoreByDiff();
 	else
 		ComputeScoreByMinMaxDiff();
+
+	if (mbLog)
+		Log();
 
 	return mScore;
 }
@@ -97,11 +102,6 @@ void CImageRingScorer::CollectRingsInfo()
 			}
 		}
 	}
-
-	if (mbLog)
-		Log();
-	{
-	}
 }
 void CImageRingScorer::ComputeScoreByDiff()
 {
@@ -116,6 +116,7 @@ void CImageRingScorer::ComputeScoreByDiff()
 		if (mean != IGNORE_RING && nextMean != IGNORE_RING)
 		{
 			float absDiff = abs(nextMean - mean);
+			mvRingScore[iRing] = absDiff;
 			if (absDiff > maxDiff)
 			{
 				maxDiff = absDiff;
@@ -157,6 +158,7 @@ void CImageRingScorer::ComputeScoreByMinMaxDiff()
 			}
 		}
 		float diff = maxVal - minVal;
+		mvRingScore[iRing] = diff;
 		if (diff > maxDiff)
 		{
 			maxDiff = diff;
@@ -174,11 +176,11 @@ void CImageRingScorer::Log()
 	if (!pf)
 		return;
 
-	fprintf(pf, "i, n check, n summed, sum, avg, diff\n");
+	fprintf(pf, "i, n check, n summed, sum, avg, diff, score\n");
 	for (int iLog = 0; iLog < mnRings; iLog++)
-		fprintf(pf, "%d, %d, %d, %.2f, %.2f, %.2f\n",
+		fprintf(pf, "%d, %d, %d, %.2f, %.2f, %.2f, %.2f\n",
 			iLog, mvRingsInfo[iLog].mnPixelsInRaster, mvRingsInfo[iLog].mnPixelsInRange,
-			mvRingsInfo[iLog].mSum, mvRingMean0[iLog], mvRingsInfo[iLog].mDiff);
+			mvRingsInfo[iLog].mSum, mvRingMean0[iLog], mvRingsInfo[iLog].mDiff, mvRingScore[iLog]);
 	fclose(pf);
 
 }
