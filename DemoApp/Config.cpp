@@ -8,10 +8,17 @@
 using namespace std;
 
 CConfig gConfig;
+CFileLogger gfLog;
 
 CConfig::CConfig()
 {
 	CMyWindows::VerifyDirectory(msScoreGraphsDir.c_str());
+}
+void CConfig::Init()
+{
+	ReadFromFile();
+	if (mDebug)
+		gfLog.Init("IQV_App");
 }
 void CConfig::SaveToFile()
 {
@@ -21,6 +28,8 @@ void CConfig::SaveToFile()
 	dumpFile.Write("max_ct_threshold", mMaxThreshold - CT_BIAS);
 	dumpFile.Write("mask_erode_level", mErodeLevel);
 	dumpFile.Write("slice_width", mnWantedSliceWidth);
+
+	dumpFile.Write("debug", mDebug);
 }
 void CConfig::ReadFromFile()
 {
@@ -42,5 +51,7 @@ void CConfig::ReadFromFile()
 		mMaxThreshold += CT_BIAS;
 	pRoot->GetValue("mask_erode_level", mErodeLevel);
 	//pRoot->GetValue("slice_width", mnWantedSliceWidth);
+
+	pRoot->GetValue("debug", mDebug);
 
 }

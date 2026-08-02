@@ -72,7 +72,6 @@ CDemoAppDlg::CDemoAppDlg(CWnd* pParent /*=NULL*/)
 	, mnImageCols(640)
 	, miPos(0)
 	, miPos2d(0)
-	, mpfLog(NULL)
 	, mbDisplayReadyImages(false)
 	, mpImages(NULL)
 	, mpDataFiles(NULL)
@@ -87,11 +86,11 @@ CDemoAppDlg::CDemoAppDlg(CWnd* pParent /*=NULL*/)
 	, mbColormapOn(false)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
-	mpfLog = CMyWindows::FOpenLogFile("DemoApp");
-	CRle1Read::SetDebug(0xff);
+	gfLog.Log("<CDemoAppDlg::CDemoAppDlg>");
 }
 CDemoAppDlg::~CDemoAppDlg(void)
 {
+	gfLog.Log("<CDemoAppDlg::~CDemoAppDlg>");
 	if (mpImageRIF)
 		delete mpImageRIF;
 	if (mpSmoother)
@@ -182,7 +181,7 @@ BOOL CDemoAppDlg::OnInitDialog()
 		CMyWindows::SetStatusWindow(pWnd);
 
 	// TODO: Add extra initialization here
-	DisplayPos();
+	//DisplayPos();
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
@@ -239,7 +238,7 @@ LRESULT CDemoAppDlg::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
 		{
 			//gCardiac.OnGraphicUpdate();
 			sprintf_s (zBuf,sizeof(zBuf), "<WindowProc> Graphic Messgae %d %d", (int)wParam, (int)lParam);
-			CMyWindows::PrintStatus(zBuf);
+			PrintStatus(zBuf);
 		    return 0;
 		}
 		else if (mpImageRIF->GetGraphicActiveMessage(message, &pGE))
@@ -247,14 +246,14 @@ LRESULT CDemoAppDlg::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
 			//gCardiac.OnGraphicUpdate();
 			sprintf_s (zBuf,sizeof(zBuf), "<WindowProc> Graphic Active Messgae %d %d - %s", 
 				(int)wParam, (int)lParam, (const char *)pGE->Name());
-			CMyWindows::PrintStatus(zBuf);
+			PrintStatus(zBuf);
 		    return 0;
 		}
         else if (message == mpImageRIF->mImageRKeyboardMsg)
 	    {
 			sprintf_s (zBuf,sizeof(zBuf), "<WindowProc> Keyboard Messgae %c", 
 				(int)wParam);
-			CMyWindows::PrintStatus(zBuf);
+			PrintStatus(zBuf);
 		    return 0;
 		}
         else if (message == mpImageRIF->mImageRSaveDoneMsg)
@@ -271,39 +270,38 @@ LRESULT CDemoAppDlg::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
 	    }
         else if (mpImageRIF->GetPositionMessage(message, wParam, lParam, bChange))
         {
-			if (mpfLog && bChange)
+			if (bChange)
 			{
-				//if (message == CPosition::umaPositionMsg[0])
-				//	fprintf (mpfLog, "<WindowProc> PositionMsg 0 ID %d pos %d\n", 
-				//		(int)lParam, (int)wParam);
-				//else if (message == CPosition::umaPositionMsg[1])
-				//	fprintf (mpfLog, "<WindowProc> PositionMsg 1 ID %d pos %d\n", 
-				//		(int)lParam, (int)wParam);
-				//fprintf (mpfLog, "<WindowProc> Pos %3d\n", miPos);
+				//gfLog.Printf("<WindowProc> message %u, wParam %d, lParam %d", message, (int)wParam, (int)lParam);
+				if (message == CPosition::umaPositionMsg[0])
+					gfLog.Printf("<WindowProc> PositionMsg 0 ID %d pos %d",  (int)lParam, (int)wParam);
+				else if (message == CPosition::umaPositionMsg[1])
+					gfLog.Printf("<WindowProc> PositionMsg 1 ID %d pos %d", (int)lParam, (int)wParam);
+				gfLog.Printf("<WindowProc> Pos %3d\n", miPos);
 
 				//DisplayPos();
-				//sprintf_s (zBuf,sizeof(zBuf), "<WindowProc> Position Messgae %d %d", (int)wParam, (int)lParam);
-				//CMyWindows::PrintStatus(zBuf);
-				//if (mpImages)
-				//{
-				//	CPosition *pPosition = mpImages->GetPosition();
-				//	if (miPos >= pPosition->miFirst && miPos <= pPosition->miLast)
-				//		mpImages->SetCurrent(miPos);
-				//}
+				sprintf_s (zBuf,sizeof(zBuf), "<WindowProc> Position Messgae %d %d", (int)wParam, (int)lParam);
+				PrintStatus(zBuf);
+				if (mpImages)
+				{
+					CPosition *pPosition = mpImages->GetPosition();
+					if (miPos >= pPosition->miFirst && miPos <= pPosition->miLast)
+						mpImages->SetCurrent(miPos);
+				}
 
-				//if (mpRingsScorer)
-				//	DisplayScore();
+				if (mpRingsScorer)
+					DisplayScore();
 			}
 		    return 0;
         }
 		else if (message == mpImageRIF->mImageRCursorLocationMsg)
 		{
 			sprintf_s (zBuf,sizeof(zBuf), "<WindowProc> Cursor Messgae %d %d", (int)wParam, (int)lParam);
-			CMyWindows::PrintStatus(zBuf);
+			PrintStatus(zBuf);
 		}
 		else if (message == mpImageRIF->mImageRLeftMouseUpMsg)
 		{
-			CMyWindows::PrintStatus("<WindowProc> Left Mouse Up");
+			PrintStatus("<WindowProc> Left Mouse Up");
 		}
     }
 	return CDialog::WindowProc(message, wParam, lParam);
@@ -411,26 +409,26 @@ void CDemoAppDlg::OnBnClickedButtonAddRoi()
 	pRoi->mbReportClientOnActivation = true;
 	mpImageRIF->DisplayGraphic(pRoi);
 }
-void CDemoAppDlg::DisplayPos(void)
-{
-	CWnd *pWnd = GetDlgItem(IDC_EDIT_POS1);
-	if (pWnd)
-	{
-		char zBuf[128];
-		int iPos = miPos;
-		if (!mbDisplayReadyImages)
-			iPos++;
-		sprintf_s(zBuf,128,"%d",iPos);
-		pWnd->SetWindowText(zBuf);
-	}
-	pWnd = GetDlgItem(IDC_EDIT_POS2);
-	if (pWnd)
-	{
-		char zBuf[128];
-		sprintf_s(zBuf,128,"%d",miPos2d+1);
-		pWnd->SetWindowText(zBuf);
-	}
-}
+//void CDemoAppDlg::DisplayPos(void)
+//{
+//	CWnd *pWnd = GetDlgItem(IDC_EDIT_POS1);
+//	if (pWnd)
+//	{
+//		char zBuf[128];
+//		int iPos = miPos;
+//		if (!mbDisplayReadyImages)
+//			iPos++;
+//		sprintf_s(zBuf,128,"%d",iPos);
+//		pWnd->SetWindowText(zBuf);
+//	}
+//	pWnd = GetDlgItem(IDC_EDIT_POS2);
+//	if (pWnd)
+//	{
+//		char zBuf[128];
+//		sprintf_s(zBuf,128,"%d",miPos2d+1);
+//		pWnd->SetWindowText(zBuf);
+//	}
+//}
 void CDemoAppDlg::GetPos1(void)
 {
 	CWnd *pWnd = GetDlgItem(IDC_EDIT_POS1);
@@ -469,8 +467,7 @@ void CDemoAppDlg::OnBnClickedButtonUpPos()
 			{
 				mpImageRIF->SetPosition(mpImages->GetPatternName(), miPos);
 			}
-			if (mpfLog)
-				fprintf (mpfLog, "<OnBnClickedButtonUpPos> (%3d %3d)\n", miPos, miPos2d);
+			gfLog.Printf("<OnBnClickedButtonUpPos> (%3d %3d)\n", miPos, miPos2d);
 		}
 	}
 }
@@ -493,7 +490,7 @@ void CDemoAppDlg::OnFileOpen32771()
 					CArinetaImages::SetDebug(0xff);
 					mpImages = new CArinetaImages(sImageName);
 					miPos = mpImages->GetCurrentPosition();
-					DisplayPos();
+					//DisplayPos();
 					mImages.AddTail(mpImages);
 					mpImages->ComputeRotationCenter(this);
 					mpImages->PrepareOnInit();
@@ -1047,4 +1044,10 @@ void CDemoAppDlg::OnBnClickedOk()
 void CDemoAppDlg::OnBnClickedCancel()
 {
 	CMyDialogEx::OnCancel();
+}
+
+void CDemoAppDlg::PrintStatus(const char* zStatus)
+{
+	gfLog.Log("<PrintStatus>", zStatus);
+	CMyWindows::PrintStatus(zStatus);
 }

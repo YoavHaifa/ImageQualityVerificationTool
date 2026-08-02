@@ -53,8 +53,7 @@ public:
 	afx_msg void OnBnClickedButtonAddRoi();
 	int miPos;
 	int miPos2d;
-	FILE *mpfLog;
-	void DisplayPos(void);
+	//void DisplayPos(void);
 	afx_msg void OnBnClickedButtonUpPos();
 	afx_msg void OnFileOpen32771();
 	afx_msg void OnFileExit();
@@ -102,5 +101,6 @@ public:
 	void DisplayCircle(CDataCoordinates& center, float radius);
 	afx_msg void OnBnClickedOk();
 	afx_msg void OnBnClickedCancel();
+	void PrintStatus(const char* zStatus);
 };
 

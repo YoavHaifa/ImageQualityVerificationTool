@@ -62,7 +62,7 @@ BOOL CDemoAppApp::InitInstance()
 
 	CString sCommandLine = GetCommandLine();
     CMyWindows::SetApplicationPath (sCommandLine);
-	gConfig.ReadFromFile();
+	gConfig.Init();
 
 	CDemoAppDlg dlg;
 	m_pMainWnd = &dlg;
