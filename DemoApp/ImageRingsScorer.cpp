@@ -176,11 +176,17 @@ void CImageRingScorer::Log()
 	if (!pf)
 		return;
 
-	fprintf(pf, "i, n check, n summed, sum, avg, diff, score\n");
+	fprintf(pf, "i, n check, n summed, sum, avg, diff, min, max, score\n");
 	for (int iLog = 0; iLog < mnRings; iLog++)
-		fprintf(pf, "%d, %d, %d, %.2f, %.2f, %.2f, %.2f\n",
-			iLog, mvRingsInfo[iLog].mnPixelsInRaster, mvRingsInfo[iLog].mnPixelsInRange,
-			mvRingsInfo[iLog].mSum, mvRingMean0[iLog], mvRingsInfo[iLog].mDiff, mvRingScore[iLog]);
+		fprintf(pf, "%d, %d, %d, %.2f, %.2f, %.2f, %d, %d, %.2f\n",
+			iLog, mvRingsInfo[iLog].mnPixelsInRaster, 
+			mvRingsInfo[iLog].mnPixelsInRange,
+			mvRingsInfo[iLog].mSum, 
+			mvRingMean0[iLog], 
+			mvRingsInfo[iLog].mDiff,
+			mvRingsInfo[iLog].mMin,
+			mvRingsInfo[iLog].mMax,
+			mvRingScore[iLog]);
 	fclose(pf);
 
 }

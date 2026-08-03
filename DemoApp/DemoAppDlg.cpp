@@ -28,6 +28,8 @@
 #define new DEBUG_NEW
 #endif
 
+CDemoAppDlg* gpDlg = nullptr;
+
 // CAboutDlg dialog used for App About
 
 class CAboutDlg : public CDialog
@@ -123,7 +125,6 @@ BEGIN_MESSAGE_MAP(CDemoAppDlg, CDialog)
 	ON_BN_CLICKED(IDC_BUTTON_UP_POS, &CDemoAppDlg::OnBnClickedButtonUpPos)
 	ON_COMMAND(ID_FILE_OPEN32771, &CDemoAppDlg::OnFileOpen32771)
 	ON_COMMAND(ID_FILE_EXIT, &CDemoAppDlg::OnFileExit)
-	//ON_COMMAND(ID_PROCESS_SMOOTH, &CDemoAppDlg::OnProcessSmooth)
 	ON_COMMAND(ID_GET_WINDOW, &CDemoAppDlg::OnGetWindow)
 	ON_COMMAND(ID_SET_WINDOW, &CDemoAppDlg::OnSetWindow)
 	ON_COMMAND(ID_SET_AUTOWINDOW, &CDemoAppDlg::OnSetAutoWindow)
@@ -137,14 +138,15 @@ BEGIN_MESSAGE_MAP(CDemoAppDlg, CDialog)
 	ON_COMMAND(ID_PROCESS_CURRENTINVOLUME, &CDemoAppDlg::OnProcessCurrentinvolume)
 	ON_COMMAND(ID_PROCESS_SAVEWITHNEWMATRIX, &CDemoAppDlg::OnProcessSavewithnewmatrix)
 	ON_COMMAND(ID_SET_TITLE, &CDemoAppDlg::OnSetTitle)
-	ON_BN_CLICKED(IDC_BUTTON_ADD_COLOR_MAP, &CDemoAppDlg::OnBnClickedButtonAddColorMap)
+	//ON_BN_CLICKED(IDC_BUTTON_ADD_COLOR_MAP, &CDemoAppDlg::OnBnClickedButtonAddColorMap)
 	ON_COMMAND(ID_SET_TOGGLECOLORMAP, &CDemoAppDlg::OnSetTogglecolormap)
-	//ON_COMMAND(ID_FILE_OPENCOLORER, &CDemoAppDlg::OnFileOpencolorer)
 	ON_COMMAND(ID_SET_WINDOWRANGE, &CDemoAppDlg::OnSetWindowrange)
 	ON_COMMAND(ID_GET_TEST, &CDemoAppDlg::OnGetTest)
-	//ON_COMMAND(ID_FILE_OPENBINARY, &CDemoAppDlg::OnFileOpenbinary)
 	ON_BN_CLICKED(IDC_OK, &CDemoAppDlg::OnBnClickedOk)
 	ON_BN_CLICKED(IDC_CANCEL, &CDemoAppDlg::OnBnClickedCancel)
+	ON_BN_CLICKED(IDC_BUTTON_MAX, &CDemoAppDlg::OnBnClickedButtonMax)
+	ON_BN_CLICKED(IDC_BUTTON_NEXT, &CDemoAppDlg::OnBnClickedButtonNext)
+	ON_BN_CLICKED(IDC_BUTTON_PREV, &CDemoAppDlg::OnBnClickedButtonPrev)
 END_MESSAGE_MAP()
 
 
@@ -183,6 +185,7 @@ BOOL CDemoAppDlg::OnInitDialog()
 	// TODO: Add extra initialization here
 	//DisplayPos();
 
+	gpDlg = this;
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
 
@@ -238,7 +241,7 @@ LRESULT CDemoAppDlg::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
 		{
 			//gCardiac.OnGraphicUpdate();
 			sprintf_s (zBuf,sizeof(zBuf), "<WindowProc> Graphic Messgae %d %d", (int)wParam, (int)lParam);
-			PrintStatus(zBuf);
+			gConfig.PrintStatus(zBuf);
 		    return 0;
 		}
 		else if (mpImageRIF->GetGraphicActiveMessage(message, &pGE))
@@ -246,14 +249,14 @@ LRESULT CDemoAppDlg::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
 			//gCardiac.OnGraphicUpdate();
 			sprintf_s (zBuf,sizeof(zBuf), "<WindowProc> Graphic Active Messgae %d %d - %s", 
 				(int)wParam, (int)lParam, (const char *)pGE->Name());
-			PrintStatus(zBuf);
+			gConfig.PrintStatus(zBuf);
 		    return 0;
 		}
         else if (message == mpImageRIF->mImageRKeyboardMsg)
 	    {
 			sprintf_s (zBuf,sizeof(zBuf), "<WindowProc> Keyboard Messgae %c", 
 				(int)wParam);
-			PrintStatus(zBuf);
+			gConfig.PrintStatus(zBuf);
 		    return 0;
 		}
         else if (message == mpImageRIF->mImageRSaveDoneMsg)
@@ -281,7 +284,7 @@ LRESULT CDemoAppDlg::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
 
 				//DisplayPos();
 				sprintf_s (zBuf,sizeof(zBuf), "<WindowProc> Position Messgae %d %d", (int)wParam, (int)lParam);
-				PrintStatus(zBuf);
+				gConfig.PrintStatus(zBuf);
 				if (mpImages)
 				{
 					CPosition *pPosition = mpImages->GetPosition();
@@ -297,11 +300,11 @@ LRESULT CDemoAppDlg::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
 		else if (message == mpImageRIF->mImageRCursorLocationMsg)
 		{
 			sprintf_s (zBuf,sizeof(zBuf), "<WindowProc> Cursor Messgae %d %d", (int)wParam, (int)lParam);
-			PrintStatus(zBuf);
+			gConfig.PrintStatus(zBuf);
 		}
 		else if (message == mpImageRIF->mImageRLeftMouseUpMsg)
 		{
-			PrintStatus("<WindowProc> Left Mouse Up");
+			gConfig.PrintStatus("<WindowProc> Left Mouse Up");
 		}
     }
 	return CDialog::WindowProc(message, wParam, lParam);
@@ -496,9 +499,8 @@ void CDemoAppDlg::OnFileOpen32771()
 					mpImages->PrepareOnInit();
 					mpRingsScorer = new CRingsScorer(mpImages);
 					miPos = mpRingsScorer->ScoreAllImages();
-					mpImageRIF->SetPosition(mpImages->GetPatternName(), miPos);
+					OnCurrentSelectedByScorer(miPos);
 					mpImageRIF->DisplayShared(mpImages->GetSharedWideVolume());
-					DisplayScore();
 				}
 			}
 			else // Add Extra Images' series
@@ -904,52 +906,52 @@ void CDemoAppDlg::OnBnClickedButtonAddColors()
 	
 	mpImageRIF->DisplayShared(mpColors);
 }
-void CDemoAppDlg::OnBnClickedButtonAddColorMap()
-{
-	if (!mpImages && !mpSharedVolume)
-		return;
-	if (!mpImageRIF)
-		return;
-
-	CString sPath("d:\\tmp");
-	if (!CMyWindows::VerifyDirectory(sPath))
-		return;
-
-	const int N_GRAY_LEVELS = 256;
-	typedef struct
-	{
-		float red;
-		float green;
-		float blue;
-	} SRGB_Entry;
-	SRGB_Entry aLut[N_GRAY_LEVELS];
-	int GREEN_MIN = N_GRAY_LEVELS / 4;
-	int GREEN_MAX = N_GRAY_LEVELS * 3 / 4;
-	int GREEN_MIDDLE = (GREEN_MIN + GREEN_MAX) / 2;
-	int GREEN_HALF_SPAN = GREEN_MIDDLE - GREEN_MIN;
-
-	for (int i = 0; i < N_GRAY_LEVELS; i++)
-	{
-		float relative = (float)i / (N_GRAY_LEVELS - 1);
-		aLut[i].blue = 1 - relative;
-		aLut[i].red = relative;
-		if (i > GREEN_MIN && i < GREEN_MAX)
-		{
-			aLut[i].green = 1 - (float)(abs(i - GREEN_MIDDLE)) / GREEN_HALF_SPAN;
-		}
-	}
-
-	CString sfName(sPath + "\\DemoApp.ColorMap");
-	FILE *pf = MyFOpenWithErrorBox(sfName,"wb","ColorMap Example");
-	if (!pf)
-		return;
-
-	fwrite (&aLut[0], sizeof(aLut[0]), N_GRAY_LEVELS, pf);
-	fclose(pf);
-
-	mpImageRIF->DisplayColorMap(sfName);
-	mbColormapOn = true;
-}
+//void CDemoAppDlg::OnBnClickedButtonAddColorMap()
+//{
+//	if (!mpImages && !mpSharedVolume)
+//		return;
+//	if (!mpImageRIF)
+//		return;
+//
+//	CString sPath("d:\\tmp");
+//	if (!CMyWindows::VerifyDirectory(sPath))
+//		return;
+//
+//	const int N_GRAY_LEVELS = 256;
+//	typedef struct
+//	{
+//		float red;
+//		float green;
+//		float blue;
+//	} SRGB_Entry;
+//	SRGB_Entry aLut[N_GRAY_LEVELS];
+//	int GREEN_MIN = N_GRAY_LEVELS / 4;
+//	int GREEN_MAX = N_GRAY_LEVELS * 3 / 4;
+//	int GREEN_MIDDLE = (GREEN_MIN + GREEN_MAX) / 2;
+//	int GREEN_HALF_SPAN = GREEN_MIDDLE - GREEN_MIN;
+//
+//	for (int i = 0; i < N_GRAY_LEVELS; i++)
+//	{
+//		float relative = (float)i / (N_GRAY_LEVELS - 1);
+//		aLut[i].blue = 1 - relative;
+//		aLut[i].red = relative;
+//		if (i > GREEN_MIN && i < GREEN_MAX)
+//		{
+//			aLut[i].green = 1 - (float)(abs(i - GREEN_MIDDLE)) / GREEN_HALF_SPAN;
+//		}
+//	}
+//
+//	CString sfName(sPath + "\\DemoApp.ColorMap");
+//	FILE *pf = MyFOpenWithErrorBox(sfName,"wb","ColorMap Example");
+//	if (!pf)
+//		return;
+//
+//	fwrite (&aLut[0], sizeof(aLut[0]), N_GRAY_LEVELS, pf);
+//	fclose(pf);
+//
+//	mpImageRIF->DisplayColorMap(sfName);
+//	mbColormapOn = true;
+//}
 void CDemoAppDlg::OnSetTitle()
 {
 	if (!mpImageRIF)
@@ -1026,6 +1028,13 @@ void CDemoAppDlg::DisplayCircle(CDataCoordinates& center, float radius)
 	mpImageRIF->SetCurrentDR(0);
 	mpImageRIF->DisplayGraphic(pCircle);
 }
+void CDemoAppDlg::OnCurrentSelectedByScorer(int iPos)
+{
+	miPos = iPos;
+	mpImages->SetCurrent(miPos);
+	mpImageRIF->SetPosition(mpImages->GetPatternName(), miPos);
+	DisplayScore();
+}
 void CDemoAppDlg::DisplayScore()
 {
 	int iAtRing = -1;
@@ -1045,9 +1054,15 @@ void CDemoAppDlg::OnBnClickedCancel()
 {
 	CMyDialogEx::OnCancel();
 }
-
-void CDemoAppDlg::PrintStatus(const char* zStatus)
+void CDemoAppDlg::OnBnClickedButtonMax()
 {
-	gfLog.Log("<PrintStatus>", zStatus);
-	CMyWindows::PrintStatus(zStatus);
+	mpRingsScorer->DisplayMaxPeak();
+}
+void CDemoAppDlg::OnBnClickedButtonNext()
+{
+	mpRingsScorer->DisplayNextPeak();
+}
+void CDemoAppDlg::OnBnClickedButtonPrev()
+{
+	mpRingsScorer->DisplayPrevPeak();
 }

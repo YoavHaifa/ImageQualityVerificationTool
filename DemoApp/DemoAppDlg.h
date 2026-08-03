@@ -18,13 +18,12 @@ public:
 // Dialog Data
 	enum { IDD = IDD_DEMOAPP_DIALOG };
 
-	protected:
+protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV support
 
 	LRESULT WindowProc(UINT message, WPARAM wParam, LPARAM lParam);
 
 // Implementation
-protected:
 	HICON m_hIcon;
 
 	// Generated message map functions
@@ -40,6 +39,8 @@ protected:
 	CTSharedImage<short> *mpSharedVolume;
 
 public:
+	void OnCurrentSelectedByScorer(int iPos);
+
 	afx_msg void OnBnClickedButtonShared();
 	class CImageRIF *mpImageRIF;
 	void LoadViewer(void);
@@ -101,6 +102,9 @@ public:
 	void DisplayCircle(CDataCoordinates& center, float radius);
 	afx_msg void OnBnClickedOk();
 	afx_msg void OnBnClickedCancel();
-	void PrintStatus(const char* zStatus);
+	afx_msg void OnBnClickedButtonMax();
+	afx_msg void OnBnClickedButtonNext();
+	afx_msg void OnBnClickedButtonPrev();
 };
 
+extern CDemoAppDlg* gpDlg;

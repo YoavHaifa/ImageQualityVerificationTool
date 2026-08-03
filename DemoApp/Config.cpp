@@ -55,3 +55,8 @@ void CConfig::ReadFromFile()
 	pRoot->GetValue("debug", mDebug);
 
 }
+void CConfig::PrintStatus(const char* zStatus)
+{
+	gfLog.Log("<PrintStatus>", zStatus);
+	CMyWindows::PrintStatus(zStatus);
+}

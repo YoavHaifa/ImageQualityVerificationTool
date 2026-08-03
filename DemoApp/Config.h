@@ -21,6 +21,7 @@ public:
 	void SaveToFile();
 	void ReadFromFile();
 
+	void PrintStatus(const char* zStatus);
 };
 
 extern CConfig gConfig;

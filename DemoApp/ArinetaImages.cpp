@@ -63,7 +63,7 @@ bool CArinetaImages::GetFloatValueFromDicomString(unsigned short group, unsigned
 }
 bool CArinetaImages::PrepareOnInit()
 {
-	CMyWindows::PrintStatus("Loading...");
+	gConfig.PrintStatus("Loading...");
 	LoadFullRange();
 
 	mnPixelsInImage = mnLinesInPage * mnCols;
@@ -74,7 +74,7 @@ bool CArinetaImages::PrepareOnInit()
 	mpSharedVolume->Dump();
 
 	string s(format("All {} images loaded", GetNFiles()));
-	CMyWindows::PrintStatus(s.c_str());
+	gConfig.PrintStatus(s.c_str());
 
 	mnSliceWidth = min(gConfig.mnWantedSliceWidth, (unsigned short)GetNFiles());
 	if (mnSliceWidth > 1)
@@ -83,7 +83,7 @@ bool CArinetaImages::PrepareOnInit()
 }
 void CArinetaImages::ComputeWideImages()
 {
-	CMyWindows::PrintStatus("Computing wide images...");
+	gConfig.PrintStatus("Computing wide images...");
 
 	if (!mpWideVolume)
 	{
@@ -157,7 +157,7 @@ void CArinetaImages::ComputeWideImages()
 	mpWideVolume->Dump();
 
 	string s(format("All {} wide images computed", GetNFiles()));
-	CMyWindows::PrintStatus(s.c_str());
+	gConfig.PrintStatus(s.c_str());
 }
 short* CArinetaImages::GetImageRaster(int iImage)
 {

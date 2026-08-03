@@ -12,12 +12,26 @@ public:
 	{
 		mnPixelsInRange++;
 		mSum += value;
+		if (mnPixelsInRange == 1)
+		{
+			mMin = value;
+			mMax = value;
+		}
+		else
+		{
+			if (value < mMin)
+				mMin = value;
+			if (value > mMax)
+				mMax = value;
+		}
 	}
 
 	int mnPixelsInRaster = 0;
 	int mnPixelsInRange = 0;
 	float mSum = 0;
 	float mDiff = 0;
+	int mMin = 0;
+	int mMax = 0;
 };
 
 class CImageRingScorer
