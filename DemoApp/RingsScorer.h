@@ -1,15 +1,22 @@
 #pragma once
+#include "ScoreTypes.h"
 #include <vector>
 
 class CImageScore
 {
 public:
-	CImageScore(float score, int iRing)
-		: mScore(score)
-		, miRing(iRing)
-	{}
-	float mScore = 0;
-	int miRing = -1; // Undefined
+	static constexpr int N_SCORE_TYPES = (int)EScoreType::N_SCORE_TYPES;
+
+	CImageScore(const float scores[], const int rings[])
+	{
+		for (int i = 0; i < N_SCORE_TYPES; i++)
+		{
+			mvScore[i] = scores[i];
+			mvRing[i] = rings[i];
+		}
+	}
+	float mvScore[N_SCORE_TYPES] = {};
+	int mvRing[N_SCORE_TYPES] = {}; // Undefined ring is -1, set by caller
 	bool mbPeak = false; // Until peaks are identified
 	int miPeak = 0;
 };
@@ -32,10 +39,14 @@ public:
 	void DisplayNextPeak();
 	void DisplayPrevPeak();
 
+	// Re-derive peaks from the already-cached per-image scores for the newly active score type
+	void OnActiveScoreTypeChanged();
+
 private:
 	void FindPeaks();
 	void OrderPeaks();
 	void FindNextPixToOrder();
+	void ResetPeaks();
 	void Log();
 
 	bool LookForPeak(int iWantedPeak);

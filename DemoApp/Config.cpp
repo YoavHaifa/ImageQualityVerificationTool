@@ -28,6 +28,7 @@ void CConfig::SaveToFile()
 	dumpFile.Write("max_ct_threshold", mMaxThreshold - CT_BIAS);
 	dumpFile.Write("mask_erode_level", mErodeLevel);
 	dumpFile.Write("slice_width", mnWantedSliceWidth);
+	dumpFile.Write("score_type", (int)mScoreType);
 
 	dumpFile.Write("debug", mDebug);
 }
@@ -51,6 +52,10 @@ void CConfig::ReadFromFile()
 		mMaxThreshold += CT_BIAS;
 	pRoot->GetValue("mask_erode_level", mErodeLevel);
 	//pRoot->GetValue("slice_width", mnWantedSliceWidth);
+
+	int iScoreType = (int)mScoreType;
+	if (pRoot->GetValue("score_type", iScoreType))
+		mScoreType = (EScoreType)iScoreType;
 
 	pRoot->GetValue("debug", mDebug);
 

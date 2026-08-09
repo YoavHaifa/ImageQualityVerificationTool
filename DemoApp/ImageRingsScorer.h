@@ -1,5 +1,6 @@
 #pragma once
 #include "..\..\ImageRLib\TSharedImage.h"
+#include "ScoreTypes.h"
 #include <vector>
 
 // Compute the rings scores for a single image
@@ -42,13 +43,19 @@ public:
 
 	float Score();
 
+	static constexpr int N_SCORE_TYPES = (int)EScoreType::N_SCORE_TYPES;
+
 	float mScore = 0;
 	int miRingOfScore = -1;
+
+	float mvScoreByType[N_SCORE_TYPES] = {};
+	int mvRingByType[N_SCORE_TYPES] = {};
 
 private:
 	void CollectRingsInfo();
 	void ComputeScoreByDiff();
 	void ComputeScoreByMinMaxDiff();
+	void ComputeScoreByTent();
 	void Log();
 
 	class CArinetaImages* mpImages = nullptr;
@@ -65,6 +72,7 @@ private:
 	std::vector<float> mvRingMean0;
 	std::vector<CRingInfo> mvRingsInfo;
 	std::vector<float> mvRingScore;
+	std::vector<float> mvRingScoreTent;
 
 	bool mbLog = true;
 };

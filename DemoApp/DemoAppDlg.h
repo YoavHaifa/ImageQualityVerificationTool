@@ -105,6 +105,7 @@ public:
 	afx_msg void OnBnClickedButtonMax();
 	afx_msg void OnBnClickedButtonNext();
 	afx_msg void OnBnClickedButtonPrev();
+	afx_msg void OnCbnSelchangeComboScoreType();
 };
 
 extern CDemoAppDlg* gpDlg;

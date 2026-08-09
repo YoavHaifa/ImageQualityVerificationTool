@@ -147,6 +147,7 @@ BEGIN_MESSAGE_MAP(CDemoAppDlg, CDialog)
 	ON_BN_CLICKED(IDC_BUTTON_MAX, &CDemoAppDlg::OnBnClickedButtonMax)
 	ON_BN_CLICKED(IDC_BUTTON_NEXT, &CDemoAppDlg::OnBnClickedButtonNext)
 	ON_BN_CLICKED(IDC_BUTTON_PREV, &CDemoAppDlg::OnBnClickedButtonPrev)
+	ON_CBN_SELCHANGE(IDC_COMBO_SCORE_TYPE, &CDemoAppDlg::OnCbnSelchangeComboScoreType)
 END_MESSAGE_MAP()
 
 
@@ -181,6 +182,14 @@ BOOL CDemoAppDlg::OnInitDialog()
 	CWnd *pWnd = GetDlgItem(IDC_STATIC_STATUS);
 	if (pWnd)
 		CMyWindows::SetStatusWindow(pWnd);
+
+	CComboBox* pComboScoreType = (CComboBox*)GetDlgItem(IDC_COMBO_SCORE_TYPE);
+	if (pComboScoreType)
+	{
+		for (int i = 0; i < (int)EScoreType::N_SCORE_TYPES; i++)
+			pComboScoreType->AddString(ScoreTypeName((EScoreType)i));
+		pComboScoreType->SetCurSel((int)gConfig.mScoreType);
+	}
 
 	// TODO: Add extra initialization here
 	//DisplayPos();
@@ -1065,4 +1074,17 @@ void CDemoAppDlg::OnBnClickedButtonNext()
 void CDemoAppDlg::OnBnClickedButtonPrev()
 {
 	mpRingsScorer->DisplayPrevPeak();
+}
+void CDemoAppDlg::OnCbnSelchangeComboScoreType()
+{
+	CComboBox* pCombo = (CComboBox*)GetDlgItem(IDC_COMBO_SCORE_TYPE);
+	int iSel = pCombo ? pCombo->GetCurSel() : -1;
+	if (iSel < 0)
+		return;
+
+	gConfig.mScoreType = (EScoreType)iSel;
+	gConfig.SaveToFile();
+
+	if (mpRingsScorer)
+		mpRingsScorer->OnActiveScoreTypeChanged();
 }

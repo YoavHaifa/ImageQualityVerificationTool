@@ -41,10 +41,11 @@ float CImageRingScorer::Score()
 			mvRingMean[iR] = mvRingMean0[iR];
 	}
 
-	if (mbComputeByDiff)
-		ComputeScoreByDiff();
-	else
-		ComputeScoreByMinMaxDiff();
+	ComputeScoreByMinMaxDiff();
+	ComputeScoreByTent();
+
+	mScore = mvScoreByType[(int)gConfig.mScoreType];
+	miRingOfScore = mvRingByType[(int)gConfig.mScoreType];
 
 	if (mbLog)
 		Log();
@@ -132,6 +133,7 @@ void CImageRingScorer::ComputeScoreByMinMaxDiff()
 	//vector<float> vMin5(mnRings + 1);
 
 	float maxDiff = 0;
+	int iRingOfScore = -1;
 	for (int iRing = 0; iRing <= mnRings; iRing++)
 	{
 		int iStart = max(0, iRing - 2);
@@ -162,11 +164,78 @@ void CImageRingScorer::ComputeScoreByMinMaxDiff()
 		if (diff > maxDiff)
 		{
 			maxDiff = diff;
-			miRingOfScore = iRing;
+			iRingOfScore = iRing;
 		}
 
 	}
-	mScore = maxDiff;
+	mvScoreByType[(int)EScoreType::MinMax] = maxDiff;
+	mvRingByType[(int)EScoreType::MinMax] = iRingOfScore;
+}
+void CImageRingScorer::ComputeScoreByTent()
+{
+	mvRingScoreTent.assign(mnRings + 1, 0.0f);
+
+	// Valid (non-ignored) ring positions, in radius order
+	std::vector<int> validIdx;
+	for (int iRing = 0; iRing <= mnRings; iRing++)
+		if (mvRingMean[iRing] != IGNORE_RING)
+			validIdx.push_back(iRing);
+
+	// Group consecutive equal-value rings into flat segments - a flat area is one unit,
+	// the same way a run of consecutive equal-scoring images is treated as a single "wide peak"
+	struct SSegment
+	{
+		size_t mkStart, mkEnd; // indices into validIdx
+		float mValue;
+	};
+	std::vector<SSegment> segments;
+	for (size_t k = 0; k < validIdx.size(); )
+	{
+		size_t j = k;
+		while (j + 1 < validIdx.size() && mvRingMean[validIdx[j + 1]] == mvRingMean[validIdx[k]])
+			j++;
+		segments.push_back({ k, j, mvRingMean[validIdx[k]] });
+		k = j + 1;
+	}
+
+	// Classify interior segments as local max/min (adjacent segments always differ in value)
+	struct SExtremum { int miRing; float mValue; bool mbMax; };
+	std::vector<SExtremum> extrema;
+	for (size_t s = 1; s + 1 < segments.size(); s++)
+	{
+		float prev = segments[s - 1].mValue;
+		float cur = segments[s].mValue;
+		float next = segments[s + 1].mValue;
+		bool bMax = cur > prev && cur > next;
+		bool bMin = cur < prev && cur < next;
+		if (bMax || bMin)
+		{
+			size_t kMid = (segments[s].mkStart + segments[s].mkEnd) / 2;
+			extrema.push_back({ validIdx[kMid], cur, bMax });
+		}
+	}
+
+	float maxTent = 0;
+	int iRingOfTent = -1;
+	for (size_t k = 1; k + 1 < extrema.size(); k++)
+	{
+		if (extrema[k - 1].mbMax == extrema[k].mbMax || extrema[k + 1].mbMax == extrema[k].mbMax)
+			continue; // needs an opposite-type extremum on both sides to form a tent
+
+		float diffLeft = abs(extrema[k].mValue - extrema[k - 1].mValue);
+		float diffRight = abs(extrema[k].mValue - extrema[k + 1].mValue);
+		float tent = (diffLeft + diffRight) / 2.0f;
+
+		mvRingScoreTent[extrema[k].miRing] = tent;
+		if (tent > maxTent)
+		{
+			maxTent = tent;
+			iRingOfTent = extrema[k].miRing;
+		}
+	}
+
+	mvScoreByType[(int)EScoreType::Tent] = maxTent;
+	mvRingByType[(int)EScoreType::Tent] = iRingOfTent;
 }
 void CImageRingScorer::Log()
 {
@@ -176,17 +245,18 @@ void CImageRingScorer::Log()
 	if (!pf)
 		return;
 
-	fprintf(pf, "i, n check, n summed, sum, avg, diff, min, max, score\n");
+	fprintf(pf, "i, n check, n summed, sum, avg, diff, min, max, minmax_score, tent_score\n");
 	for (int iLog = 0; iLog < mnRings; iLog++)
-		fprintf(pf, "%d, %d, %d, %.2f, %.2f, %.2f, %d, %d, %.2f\n",
-			iLog, mvRingsInfo[iLog].mnPixelsInRaster, 
+		fprintf(pf, "%d, %d, %d, %.2f, %.2f, %.2f, %d, %d, %.2f, %.2f\n",
+			iLog, mvRingsInfo[iLog].mnPixelsInRaster,
 			mvRingsInfo[iLog].mnPixelsInRange,
-			mvRingsInfo[iLog].mSum, 
-			mvRingMean0[iLog], 
+			mvRingsInfo[iLog].mSum,
+			mvRingMean0[iLog],
 			mvRingsInfo[iLog].mDiff,
 			mvRingsInfo[iLog].mMin,
 			mvRingsInfo[iLog].mMax,
-			mvRingScore[iLog]);
+			mvRingScore[iLog],
+			mvRingScoreTent[iLog]);
 	fclose(pf);
 
 }

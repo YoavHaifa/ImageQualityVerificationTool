@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include "..\..\yUtils\FileLogger.h"
+#include "ScoreTypes.h"
 
 class CConfig
 {
@@ -13,6 +14,8 @@ public:
 	short mMaxThreshold = 1050;
 	unsigned short mErodeLevel = 5;
 	unsigned short mnWantedSliceWidth = 11; // Number of consecutive input slices to average
+
+	EScoreType mScoreType = EScoreType::MinMax;
 
 	int mDebug = 0xff;
 

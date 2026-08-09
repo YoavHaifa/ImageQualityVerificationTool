@@ -23,8 +23,8 @@ float CRingsScorer::ScoreCurrentImage(int iImage, int& oAtRing)
 {
 	if (mbScoresComputed)
 	{
-		oAtRing = mvScores[iImage - 1].miRing;
-		return mvScores[iImage - 1].mScore;
+		oAtRing = mvScores[iImage - 1].mvRing[(int)gConfig.mScoreType];
+		return mvScores[iImage - 1].mvScore[(int)gConfig.mScoreType];
 	}
 
 	CImageRingScorer scorer(mpImages, iImage, mpRadiusImage);
@@ -43,13 +43,14 @@ int CRingsScorer::ScoreAllImages()
 	for (int iImage = miFirst; iImage <= miLast; iImage += mStep)
 	{
 		mpImages->SetCurrent(iImage);
-		int iRing = -1;
-		float score = ScoreCurrentImage(iImage, iRing);
-		mvScores.push_back(CImageScore(score, iRing));
+		CImageRingScorer scorer(mpImages, iImage, mpRadiusImage);
+		scorer.Score();
+		mvScores.push_back(CImageScore(scorer.mvScoreByType, scorer.mvRingByType));
 
-		if (iImage == miFirst || score > mMaxScore)
+		float activeScore = mvScores.back().mvScore[(int)gConfig.mScoreType];
+		if (iImage == miFirst || activeScore > mMaxScore)
 		{
-			mMaxScore = score;
+			mMaxScore = activeScore;
 			miImageWithMaxScore = iImage;
 		}
 
@@ -74,11 +75,12 @@ int CRingsScorer::ScoreAllImages()
 }
 void CRingsScorer::FindPeaks()
 {
+	int iType = (int)gConfig.mScoreType;
 	for (int iImage = 1; iImage < mnImages - 1; iImage++)
 	{
-		float prev = mvScores[iImage - 1].mScore;
-		float cur = mvScores[iImage].mScore;
-		float next = mvScores[iImage + 1].mScore;
+		float prev = mvScores[iImage - 1].mvScore[iType];
+		float cur = mvScores[iImage].mvScore[iType];
+		float next = mvScores[iImage + 1].mvScore[iType];
 		if (prev > 0 && cur > 0 && next > 0) // All valid scores
 		{
 			if (cur >= prev && cur >= next)
@@ -100,13 +102,14 @@ void CRingsScorer::OrderPeaks()
 }
 void CRingsScorer::FindNextPixToOrder()
 {
+	int iType = (int)gConfig.mScoreType;
 	int iNext = -1;
 	float nextMaxScore = 0;
 	for (int iImage = 1; iImage < mnImages-1; iImage++) // Peaks can not come in first or last image
 	{
 		if (mvScores[iImage].mbPeak && !mvScores[iImage].miPeak)
 		{
-			float score = mvScores[iImage].mScore;
+			float score = mvScores[iImage].mvScore[iType];
 			if (score > nextMaxScore)
 			{
 				nextMaxScore = score;
@@ -127,22 +130,48 @@ void CRingsScorer::FindNextPixToOrder()
 void CRingsScorer::Log()
 {
 	FILE* pfLog = nullptr;
-	fopen_s(&pfLog, "D:\\Log\\ScoreAllImages.csv", "w");
+	string sfName(format("D:\\Log\\ScoreAllImages_{}.csv", ScoreTypeName(gConfig.mScoreType)));
+	fopen_s(&pfLog, sfName.c_str(), "w");
 	if (!pfLog)
 		return;
 
-	fprintf(pfLog, "image, score, ring, peak\n");
+	fprintf(pfLog, "image, minmax_score, minmax_ring, tent_score, tent_ring, peak, peak_order\n");
 	for (int iImage = 0; iImage < mnImages; iImage++)
 	{
 		int iOriginal = miFirst + iImage * mStep;
-		fprintf(pfLog, "%d, %.2f, %d, %s, %d\n", iOriginal, 
-			mvScores[iImage].mScore, 
-			mvScores[iImage].miRing,
+		fprintf(pfLog, "%d, %.2f, %d, %.2f, %d, %s, %d\n", iOriginal,
+			mvScores[iImage].mvScore[(int)EScoreType::MinMax],
+			mvScores[iImage].mvRing[(int)EScoreType::MinMax],
+			mvScores[iImage].mvScore[(int)EScoreType::Tent],
+			mvScores[iImage].mvRing[(int)EScoreType::Tent],
 			mvScores[iImage].mbPeak ? "Peak" : "-",
 			mvScores[iImage].miPeak
 			);
 	}
 	fclose(pfLog);
+}
+void CRingsScorer::ResetPeaks()
+{
+	for (auto& score : mvScores)
+	{
+		score.mbPeak = false;
+		score.miPeak = 0;
+	}
+	mnPeaks = 0;
+	mnPeaksOrdered = 0;
+	mnRealPeaks = 0;
+}
+void CRingsScorer::OnActiveScoreTypeChanged()
+{
+	if (!mbScoresComputed)
+		return;
+
+	ResetPeaks();
+	FindPeaks();
+	OrderPeaks();
+	Log();
+
+	DisplayMaxPeak();
 }
 void CRingsScorer::DisplayMaxPeak()
 {
