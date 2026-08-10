@@ -53,7 +53,6 @@ public:
 
 private:
 	void CollectRingsInfo();
-	void ComputeScoreByDiff();
 	void ComputeScoreByMinMaxDiff();
 	void ComputeScoreByTent();
 	void Log();
@@ -70,8 +69,7 @@ private:
 	std::vector<float> mvRingMean0;
 	std::vector<float> mvRingMean;
 	std::vector<CRingInfo> mvRingsInfo;
-	std::vector<float> mvRingScore;
-	std::vector<float> mvRingScoreTent;
+	std::vector<float> mvRingScoreByType[N_SCORE_TYPES];
 
 	bool mbLog = true;
 };

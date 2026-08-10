@@ -15,7 +15,7 @@ CTentScorer::CTentScorer(const std::vector<float>& vRingMean)
 	: mvRingMean(vRingMean)
 	, mnRings((int)vRingMean.size() - 1)
 {
-
+	mvRingScore.assign(vRingMean.size(), 0.0f);
 }
 void CTentScorer::Score()
 {
@@ -73,6 +73,7 @@ void CTentScorer::ComputeLocalMaxScore(int iRing)
 		iNext++;
 
 	float score = ((value - mvRingMean[iPrev]) + (value - mvRingMean[iNext])) / 2.0f;
+	mvRingScore[iRing] = score;
 	if (score > mScore.mScore)
 	{
 		mScore.mScore = score;
@@ -102,6 +103,7 @@ void CTentScorer::ComputeLocalMinScore(int iRing)
 		iNext++;
 
 	float score = ((mvRingMean[iPrev] - value) + (mvRingMean[iNext] - value)) / 2.0f;
+	mvRingScore[iRing] = score;
 	if (score > mScore.mScore)
 	{
 		mScore.mScore = score;

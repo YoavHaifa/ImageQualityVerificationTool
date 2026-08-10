@@ -9,6 +9,7 @@ public:
 	void Score();
 
 	CImageScore mScore;
+	std::vector<float> mvRingScore; // score at every tent candidate ring found, 0 elsewhere
 
 private:
 	void ComputeLocalMinScore(int iRing);

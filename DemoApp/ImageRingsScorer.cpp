@@ -3,6 +3,8 @@
 #include "Config.h"
 #include "ArinetaImages.h"
 #include "RadiusImage.h"
+#include "TentScorer.h"
+#include "..\..\yUtils\MyWindows.h"
 #include <string>
 #include <cmath>
 #include <format>
@@ -27,7 +29,8 @@ float CImageRingScorer::Score()
 
 	// Expand area of illegal samples
 	mvRingMean.resize(mnRings + 1);
-	mvRingScore.resize(mnRings + 1);
+	for (int iType = 0; iType < N_SCORE_TYPES; iType++)
+		mvRingScoreByType[iType].assign(mnRings + 1, 0.0f);
 
 	mvRingMean[0] = mvRingMean0[0];
 	mvRingMean[mnRings] = mvRingMean0[mnRings];
@@ -104,29 +107,6 @@ void CImageRingScorer::CollectRingsInfo()
 		}
 	}
 }
-void CImageRingScorer::ComputeScoreByDiff()
-{
-	// Compute score on rings
-	// As first trial, just find the heighest jump in the function
-	// where number of pixels in range is at least 50% OR bigger han 20
-	float maxDiff = 0;
-	for (int iRing = 1; iRing < mnRings - 2; iRing++)
-	{
-		float mean = mvRingMean[iRing];
-		float nextMean = mvRingMean[iRing + 3];
-		if (mean != IGNORE_RING && nextMean != IGNORE_RING)
-		{
-			float absDiff = abs(nextMean - mean);
-			mvRingScore[iRing] = absDiff;
-			if (absDiff > maxDiff)
-			{
-				maxDiff = absDiff;
-				miRingOfScore = iRing;
-			}
-		}
-	}
-	mScore = maxDiff;
-}
 void CImageRingScorer::ComputeScoreByMinMaxDiff()
 {
 	//vector<float> vMax5(mnRings + 1);
@@ -160,7 +140,7 @@ void CImageRingScorer::ComputeScoreByMinMaxDiff()
 			}
 		}
 		float diff = maxVal - minVal;
-		mvRingScore[iRing] = diff;
+		mvRingScoreByType[(int)EScoreType::MinMax][iRing] = diff;
 		if (diff > maxDiff)
 		{
 			maxDiff = diff;
@@ -173,90 +153,38 @@ void CImageRingScorer::ComputeScoreByMinMaxDiff()
 }
 void CImageRingScorer::ComputeScoreByTent()
 {
-	mvRingScoreTent.assign(mnRings + 1, 0.0f);
+	CTentScorer scorer(mvRingMean);
+	scorer.Score();
 
-	// Valid (non-ignored) ring positions, in radius order
-	std::vector<int> validIdx;
-	for (int iRing = 0; iRing <= mnRings; iRing++)
-		if (mvRingMean[iRing] != IGNORE_RING)
-			validIdx.push_back(iRing);
-
-	// Group consecutive equal-value rings into flat segments - a flat area is one unit,
-	// the same way a run of consecutive equal-scoring images is treated as a single "wide peak"
-	struct SSegment
-	{
-		size_t mkStart, mkEnd; // indices into validIdx
-		float mValue;
-	};
-	std::vector<SSegment> segments;
-	for (size_t k = 0; k < validIdx.size(); )
-	{
-		size_t j = k;
-		while (j + 1 < validIdx.size() && mvRingMean[validIdx[j + 1]] == mvRingMean[validIdx[k]])
-			j++;
-		segments.push_back({ k, j, mvRingMean[validIdx[k]] });
-		k = j + 1;
-	}
-
-	// Classify interior segments as local max/min (adjacent segments always differ in value)
-	struct SExtremum { int miRing; float mValue; bool mbMax; };
-	std::vector<SExtremum> extrema;
-	for (size_t s = 1; s + 1 < segments.size(); s++)
-	{
-		float prev = segments[s - 1].mValue;
-		float cur = segments[s].mValue;
-		float next = segments[s + 1].mValue;
-		bool bMax = cur > prev && cur > next;
-		bool bMin = cur < prev && cur < next;
-		if (bMax || bMin)
-		{
-			size_t kMid = (segments[s].mkStart + segments[s].mkEnd) / 2;
-			extrema.push_back({ validIdx[kMid], cur, bMax });
-		}
-	}
-
-	float maxTent = 0;
-	int iRingOfTent = -1;
-	for (size_t k = 1; k + 1 < extrema.size(); k++)
-	{
-		if (extrema[k - 1].mbMax == extrema[k].mbMax || extrema[k + 1].mbMax == extrema[k].mbMax)
-			continue; // needs an opposite-type extremum on both sides to form a tent
-
-		float diffLeft = abs(extrema[k].mValue - extrema[k - 1].mValue);
-		float diffRight = abs(extrema[k].mValue - extrema[k + 1].mValue);
-		float tent = (diffLeft + diffRight) / 2.0f;
-
-		mvRingScoreTent[extrema[k].miRing] = tent;
-		if (tent > maxTent)
-		{
-			maxTent = tent;
-			iRingOfTent = extrema[k].miRing;
-		}
-	}
-
-	mvScoreByType[(int)EScoreType::Tent] = maxTent;
-	mvRingByType[(int)EScoreType::Tent] = iRingOfTent;
+	mvScoreByType[(int)EScoreType::Tent] = scorer.mScore.mScore;
+	mvRingByType[(int)EScoreType::Tent] = scorer.mScore.miRing;
+	mvRingScoreByType[(int)EScoreType::Tent] = scorer.mvRingScore;
 }
 void CImageRingScorer::Log()
 {
-	string sfName(format("{}\\ImageScorer_{:03d}.csv", gConfig.msScoreGraphsDir.c_str(), miImage));
-	FILE* pf = NULL;
-	fopen_s(&pf, sfName.c_str(), "w");
-	if (!pf)
-		return;
+	for (int iType = 0; iType < N_SCORE_TYPES; iType++)
+	{
+		string sDir(format("{}\\{}", gConfig.msScoreGraphsDir.c_str(), ScoreTypeName((EScoreType)iType)));
+		CMyWindows::VerifyDirectory(sDir.c_str());
 
-	fprintf(pf, "i, n check, n summed, sum, avg, diff, min, max, minmax_score, tent_score\n");
-	for (int iLog = 0; iLog < mnRings; iLog++)
-		fprintf(pf, "%d, %d, %d, %.2f, %.2f, %.2f, %d, %d, %.2f, %.2f\n",
-			iLog, mvRingsInfo[iLog].mnPixelsInRaster,
-			mvRingsInfo[iLog].mnPixelsInRange,
-			mvRingsInfo[iLog].mSum,
-			mvRingMean0[iLog],
-			mvRingsInfo[iLog].mDiff,
-			mvRingsInfo[iLog].mMin,
-			mvRingsInfo[iLog].mMax,
-			mvRingScore[iLog],
-			mvRingScoreTent[iLog]);
-	fclose(pf);
+		string sfName(format("{}\\ImageScorer_{:03d}.csv", sDir.c_str(), miImage));
+		FILE* pf = NULL;
+		fopen_s(&pf, sfName.c_str(), "w");
+		if (!pf)
+			continue;
 
+		const std::vector<float>& vScore = mvRingScoreByType[iType];
+		fprintf(pf, "i, n check, n summed, sum, avg, diff, min, max, score\n");
+		for (int iLog = 0; iLog < mnRings; iLog++)
+			fprintf(pf, "%d, %d, %d, %.2f, %.2f, %.2f, %d, %d, %.2f\n",
+				iLog, mvRingsInfo[iLog].mnPixelsInRaster,
+				mvRingsInfo[iLog].mnPixelsInRange,
+				mvRingsInfo[iLog].mSum,
+				mvRingMean0[iLog],
+				mvRingsInfo[iLog].mDiff,
+				mvRingsInfo[iLog].mMin,
+				mvRingsInfo[iLog].mMax,
+				vScore[iLog]);
+		fclose(pf);
+	}
 }
