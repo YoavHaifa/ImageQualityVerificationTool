@@ -1,0 +1,19 @@
+#pragma once
+#include "ImageScore.h"
+#include <vector>
+
+class CTentScorer
+{
+public:
+	CTentScorer(const std::vector<float>& vRingMean);
+	void Score();
+
+	CImageScore mScore;
+
+private:
+	void ComputeLocalMinScore(int iRing);
+	void ComputeLocalMaxScore(int iRing);
+
+	const std::vector<float>& mvRingMean;
+	int mnRings;
+};

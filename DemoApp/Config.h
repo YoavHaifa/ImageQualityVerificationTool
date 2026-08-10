@@ -27,5 +27,7 @@ public:
 	void PrintStatus(const char* zStatus);
 };
 
+static constexpr float IGNORE_RING = -100.0;
+
 extern CConfig gConfig;
 extern CFileLogger gfLog;

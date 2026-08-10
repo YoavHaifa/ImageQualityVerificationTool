@@ -65,11 +65,10 @@ private:
 	int mnRings = 0;
 	int mnPixelsWithinThreshold = 0;
 
-	static constexpr float IGNORE_RING = -100.0;
 	bool mbComputeByDiff = false;
 
-	std::vector<float> mvRingMean;
 	std::vector<float> mvRingMean0;
+	std::vector<float> mvRingMean;
 	std::vector<CRingInfo> mvRingsInfo;
 	std::vector<float> mvRingScore;
 	std::vector<float> mvRingScoreTent;

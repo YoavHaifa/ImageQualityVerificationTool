@@ -2,12 +2,12 @@
 #include "ScoreTypes.h"
 #include <vector>
 
-class CImageScore
+class CImageScore1
 {
 public:
 	static constexpr int N_SCORE_TYPES = (int)EScoreType::N_SCORE_TYPES;
 
-	CImageScore(const float scores[], const int rings[])
+	CImageScore1(const float scores[], const int rings[])
 	{
 		for (int i = 0; i < N_SCORE_TYPES; i++)
 		{
@@ -62,7 +62,7 @@ private:
 	int miCurrentPeak = 0;
 	int miCurrentPeakImage = 0;
 
-	std::vector<CImageScore> mvScores;
+	std::vector<CImageScore1> mvScores;
 	bool mbScoresComputed = false;
 
 	float mMaxScore = 0;

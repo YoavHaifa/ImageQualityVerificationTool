@@ -45,7 +45,7 @@ int CRingsScorer::ScoreAllImages()
 		mpImages->SetCurrent(iImage);
 		CImageRingScorer scorer(mpImages, iImage, mpRadiusImage);
 		scorer.Score();
-		mvScores.push_back(CImageScore(scorer.mvScoreByType, scorer.mvRingByType));
+		mvScores.push_back(CImageScore1(scorer.mvScoreByType, scorer.mvRingByType));
 
 		float activeScore = mvScores.back().mvScore[(int)gConfig.mScoreType];
 		if (iImage == miFirst || activeScore > mMaxScore)
