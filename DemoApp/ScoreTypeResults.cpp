@@ -1,0 +1,76 @@
+#include "stdafx.h"
+#include "ScoreTypeResults.h"
+#include "Config.h"
+
+void CScoreTypeResults::AddScore(float score, int iRing, int iImage)
+{
+	mvScores.push_back(CImageScore{ score, iRing });
+	if (mvScores.size() == 1 || score > mMaxScore)
+	{
+		mMaxScore = score;
+		miImageWithMaxScore = iImage;
+	}
+}
+void CScoreTypeResults::FindPeaks()
+{
+	int nImages = (int)mvScores.size();
+	for (int iImage = 1; iImage < nImages - 1; iImage++)
+	{
+		float prev = mvScores[iImage - 1].mScore;
+		float cur = mvScores[iImage].mScore;
+		float next = mvScores[iImage + 1].mScore;
+		if (prev > 0 && cur > 0 && next > 0) // All valid scores
+		{
+			if (cur >= prev && cur >= next)
+			{
+				mvScores[iImage].mbPeak = true;
+				mnPeaks++;
+			}
+		}
+	}
+}
+void CScoreTypeResults::OrderPeaks()
+{
+	mnRealPeaks = 0;
+	int nPeaksOrdered = 0;
+	while (nPeaksOrdered < mnPeaks)
+	{
+		if (!FindNextPixToOrder())
+			break;
+		nPeaksOrdered++;
+	}
+}
+bool CScoreTypeResults::FindNextPixToOrder()
+{
+	int nImages = (int)mvScores.size();
+	int iNext = -1;
+	float nextMaxScore = 0;
+	for (int iImage = 1; iImage < nImages - 1; iImage++) // Peaks can not come in first or last image
+	{
+		if (mvScores[iImage].mbPeak && !mvScores[iImage].miPeak)
+		{
+			float score = mvScores[iImage].mScore;
+			if (score > nextMaxScore)
+			{
+				nextMaxScore = score;
+				iNext = iImage;
+			}
+		}
+	}
+	if (iNext < 0)
+		return false;
+
+	if (!mvScores[iNext - 1].mbPeak)
+		mnRealPeaks++;
+	else
+		gfLog.Printf("<CScoreTypeResults::FindNextPixToOrder> found wide peak %d at %d", mnRealPeaks, iNext);
+	mvScores[iNext].miPeak = mnRealPeaks;
+	return true;
+}
+int CScoreTypeResults::FindImageIndexOfPeak(int iWantedPeak) const
+{
+	for (int iImage = 0; iImage < (int)mvScores.size(); iImage++)
+		if (mvScores[iImage].miPeak == iWantedPeak)
+			return iImage;
+	return -1;
+}
