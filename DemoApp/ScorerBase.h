@@ -1,5 +1,6 @@
 #pragma once
 #include "ImageScore.h"
+#include "ScoreTypes.h"
 #include <vector>
 #include <algorithm>
 
@@ -10,9 +11,10 @@
 class CScorerBase
 {
 public:
-	CScorerBase(const std::vector<float>& vRingMean)
+	CScorerBase(const std::vector<float>& vRingMean, EScoreType eScoreType)
 		: mvRingMean(vRingMean)
 		, mnRings((int)vRingMean.size() - 1)
+		, meScoreType(eScoreType)
 	{
 		mvRingScore.assign(vRingMean.size(), 0.0f);
 	}
@@ -25,7 +27,7 @@ public:
 		std::fill(mvRingScore.begin(), mvRingScore.end(), 0.0f);
 		ComputeScore();
 	}
-	virtual const char* Name() const = 0;
+	const char* Name() const { return ScoreTypeName(meScoreType); }
 
 	CImageScore mScore;
 	std::vector<float> mvRingScore; // score at every candidate ring this scorer considered, 0 elsewhere
@@ -35,4 +37,5 @@ protected:
 
 	const std::vector<float>& mvRingMean;
 	int mnRings;
+	EScoreType meScoreType;
 };

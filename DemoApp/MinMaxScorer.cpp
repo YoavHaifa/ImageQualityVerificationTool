@@ -3,7 +3,7 @@
 #include "Config.h"
 
 CMinMaxScorer::CMinMaxScorer(const std::vector<float>& vRingMean)
-	: CScorerBase(vRingMean)
+	: CScorerBase(vRingMean, EScoreType::MinMax)
 {
 }
 void CMinMaxScorer::ComputeScore()

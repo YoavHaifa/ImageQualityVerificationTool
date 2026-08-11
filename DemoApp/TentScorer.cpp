@@ -12,7 +12,7 @@ typedef enum EDir
 
 
 CTentScorer::CTentScorer(const std::vector<float>& vRingMean)
-	: CScorerBase(vRingMean)
+	: CScorerBase(vRingMean, EScoreType::Tent)
 {
 }
 void CTentScorer::ComputeScore()
