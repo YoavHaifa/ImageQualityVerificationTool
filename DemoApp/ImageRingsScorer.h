@@ -1,9 +1,11 @@
 #pragma once
 #include "..\..\ImageRLib\TSharedImage.h"
-#include "ScoreTypes.h"
 #include <vector>
+#include <memory>
 
 // Compute the rings scores for a single image
+
+class CScorerBase;
 
 class CRingInfo
 {
@@ -35,26 +37,24 @@ public:
 	int mMax = 0;
 };
 
-class CImageRingScorer
+class CImageRingsScorer
 {
 public:
-	CImageRingScorer(class CArinetaImages* pImages, int iImage, class CRadiusImage* pRadiusImage);
-	~CImageRingScorer();
+	CImageRingsScorer(class CArinetaImages* pImages, class CRadiusImage* pRadiusImage);
+	~CImageRingsScorer();
 
-	float Score();
-
-	static constexpr int N_SCORE_TYPES = (int)EScoreType::N_SCORE_TYPES;
+	// Score the given image; safe to call repeatedly on the same instance, one image at a time
+	float Score(int iImage);
 
 	float mScore = 0;
 	int miRingOfScore = -1;
 
-	float mvScoreByType[N_SCORE_TYPES] = {};
-	int mvRingByType[N_SCORE_TYPES] = {};
+	std::vector<float> mvScoreByType;
+	std::vector<int> mvRingByType;
 
 private:
 	void CollectRingsInfo();
-	void ComputeScoreByMinMaxDiff();
-	void ComputeScoreByTent();
+	void CreateScorers();
 	void Log();
 
 	class CArinetaImages* mpImages = nullptr;
@@ -64,12 +64,10 @@ private:
 	int mnRings = 0;
 	int mnPixelsWithinThreshold = 0;
 
-	bool mbComputeByDiff = false;
-
 	std::vector<float> mvRingMean0;
 	std::vector<float> mvRingMean;
 	std::vector<CRingInfo> mvRingsInfo;
-	std::vector<float> mvRingScoreByType[N_SCORE_TYPES];
+	std::vector<std::unique_ptr<CScorerBase>> mvScorers;
 
 	bool mbLog = true;
 };

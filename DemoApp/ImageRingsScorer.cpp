@@ -3,6 +3,7 @@
 #include "Config.h"
 #include "ArinetaImages.h"
 #include "RadiusImage.h"
+#include "MinMaxScorer.h"
 #include "TentScorer.h"
 #include "..\..\yUtils\MyWindows.h"
 #include <string>
@@ -13,25 +14,26 @@
 
 using namespace std;
 
-CImageRingScorer::CImageRingScorer(CArinetaImages* pImages, int iImage, CRadiusImage* pRadiusImage)
+CImageRingsScorer::CImageRingsScorer(CArinetaImages* pImages, CRadiusImage* pRadiusImage)
 	: mpImages(pImages)
-	, miImage(iImage)
 	, mpRadiusImage(pRadiusImage)
 {
 	mnRings = (int)mpRadiusImage->mMaxRadius;
+
+	// Sized once - never resized again, so the scorers' cached references/sizes stay valid for reuse
+	mvRingMean.resize(mnRings + 1);
+	CreateScorers();
 }
-CImageRingScorer::~CImageRingScorer()
+CImageRingsScorer::~CImageRingsScorer()
 {
 }
-float CImageRingScorer::Score()
+float CImageRingsScorer::Score(int iImage)
 {
+	miImage = iImage;
+
 	CollectRingsInfo();
 
 	// Expand area of illegal samples
-	mvRingMean.resize(mnRings + 1);
-	for (int iType = 0; iType < N_SCORE_TYPES; iType++)
-		mvRingScoreByType[iType].assign(mnRings + 1, 0.0f);
-
 	mvRingMean[0] = mvRingMean0[0];
 	mvRingMean[mnRings] = mvRingMean0[mnRings];
 	for (int iR = 1; iR < mnRings; iR++)
@@ -44,8 +46,14 @@ float CImageRingScorer::Score()
 			mvRingMean[iR] = mvRingMean0[iR];
 	}
 
-	ComputeScoreByMinMaxDiff();
-	ComputeScoreByTent();
+	mvScoreByType.resize(mvScorers.size());
+	mvRingByType.resize(mvScorers.size());
+	for (size_t i = 0; i < mvScorers.size(); i++)
+	{
+		mvScorers[i]->Score();
+		mvScoreByType[i] = mvScorers[i]->mScore.mScore;
+		mvRingByType[i] = mvScorers[i]->mScore.miRing;
+	}
 
 	mScore = mvScoreByType[(int)gConfig.mScoreType];
 	miRingOfScore = mvRingByType[(int)gConfig.mScoreType];
@@ -55,13 +63,21 @@ float CImageRingScorer::Score()
 
 	return mScore;
 }
-void CImageRingScorer::CollectRingsInfo()
+void CImageRingsScorer::CreateScorers()
 {
+	// The one place that knows the concrete scorer types - everything else operates on them generically
+	mvScorers.clear();
+	mvScorers.push_back(std::make_unique<CMinMaxScorer>(mvRingMean));
+	mvScorers.push_back(std::make_unique<CTentScorer>(mvRingMean));
+}
+void CImageRingsScorer::CollectRingsInfo()
+{
+	mnPixelsWithinThreshold = 0;
 	mvRingMean0.resize(mnRings + 1);
 	int nToCheck = mpRadiusImage->mnPixels;
 	float* pRadiusRaster = mpRadiusImage->GetData();
 	short* pImageRaster = mpImages->GetImageRaster(miImage);
-	mvRingsInfo.resize(mnRings+1);
+	mvRingsInfo.assign(mnRings + 1, CRingInfo()); // reset, not just resize - Add() accumulates per call
 
 	int nLines = mpImages->GetNLines();
 	int nCols = mpImages->GetNCols();
@@ -107,64 +123,11 @@ void CImageRingScorer::CollectRingsInfo()
 		}
 	}
 }
-void CImageRingScorer::ComputeScoreByMinMaxDiff()
+void CImageRingsScorer::Log()
 {
-	//vector<float> vMax5(mnRings + 1);
-	//vector<float> vMin5(mnRings + 1);
-
-	float maxDiff = 0;
-	int iRingOfScore = -1;
-	for (int iRing = 0; iRing <= mnRings; iRing++)
+	for (const auto& pScorer : mvScorers)
 	{
-		int iStart = max(0, iRing - 2);
-		int iLast = min(iRing + 2, mnRings);
-		float maxVal = IGNORE_RING;
-		float minVal = IGNORE_RING;
-		for (int iVal = iStart; iVal <= iLast; iVal++)
-		{
-			float value = mvRingMean[iVal];
-			if (value != IGNORE_RING)
-			{
-				if (maxVal == IGNORE_RING)
-				{
-					maxVal = value;
-					minVal = value;
-				}
-				else
-				{
-					if (value > maxVal)
-						maxVal = value;
-					else if (value < minVal)
-						minVal = value;
-				}
-			}
-		}
-		float diff = maxVal - minVal;
-		mvRingScoreByType[(int)EScoreType::MinMax][iRing] = diff;
-		if (diff > maxDiff)
-		{
-			maxDiff = diff;
-			iRingOfScore = iRing;
-		}
-
-	}
-	mvScoreByType[(int)EScoreType::MinMax] = maxDiff;
-	mvRingByType[(int)EScoreType::MinMax] = iRingOfScore;
-}
-void CImageRingScorer::ComputeScoreByTent()
-{
-	CTentScorer scorer(mvRingMean);
-	scorer.Score();
-
-	mvScoreByType[(int)EScoreType::Tent] = scorer.mScore.mScore;
-	mvRingByType[(int)EScoreType::Tent] = scorer.mScore.miRing;
-	mvRingScoreByType[(int)EScoreType::Tent] = scorer.mvRingScore;
-}
-void CImageRingScorer::Log()
-{
-	for (int iType = 0; iType < N_SCORE_TYPES; iType++)
-	{
-		string sDir(format("{}\\{}", gConfig.msScoreGraphsDir.c_str(), ScoreTypeName((EScoreType)iType)));
+		string sDir(format("{}\\{}", gConfig.msScoreGraphsDir.c_str(), pScorer->Name()));
 		CMyWindows::VerifyDirectory(sDir.c_str());
 
 		string sfName(format("{}\\ImageScorer_{:03d}.csv", sDir.c_str(), miImage));
@@ -173,7 +136,7 @@ void CImageRingScorer::Log()
 		if (!pf)
 			continue;
 
-		const std::vector<float>& vScore = mvRingScoreByType[iType];
+		const std::vector<float>& vScore = pScorer->mvRingScore;
 		fprintf(pf, "i, n check, n summed, sum, avg, diff, min, max, score\n");
 		for (int iLog = 0; iLog < mnRings; iLog++)
 			fprintf(pf, "%d, %d, %d, %.2f, %.2f, %.2f, %d, %d, %.2f\n",

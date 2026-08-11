@@ -12,12 +12,10 @@ typedef enum EDir
 
 
 CTentScorer::CTentScorer(const std::vector<float>& vRingMean)
-	: mvRingMean(vRingMean)
-	, mnRings((int)vRingMean.size() - 1)
+	: CScorerBase(vRingMean)
 {
-	mvRingScore.assign(vRingMean.size(), 0.0f);
 }
-void CTentScorer::Score()
+void CTentScorer::ComputeScore()
 {
 	// Look for all rings that are internal local mean
 	float maxScore = 0;

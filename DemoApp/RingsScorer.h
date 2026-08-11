@@ -43,6 +43,6 @@ private:
 
 	class CArinetaImages* mpImages = nullptr;
 	class CRadiusImage* mpRadiusImage = nullptr;
-	// class CImageRingScorer* mpImageScorer = nullptr;
+	class CImageRingsScorer* mpImageScorer = nullptr;
 };
 

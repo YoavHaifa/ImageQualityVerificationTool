@@ -1,20 +1,16 @@
 #pragma once
-#include "ImageScore.h"
-#include <vector>
+#include "ScorerBase.h"
 
-class CTentScorer
+class CTentScorer : public CScorerBase
 {
 public:
 	CTentScorer(const std::vector<float>& vRingMean);
-	void Score();
+	const char* Name() const override { return "Tent"; }
 
-	CImageScore mScore;
-	std::vector<float> mvRingScore; // score at every tent candidate ring found, 0 elsewhere
+protected:
+	void ComputeScore() override;
 
 private:
 	void ComputeLocalMinScore(int iRing);
 	void ComputeLocalMaxScore(int iRing);
-
-	const std::vector<float>& mvRingMean;
-	int mnRings;
 };

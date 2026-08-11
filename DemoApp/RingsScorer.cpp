@@ -14,9 +14,11 @@ CRingsScorer::CRingsScorer(CArinetaImages* pImages)
 	: mpImages(pImages)
 {
 	mpRadiusImage = new CRadiusImage(*pImages);
+	mpImageScorer = new CImageRingsScorer(pImages, mpRadiusImage);
 }
 CRingsScorer::~CRingsScorer()
 {
+	delete mpImageScorer;
 	delete mpRadiusImage;
 }
 float CRingsScorer::ScoreCurrentImage(int iImage, int& oAtRing)
@@ -28,9 +30,8 @@ float CRingsScorer::ScoreCurrentImage(int iImage, int& oAtRing)
 		return score.mScore;
 	}
 
-	CImageRingScorer scorer(mpImages, iImage, mpRadiusImage);
-	float score = scorer.Score();
-	oAtRing = scorer.miRingOfScore;
+	float score = mpImageScorer->Score(iImage);
+	oAtRing = mpImageScorer->miRingOfScore;
 	return score;
 
 }
@@ -44,11 +45,10 @@ int CRingsScorer::ScoreAllImages()
 	for (int iImage = miFirst; iImage <= miLast; iImage += mStep)
 	{
 		mpImages->SetCurrent(iImage);
-		CImageRingScorer scorer(mpImages, iImage, mpRadiusImage);
-		scorer.Score();
+		mpImageScorer->Score(iImage);
 
 		for (int iType = 0; iType < N_SCORE_TYPES; iType++)
-			mvScoreResults[iType].AddScore(scorer.mvScoreByType[iType], scorer.mvRingByType[iType], iImage);
+			mvScoreResults[iType].AddScore(mpImageScorer->mvScoreByType[iType], mpImageScorer->mvRingByType[iType], iImage);
 
 		if (iImage % 10 == 0)
 		{
