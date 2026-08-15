@@ -1,7 +1,9 @@
 #pragma once
 #include "ImageScore.h"
 #include "ScoreTypes.h"
+#include "RingInfo.h"
 #include "ScoreTypeResults.h"
+#include "Range.h"
 #include <vector>
 #include <algorithm>
 
@@ -19,7 +21,7 @@ public:
 	virtual ~CScorerBase() = default;
 
 	// Clears state left over from whatever image was scored previously, then scores mvRingMean as it is now
-	void Score(int iImage);
+	void Score(int iImage, const std::vector<CRingInfo>& vRingsInfo);
 
 	// Called once all images have been scored and recorded - finalizes mResults' peaks
 	void OnAllImagesScored()
@@ -34,7 +36,10 @@ public:
 
 protected:
 	virtual void ComputeScore() = 0;
-	void CorrectCenter();
+	void CorrectCenter(const std::vector<CRingInfo>& vRingsInfo);
+	void FindMaxScorePerCurrentImage();
+
+	SRange<int> ComputeDataRange(int iFrom, int n, const std::vector<CRingInfo>& vRingsInfo);
 
 	const std::vector<float>& mvRingMean;
 	int mnRings;

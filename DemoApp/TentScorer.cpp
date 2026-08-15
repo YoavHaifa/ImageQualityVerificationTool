@@ -72,11 +72,6 @@ void CTentScorer::ComputeLocalMaxScore(int iRing)
 
 	float score = ((value - mvRingMean[iPrev]) + (value - mvRingMean[iNext])) / 2.0f;
 	mvRingScore[iRing] = score;
-	if (score > mScore.mScore)
-	{
-		mScore.mScore = score;
-		mScore.miRing = iRing;
-	}
 }
 void CTentScorer::ComputeLocalMinScore(int iRing)
 {
@@ -102,9 +97,4 @@ void CTentScorer::ComputeLocalMinScore(int iRing)
 
 	float score = ((mvRingMean[iPrev] - value) + (mvRingMean[iNext] - value)) / 2.0f;
 	mvRingScore[iRing] = score;
-	if (score > mScore.mScore)
-	{
-		mScore.mScore = score;
-		mScore.miRing = iRing;
-	}
 }

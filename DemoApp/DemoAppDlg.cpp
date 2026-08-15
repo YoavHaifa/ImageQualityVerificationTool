@@ -1047,13 +1047,12 @@ void CDemoAppDlg::OnCurrentSelectedByScorer(int iPos)
 }
 void CDemoAppDlg::DisplayScore()
 {
-	int iAtRing = -1;
 	const CImageScore& score = mpRingsScorer->ScoreCurrentImage(miPos);
 	SetParameter(IDC_EDIT_I_IMAGE, miPos);
 	SetParameter(IDC_EDIT_SCORE, score.mScore);
 	SetParameter(IDC_EDIT_RADIUS, score.miRing);
-	if (iAtRing >= 1)
-		DisplayCircle(mpImages->GetRotationCenter(), (float)iAtRing);
+	if (score.miRing >= 1)
+		DisplayCircle(mpImages->GetRotationCenter(), (float)score.miRing);
 }
 void CDemoAppDlg::OnBnClickedOk()
 {

@@ -37,10 +37,7 @@ const CImageScore& CImageRingsScorer::Score(int iImage)
 	ErodeValidArea();
 
 	for (auto& pScorer : mvScorers)
-		pScorer->Score(iImage);
-
-	//mScore = GetScorer(gConfig.mScoreType)->mScore.mScore;
-	//miRingOfScore = GetScorer(gConfig.mScoreType)->mScore.miRing;
+		pScorer->Score(iImage, mvRingsInfo);
 
 	if (mbLog)
 		Log();
