@@ -11,6 +11,11 @@ void CScoreTypeResults::AddScore(float score, int iRing, int iImage)
 		miImageWithMaxScore = iImage;
 	}
 }
+void CScoreTypeResults::OnAllImagesScored()
+{
+	FindPeaks();
+	OrderPeaks();
+}
 void CScoreTypeResults::FindPeaks()
 {
 	int nImages = (int)mvScores.size();

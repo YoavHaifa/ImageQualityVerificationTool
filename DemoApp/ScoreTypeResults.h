@@ -9,8 +9,8 @@ class CScoreTypeResults
 public:
 	void AddScore(float score, int iRing, int iImage);
 
-	void FindPeaks();
-	void OrderPeaks();
+	// Call once, after all images have been scored and added, to find peaks and rank them by severity
+	void OnAllImagesScored();
 
 	// Returns the image index holding the given peak severity order, or -1 if not found
 	int FindImageIndexOfPeak(int iWantedPeak) const;
@@ -22,6 +22,8 @@ public:
 	int miImageWithMaxScore = -1;
 
 private:
+	void FindPeaks();
+	void OrderPeaks();
 	bool FindNextPixToOrder();
 
 	std::vector<CImageScore> mvScores;
