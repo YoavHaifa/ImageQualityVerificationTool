@@ -210,6 +210,7 @@ copy ..\..\ImageRLib\$(Platform)\$(Configuration)\ImageRLib.dll $(OutDir)
     <ClInclude Include="MinMaxScorer.h" />
     <ClInclude Include="RadiusImage.h" />
     <ClInclude Include="Resource.h" />
+    <ClInclude Include="RingInfo.h" />
     <ClInclude Include="RingsScorer.h" />
     <ClInclude Include="ScorerBase.h" />
     <ClInclude Include="ScoreTypeResults.h" />
@@ -226,6 +227,7 @@ copy ..\..\ImageRLib\$(Platform)\$(Configuration)\ImageRLib.dll $(OutDir)
     <ClCompile Include="ImageScore.cpp" />
     <ClCompile Include="MinMaxScorer.cpp" />
     <ClCompile Include="RadiusImage.cpp" />
+    <ClCompile Include="RingInfo.cpp" />
     <ClCompile Include="RingsScorer.cpp" />
     <ClCompile Include="ScorerBase.cpp" />
     <ClCompile Include="ScoreTypeResults.cpp" />
