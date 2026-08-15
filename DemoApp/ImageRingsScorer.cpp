@@ -46,22 +46,42 @@ float CImageRingsScorer::Score(int iImage)
 			mvRingMean[iR] = mvRingMean0[iR];
 	}
 
-	mvScoreByType.resize(mvScorers.size());
-	mvRingByType.resize(mvScorers.size());
-	for (size_t i = 0; i < mvScorers.size(); i++)
-	{
-		mvScorers[i]->Score();
-		mvScoreByType[i] = mvScorers[i]->mScore.mScore;
-		mvRingByType[i] = mvScorers[i]->mScore.miRing;
-	}
+	for (auto& pScorer : mvScorers)
+		pScorer->Score();
 
-	mScore = mvScoreByType[(int)gConfig.mScoreType];
-	miRingOfScore = mvRingByType[(int)gConfig.mScoreType];
+	mScore = GetScorer(gConfig.mScoreType)->mScore.mScore;
+	miRingOfScore = GetScorer(gConfig.mScoreType)->mScore.miRing;
 
 	if (mbLog)
 		Log();
 
 	return mScore;
+}
+void CImageRingsScorer::RecordScores(int iImage)
+{
+	for (auto& pScorer : mvScorers)
+		pScorer->RecordScore(iImage);
+}
+void CImageRingsScorer::OnAllImagesScored()
+{
+	for (auto& pScorer : mvScorers)
+		pScorer->OnAllImagesScored();
+}
+const CImageScore& CImageRingsScorer::GetCurrentScore(int iImage) const
+{
+	return GetScorer(gConfig.mScoreType)->mResults[iImage - 1];
+}
+const CImageScore& CImageRingsScorer::GetScore(EScoreType eScoreType, int iImage) const
+{
+	return GetScorer(eScoreType)->mResults[iImage];
+}
+int CImageRingsScorer::GetImageWithMaxScore() const
+{
+	return GetScorer(gConfig.mScoreType)->mResults.miImageWithMaxScore;
+}
+int CImageRingsScorer::FindImageIndexOfPeak(int iWantedPeak) const
+{
+	return GetScorer(gConfig.mScoreType)->mResults.FindImageIndexOfPeak(iWantedPeak);
 }
 void CImageRingsScorer::CreateScorers()
 {

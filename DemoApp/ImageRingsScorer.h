@@ -1,11 +1,13 @@
 #pragma once
 #include "..\..\ImageRLib\TSharedImage.h"
+#include "ScoreTypes.h"
 #include <vector>
 #include <memory>
 
 // Compute the rings scores for a single image
 
 class CScorerBase;
+class CImageScore;
 
 class CRingInfo
 {
@@ -46,13 +48,31 @@ public:
 	// Score the given image; safe to call repeatedly on the same instance, one image at a time
 	float Score(int iImage);
 
+	// Files the score each scorer just computed into its own mResults, under iImage
+	void RecordScores(int iImage);
+
+	// Call once, after all images have been scored and recorded, to finalize each scorer's peaks
+	void OnAllImagesScored();
+
+	// The score+ring already recorded for iImage, under the currently active score type (gConfig.mScoreType)
+	const CImageScore& GetCurrentScore(int iImage) const;
+
+	// The score+ring already recorded for iImage, under the given score type
+	const CImageScore& GetScore(EScoreType eScoreType, int iImage) const;
+
+	// The image index with the highest score, under the currently active score type
+	int GetImageWithMaxScore() const;
+
+	// The image index holding the given peak severity order under the currently active score type, or -1 if not found
+	int FindImageIndexOfPeak(int iWantedPeak) const;
+
 	float mScore = 0;
 	int miRingOfScore = -1;
 
-	std::vector<float> mvScoreByType;
-	std::vector<int> mvRingByType;
-
 private:
+	// The scorer of the given type; its mResults holds the score+ring history across all images scored so far
+	class CScorerBase* GetScorer(EScoreType eScoreType) const { return mvScorers[(int)eScoreType].get(); }
+
 	void CollectRingsInfo();
 	void CreateScorers();
 	void Log();

@@ -1,6 +1,5 @@
 #pragma once
 #include "ScoreTypes.h"
-#include "ScoreTypeResults.h"
 #include <vector>
 
 class CRingsScorer
@@ -38,7 +37,6 @@ private:
 	int miCurrentPeak = 0;
 	int miCurrentPeakImage = 0;
 
-	CScoreTypeResults mvScoreResults[N_SCORE_TYPES];
 	bool mbScoresComputed = false;
 
 	class CArinetaImages* mpImages = nullptr;

@@ -3,6 +3,7 @@
 #include "RadiusImage.h"
 #include "ArinetaImages.h"
 #include "ImageRingsScorer.h"
+#include "ImageScore.h"
 #include "Config.h"
 #include "DemoAppDlg.h"
 #include <string>
@@ -25,7 +26,7 @@ float CRingsScorer::ScoreCurrentImage(int iImage, int& oAtRing)
 {
 	if (mbScoresComputed)
 	{
-		const CImageScore& score = mvScoreResults[(int)gConfig.mScoreType][iImage - 1];
+		const CImageScore& score = mpImageScorer->GetCurrentScore(iImage);
 		oAtRing = score.miRing;
 		return score.mScore;
 	}
@@ -46,9 +47,7 @@ int CRingsScorer::ScoreAllImages()
 	{
 		mpImages->SetCurrent(iImage);
 		mpImageScorer->Score(iImage);
-
-		for (int iType = 0; iType < N_SCORE_TYPES; iType++)
-			mvScoreResults[iType].AddScore(mpImageScorer->mvScoreByType[iType], mpImageScorer->mvRingByType[iType], iImage);
+		mpImageScorer->RecordScores(iImage);
 
 		if (iImage % 10 == 0)
 		{
@@ -57,11 +56,7 @@ int CRingsScorer::ScoreAllImages()
 		}
 	}
 
-	for (int iType = 0; iType < N_SCORE_TYPES; iType++)
-	{
-		mvScoreResults[iType].FindPeaks();
-		mvScoreResults[iType].OrderPeaks();
-	}
+	mpImageScorer->OnAllImagesScored();
 	Log();
 
 	mbScoresComputed = true;
@@ -70,7 +65,7 @@ int CRingsScorer::ScoreAllImages()
 	string s(format("All {} images scored", mnImages));
 	gConfig.PrintStatus(s.c_str());
 
-	return mvScoreResults[(int)gConfig.mScoreType].miImageWithMaxScore;
+	return mpImageScorer->GetImageWithMaxScore();
 }
 void CRingsScorer::Log()
 {
@@ -94,7 +89,7 @@ void CRingsScorer::Log()
 		fprintf(pfLog, "%d", iOriginal);
 		for (int iType = 0; iType < N_SCORE_TYPES; iType++)
 		{
-			const CImageScore& score = mvScoreResults[iType][iImage];
+			const CImageScore& score = mpImageScorer->GetScore((EScoreType)iType, iImage);
 			fprintf(pfLog, ", %.2f, %d, %s, %d", score.mScore, score.miRing, score.mbPeak ? "Peak" : "-", score.miPeak);
 		}
 		fprintf(pfLog, "\n");
@@ -125,7 +120,7 @@ void CRingsScorer::DisplayPrevPeak()
 }
 bool CRingsScorer::LookForPeak(int iWantedPeak)
 {
-	int iImage = mvScoreResults[(int)gConfig.mScoreType].FindImageIndexOfPeak(iWantedPeak);
+	int iImage = mpImageScorer->FindImageIndexOfPeak(iWantedPeak);
 	if (iImage < 0)
 	{
 		gfLog.Printf("<CRingsScorer::LookForPeak> Failed to find peak %d", iWantedPeak);
