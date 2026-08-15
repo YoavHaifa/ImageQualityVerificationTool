@@ -22,8 +22,10 @@ public:
 	int miImageWithMaxScore = -1;
 
 private:
+	// Operations to perform when scores are compute on all images
 	void FindPeaks();
 	void OrderPeaks();
+
 	bool FindNextPixToOrder();
 
 	std::vector<CImageScore> mvScores;

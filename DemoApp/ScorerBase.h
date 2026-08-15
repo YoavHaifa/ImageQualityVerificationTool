@@ -15,27 +15,12 @@
 class CScorerBase
 {
 public:
-	CScorerBase(const std::vector<float>& vRingMean, EScoreType eScoreType)
-		: mvRingMean(vRingMean)
-		, mnRings((int)vRingMean.size() - 1)
-		, meScoreType(eScoreType)
-	{
-		mvRingScore.assign(vRingMean.size(), 0.0f);
-	}
+	CScorerBase(const std::vector<float>& vRingMean, EScoreType eScoreType);
 	virtual ~CScorerBase() = default;
 
 	// Clears state left over from whatever image was scored previously, then scores mvRingMean as it is now
-	void Score()
-	{
-		mScore = CImageScore();
-		std::fill(mvRingScore.begin(), mvRingScore.end(), 0.0f);
-		ComputeScore();
-	}
-	// Files the score just computed by Score() into mResults, under iImage
-	void RecordScore(int iImage)
-	{
-		mResults.AddScore(mScore.mScore, mScore.miRing, iImage);
-	}
+	void Score(int iImage);
+
 	// Called once all images have been scored and recorded - finalizes mResults' peaks
 	void OnAllImagesScored()
 	{
@@ -49,6 +34,7 @@ public:
 
 protected:
 	virtual void ComputeScore() = 0;
+	void CorrectCenter();
 
 	const std::vector<float>& mvRingMean;
 	int mnRings;

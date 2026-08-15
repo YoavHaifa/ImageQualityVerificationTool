@@ -22,19 +22,12 @@ CRingsScorer::~CRingsScorer()
 	delete mpImageScorer;
 	delete mpRadiusImage;
 }
-float CRingsScorer::ScoreCurrentImage(int iImage, int& oAtRing)
+const CImageScore& CRingsScorer::ScoreCurrentImage(int iImage)
 {
 	if (mbScoresComputed)
-	{
-		const CImageScore& score = mpImageScorer->GetCurrentScore(iImage);
-		oAtRing = score.miRing;
-		return score.mScore;
-	}
+		return mpImageScorer->GetCurrentScore(iImage);
 
-	float score = mpImageScorer->Score(iImage);
-	oAtRing = mpImageScorer->miRingOfScore;
-	return score;
-
+	return mpImageScorer->Score(iImage);
 }
 int CRingsScorer::ScoreAllImages()
 {
@@ -47,7 +40,6 @@ int CRingsScorer::ScoreAllImages()
 	{
 		mpImages->SetCurrent(iImage);
 		mpImageScorer->Score(iImage);
-		mpImageScorer->RecordScores(iImage);
 
 		if (iImage % 10 == 0)
 		{

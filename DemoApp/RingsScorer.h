@@ -8,7 +8,7 @@ public:
 	CRingsScorer(class CArinetaImages* pImages);
 	~CRingsScorer();
 
-	float ScoreCurrentImage(int iImage, int& oAtRing);
+	const class CImageScore& ScoreCurrentImage(int iImage);
 
 	// Compute score of all images
 	// Return miPos of image with max score (to be displayed)

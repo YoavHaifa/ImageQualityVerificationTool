@@ -6,6 +6,7 @@
 #include "DemoAppDlg.h"
 #include "ArinetaImages.h"
 #include "RingsScorer.h"
+#include "ImageScore.h"
 #include "Config.h"
 
 #include "..\..\yUtils\MyMath.h"
@@ -1047,10 +1048,10 @@ void CDemoAppDlg::OnCurrentSelectedByScorer(int iPos)
 void CDemoAppDlg::DisplayScore()
 {
 	int iAtRing = -1;
-	float score = mpRingsScorer->ScoreCurrentImage(miPos, iAtRing);
+	const CImageScore& score = mpRingsScorer->ScoreCurrentImage(miPos);
 	SetParameter(IDC_EDIT_I_IMAGE, miPos);
-	SetParameter(IDC_EDIT_SCORE, score);
-	SetParameter(IDC_EDIT_RADIUS, iAtRing);
+	SetParameter(IDC_EDIT_SCORE, score.mScore);
+	SetParameter(IDC_EDIT_RADIUS, score.miRing);
 	if (iAtRing >= 1)
 		DisplayCircle(mpImages->GetRotationCenter(), (float)iAtRing);
 }

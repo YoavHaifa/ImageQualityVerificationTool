@@ -27,40 +27,25 @@ CImageRingsScorer::CImageRingsScorer(CArinetaImages* pImages, CRadiusImage* pRad
 CImageRingsScorer::~CImageRingsScorer()
 {
 }
-float CImageRingsScorer::Score(int iImage)
+const CImageScore& CImageRingsScorer::Score(int iImage)
 {
 	miImage = iImage;
 
 	CollectRingsInfo();
 
 	// Expand area of illegal samples
-	mvRingMean[0] = mvRingMean0[0];
-	mvRingMean[mnRings] = mvRingMean0[mnRings];
-	for (int iR = 1; iR < mnRings; iR++)
-	{
-		float prev = mvRingMean0[iR - 1];
-		float next = mvRingMean0[iR + 1];
-		if (prev == IGNORE_RING && next == IGNORE_RING)
-			mvRingMean[iR] = IGNORE_RING;
-		else
-			mvRingMean[iR] = mvRingMean0[iR];
-	}
+	ErodeValidArea();
 
 	for (auto& pScorer : mvScorers)
-		pScorer->Score();
+		pScorer->Score(iImage);
 
-	mScore = GetScorer(gConfig.mScoreType)->mScore.mScore;
-	miRingOfScore = GetScorer(gConfig.mScoreType)->mScore.miRing;
+	//mScore = GetScorer(gConfig.mScoreType)->mScore.mScore;
+	//miRingOfScore = GetScorer(gConfig.mScoreType)->mScore.miRing;
 
 	if (mbLog)
 		Log();
 
-	return mScore;
-}
-void CImageRingsScorer::RecordScores(int iImage)
-{
-	for (auto& pScorer : mvScorers)
-		pScorer->RecordScore(iImage);
+	return GetScorer(gConfig.mScoreType)->mScore;
 }
 void CImageRingsScorer::OnAllImagesScored()
 {
@@ -141,6 +126,20 @@ void CImageRingsScorer::CollectRingsInfo()
 					mvRingsInfo[iRing].mDiff = abs(mvRingMean0[iRing] - prev);
 			}
 		}
+	}
+}
+void CImageRingsScorer::ErodeValidArea()
+{
+	mvRingMean[0] = mvRingMean0[0];
+	mvRingMean[mnRings] = mvRingMean0[mnRings];
+	for (int iR = 1; iR < mnRings; iR++)
+	{
+		float prev = mvRingMean0[iR - 1];
+		float next = mvRingMean0[iR + 1];
+		if (prev == IGNORE_RING && next == IGNORE_RING)
+			mvRingMean[iR] = IGNORE_RING;
+		else
+			mvRingMean[iR] = mvRingMean0[iR];
 	}
 }
 void CImageRingsScorer::Log()

@@ -15,6 +15,9 @@ public:
 	unsigned short mErodeLevel = 5;
 	unsigned short mnWantedSliceWidth = 11; // Number of consecutive input slices to average
 
+	int mnCentralRings = 2; // Number of innermost rings scored as "central"
+	int mnOffCenterRings = 2; // Number of rings beyond the central rings scored as "off-center"
+
 	EScoreType mScoreType = EScoreType::MinMax;
 
 	int mDebug = 0xff;

@@ -46,7 +46,7 @@ public:
 	~CImageRingsScorer();
 
 	// Score the given image; safe to call repeatedly on the same instance, one image at a time
-	float Score(int iImage);
+	const CImageScore& Score(int iImage);
 
 	// Files the score each scorer just computed into its own mResults, under iImage
 	void RecordScores(int iImage);
@@ -66,15 +66,18 @@ public:
 	// The image index holding the given peak severity order under the currently active score type, or -1 if not found
 	int FindImageIndexOfPeak(int iWantedPeak) const;
 
-	float mScore = 0;
-	int miRingOfScore = -1;
+	//float mScore = 0;
+	//int miRingOfScore = -1;
 
 private:
+	void CreateScorers();
+
 	// The scorer of the given type; its mResults holds the score+ring history across all images scored so far
 	class CScorerBase* GetScorer(EScoreType eScoreType) const { return mvScorers[(int)eScoreType].get(); }
 
 	void CollectRingsInfo();
-	void CreateScorers();
+	void ErodeValidArea();
+
 	void Log();
 
 	class CArinetaImages* mpImages = nullptr;
