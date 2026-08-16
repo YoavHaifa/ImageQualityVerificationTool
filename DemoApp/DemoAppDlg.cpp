@@ -353,7 +353,7 @@ void CDemoAppDlg::LoadViewer(void)
 		return;
 
 	mpImageRIF = new CImageRIF(0, 0, false, mMyViewerOffsetX, mMyViewerOffsetY);
-	mpImageRIF->SetTitle("DemoAppViewer");
+	mpImageRIF->SetTitle("Image Quality Verification Viewer");
 	mpImageRIF->SetViewerBroadPos();
 	mpImageRIF->SetIndicesToUpdatePosition2d(miPos,miPos2d);
 }
@@ -363,7 +363,7 @@ bool CDemoAppDlg::LoadViewerWithImages(const char *zName)
 		return false;
 
 	mpImageRIF = new CImageRIF(0,0,false, mMyViewerOffsetX, mMyViewerOffsetY);
-	mpImageRIF->SetTitle("DemoAppViewer");
+	mpImageRIF->SetTitle("Image Quality Verification Viewer");
 	mpImageRIF->FileOpen(zName);
 	mpImageRIF->SetViewerBroadPos();
 	mpImageRIF->SetIndicesToUpdatePosition2d(miPos,miPos2d);
