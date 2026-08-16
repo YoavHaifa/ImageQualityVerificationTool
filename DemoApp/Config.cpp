@@ -31,6 +31,7 @@ void CConfig::SaveToFile()
 	dumpFile.Write("n_central_rings", mnCentralRings);
 	dumpFile.Write("n_off_center_rings", mnOffCenterRings);
 	dumpFile.Write("score_type", (int)mScoreType);
+	dumpFile.Write("score_graphs_dir", msScoreGraphsDir.c_str());
 
 	dumpFile.Write("debug", mDebug);
 }
@@ -53,13 +54,20 @@ void CConfig::ReadFromFile()
 	if (pRoot->GetValue("max_ct_threshold", mMaxThreshold))
 		mMaxThreshold += CT_BIAS;
 	pRoot->GetValue("mask_erode_level", mErodeLevel);
-	//pRoot->GetValue("slice_width", mnWantedSliceWidth);
+	pRoot->GetValue("slice_width", mnWantedSliceWidth);
 	pRoot->GetValue("n_central_rings", mnCentralRings);
 	pRoot->GetValue("n_off_center_rings", mnOffCenterRings);
 
 	int iScoreType = (int)mScoreType;
 	if (pRoot->GetValue("score_type", iScoreType))
 		mScoreType = (EScoreType)iScoreType;
+
+	CString sGraphsDir;
+	if (pRoot->GetValue("score_graphs_dir", sGraphsDir))
+	{
+		msScoreGraphsDir = (const char*)sGraphsDir;
+		CMyWindows::VerifyDirectory(msScoreGraphsDir.c_str());
+	}
 
 	pRoot->GetValue("debug", mDebug);
 

@@ -3,6 +3,9 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
+# Claude Code local settings (personal, machine-specific)
+.claude/settings.local.json
+
 # User-specific files
 *.rsuser
 *.suo
