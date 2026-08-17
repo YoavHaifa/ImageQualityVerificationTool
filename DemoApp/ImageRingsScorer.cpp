@@ -143,7 +143,7 @@ void CImageRingsScorer::Log()
 {
 	for (const auto& pScorer : mvScorers)
 	{
-		string sDir(format("{}\\{}", gConfig.msScoreGraphsDir.c_str(), pScorer->Name()));
+		string sDir(format("{}\\{}", gConfig.msCaseLogDir.c_str(), pScorer->Name()));
 		CMyWindows::VerifyDirectory(sDir.c_str());
 
 		string sfName(format("{}\\ImageScorer_{:03d}.csv", sDir.c_str(), miImage));

@@ -12,13 +12,18 @@ CFileLogger gfLog;
 
 CConfig::CConfig()
 {
-	CMyWindows::VerifyDirectory(msScoreGraphsDir.c_str());
 }
 void CConfig::Init()
 {
 	ReadFromFile();
+	CMyWindows::VerifyDirectory(msLogRoot.c_str());
 	if (mDebug)
 		gfLog.Init("IQV_App");
+}
+void CConfig::SetCurrentCase(const char* zCaseName)
+{
+	msCaseLogDir = msLogRoot + "\\" + zCaseName;
+	CMyWindows::VerifyDirectory(msCaseLogDir.c_str());
 }
 void CConfig::SaveToFile()
 {
@@ -31,7 +36,7 @@ void CConfig::SaveToFile()
 	dumpFile.Write("n_central_rings", mnCentralRings);
 	dumpFile.Write("n_off_center_rings", mnOffCenterRings);
 	dumpFile.Write("score_type", (int)mScoreType);
-	dumpFile.Write("score_graphs_dir", msScoreGraphsDir.c_str());
+	dumpFile.Write("log_root", msLogRoot.c_str());
 
 	dumpFile.Write("debug", mDebug);
 }
@@ -62,12 +67,9 @@ void CConfig::ReadFromFile()
 	if (pRoot->GetValue("score_type", iScoreType))
 		mScoreType = (EScoreType)iScoreType;
 
-	CString sGraphsDir;
-	if (pRoot->GetValue("score_graphs_dir", sGraphsDir))
-	{
-		msScoreGraphsDir = (const char*)sGraphsDir;
-		CMyWindows::VerifyDirectory(msScoreGraphsDir.c_str());
-	}
+	CString sLogRoot;
+	if (pRoot->GetValue("log_root", sLogRoot))
+		msLogRoot = (const char*)sLogRoot;
 
 	pRoot->GetValue("debug", mDebug);
 

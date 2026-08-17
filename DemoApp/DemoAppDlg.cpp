@@ -10,6 +10,7 @@
 #include "Config.h"
 
 #include "..\..\yUtils\MyMath.h"
+#include "..\..\yUtils\FileName.h"
 #include "..\..\yUtils\MyFileDialog.h"
 #include "..\..\yUtils\NameGetDialog.h"
 #include "..\..\yUtils\MyProgress.h"
@@ -505,6 +506,18 @@ void CDemoAppDlg::OnFileOpen32771()
 					miPos = mpImages->GetCurrentPosition();
 					//DisplayPos();
 					mImages.AddTail(mpImages);
+
+					// The images' immediate directory is usually a generic name (e.g. "Dicom"),
+					// so use its parent directory's name as the case name instead.
+					CString sDicomDir(mpImages->GetPath());
+					if (!sDicomDir.IsEmpty() && (sDicomDir.Right(1) == "\\" || sDicomDir.Right(1) == "/"))
+						sDicomDir = sDicomDir.Left(sDicomDir.GetLength() - 1);
+					gConfig.SetCurrentCase(CFileName::GetLastDirName(sDicomDir));
+
+					CString sSetInfo;
+					sSetInfo.Format("Set: %s  (%d images)", (LPCTSTR)mpImages->GetPath(), mpImages->GetNFiles());
+					SetDlgItemText(IDC_STATIC_IMAGESET, sSetInfo);
+
 					mpImages->ComputeRotationCenter(this);
 					mpImages->PrepareOnInit();
 					mpRingsScorer = new CRingsScorer(mpImages);

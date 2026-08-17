@@ -62,7 +62,7 @@ int CRingsScorer::ScoreAllImages()
 void CRingsScorer::Log()
 {
 	FILE* pfLog = nullptr;
-	string sfName("D:\\Log\\ScoreAllImages.csv");
+	string sfName(gConfig.msCaseLogDir + "\\ScoreAllImages.csv");
 	fopen_s(&pfLog, sfName.c_str(), "w");
 	if (!pfLog)
 		return;

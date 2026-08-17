@@ -22,7 +22,10 @@ public:
 
 	int mDebug = 0xff;
 
-	std::string msScoreGraphsDir = "d:\\Log\\IQV_Graphs";
+	std::string msLogRoot = "d:\\IQV_Log";
+	std::string msCaseLogDir; // <msLogRoot>\<current case name>, set by SetCurrentCase
+
+	void SetCurrentCase(const char* zCaseName);
 
 	void SaveToFile();
 	void ReadFromFile();
