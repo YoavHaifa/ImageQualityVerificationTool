@@ -63,6 +63,7 @@ public:
 	bool mbDisplayReadyImages;
 	class CArinetaImages* mpImages;
 	class CRingsScorer* mpRingsScorer;
+	class CIQVManager* mpIQVManager;
 	class CDataFiles* mpDataFiles;
 	CList<class CArchivesImages*,class CArchivesImages*> mImages;
 	CTSharedImage<short> *mpSmoothed;

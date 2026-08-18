@@ -207,6 +207,7 @@ copy ..\..\ImageRLib\$(Platform)\$(Configuration)\ImageRLib.dll $(OutDir)
     <ClInclude Include="framework.h" />
     <ClInclude Include="ImageRingsScorer.h" />
     <ClInclude Include="ImageScore.h" />
+    <ClInclude Include="IQVManager.h" />
     <ClInclude Include="MinMaxScorer.h" />
     <ClInclude Include="RadiusImage.h" />
     <ClInclude Include="Range.h" />
@@ -226,6 +227,7 @@ copy ..\..\ImageRLib\$(Platform)\$(Configuration)\ImageRLib.dll $(OutDir)
     <ClCompile Include="DemoAppDlg.cpp" />
     <ClCompile Include="ImageRingsScorer.cpp" />
     <ClCompile Include="ImageScore.cpp" />
+    <ClCompile Include="IQVManager.cpp" />
     <ClCompile Include="MinMaxScorer.cpp" />
     <ClCompile Include="RadiusImage.cpp" />
     <ClCompile Include="Range.cpp" />

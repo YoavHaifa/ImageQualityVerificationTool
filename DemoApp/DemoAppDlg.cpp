@@ -6,11 +6,11 @@
 #include "DemoAppDlg.h"
 #include "ArinetaImages.h"
 #include "RingsScorer.h"
+#include "IQVManager.h"
 #include "ImageScore.h"
 #include "Config.h"
 
 #include "..\..\yUtils\MyMath.h"
-#include "..\..\yUtils\FileName.h"
 #include "..\..\yUtils\MyFileDialog.h"
 #include "..\..\yUtils\NameGetDialog.h"
 #include "..\..\yUtils\MyProgress.h"
@@ -78,6 +78,7 @@ CDemoAppDlg::CDemoAppDlg(CWnd* pParent /*=NULL*/)
 	, miPos2d(0)
 	, mbDisplayReadyImages(false)
 	, mpImages(NULL)
+	, mpIQVManager(NULL)
 	, mpDataFiles(NULL)
 	, mpSmoothed(NULL)
 	, mpColors(NULL)
@@ -95,6 +96,8 @@ CDemoAppDlg::CDemoAppDlg(CWnd* pParent /*=NULL*/)
 CDemoAppDlg::~CDemoAppDlg(void)
 {
 	gfLog.Log("<CDemoAppDlg::~CDemoAppDlg>");
+	if (mpIQVManager)
+		delete mpIQVManager;
 	if (mpImageRIF)
 		delete mpImageRIF;
 	if (mpSmoother)
@@ -108,8 +111,10 @@ CDemoAppDlg::~CDemoAppDlg(void)
 
 	while (!mImages.IsEmpty())
 	{
-		delete mImages.GetTail();
+		CArchivesImages* pImages = mImages.GetTail();
 		mImages.RemoveTail();
+		if (pImages != mpImages) // mpImages is owned and deleted by mpIQVManager
+			delete pImages;
 	}
 }
 void CDemoAppDlg::DoDataExchange(CDataExchange* pDX)
@@ -501,27 +506,16 @@ void CDemoAppDlg::OnFileOpen32771()
 			{
 				if (LoadViewerWithImages(sImageName))
 				{
-					CArinetaImages::SetDebug(0xff);
-					mpImages = new CArinetaImages(sImageName);
-					miPos = mpImages->GetCurrentPosition();
-					//DisplayPos();
+					mpIQVManager = new CIQVManager();
+					mpIQVManager->LoadAndScore(sImageName, this);
+
+					mpImages = mpIQVManager->GetImages();
+					mpRingsScorer = mpIQVManager->GetRingsScorer();
+					miPos = mpIQVManager->GetScoredPosition();
 					mImages.AddTail(mpImages);
 
-					// The images' immediate directory is usually a generic name (e.g. "Dicom"),
-					// so use its parent directory's name as the case name instead.
-					CString sDicomDir(mpImages->GetPath());
-					if (!sDicomDir.IsEmpty() && (sDicomDir.Right(1) == "\\" || sDicomDir.Right(1) == "/"))
-						sDicomDir = sDicomDir.Left(sDicomDir.GetLength() - 1);
-					gConfig.SetCurrentCase(CFileName::GetLastDirName(sDicomDir));
+					SetDlgItemText(IDC_STATIC_IMAGESET, mpIQVManager->GetSetInfo().c_str());
 
-					CString sSetInfo;
-					sSetInfo.Format("Set: %s  (%d images)", (LPCTSTR)mpImages->GetPath(), mpImages->GetNFiles());
-					SetDlgItemText(IDC_STATIC_IMAGESET, sSetInfo);
-
-					mpImages->ComputeRotationCenter(this);
-					mpImages->PrepareOnInit();
-					mpRingsScorer = new CRingsScorer(mpImages);
-					miPos = mpRingsScorer->ScoreAllImages();
 					OnCurrentSelectedByScorer(miPos);
 					mpImageRIF->DisplayShared(mpImages->GetSharedWideVolume());
 				}
