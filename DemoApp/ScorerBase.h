@@ -30,6 +30,11 @@ public:
 	}
 	const char* Name() const { return ScoreTypeName(meScoreType); }
 
+	// Writes this scorer's score/ring/peak data for every image scored so far to
+	// <gConfig.msCaseLogDir>\ScoreAllImages_<Name>.csv, one row per image. iFirst/iStep
+	// map internal image indices back to the original DICOM slice numbers.
+	void LogAllImages(int iFirst, int iStep) const;
+
 	CImageScore mScore;
 	std::vector<float> mvRingScore; // score at every candidate ring this scorer considered, 0 elsewhere
 	CScoreTypeResults mResults; // score+ring per image scored so far, for peak finding/navigation

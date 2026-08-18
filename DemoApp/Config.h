@@ -25,6 +25,10 @@ public:
 	std::string msLogRoot = "d:\\IQV_Log";
 	std::string msCaseLogDir; // <msLogRoot>\<current case name>, set by SetCurrentCase
 
+	// Per-scorer directory with one ring-detail CSV per image (heavy: one dir + N files per scorer);
+	// off by default so it doesn't blow up when batch-scoring many sets.
+	bool mbLogImageRingDetails = false;
+
 	void SetCurrentCase(const char* zCaseName);
 
 	void SaveToFile();

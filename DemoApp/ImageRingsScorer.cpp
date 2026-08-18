@@ -39,7 +39,7 @@ const CImageScore& CImageRingsScorer::Score(int iImage)
 	for (auto& pScorer : mvScorers)
 		pScorer->Score(iImage, mvRingsInfo);
 
-	if (mbLog)
+	if (gConfig.mbLogImageRingDetails)
 		Log();
 
 	return GetScorer(gConfig.mScoreType)->mScore;

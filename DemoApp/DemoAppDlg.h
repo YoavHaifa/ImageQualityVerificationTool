@@ -70,7 +70,6 @@ public:
 	CTSharedImage<COLORREF> *mpColors;
 
 	class CSmoother *mpSmoother;
-	void UpdateSmooth(void);
 	void ProcessImageInVolume(int iImage);
 	bool InitProcessVolume(void);
 	float mLowFactor;

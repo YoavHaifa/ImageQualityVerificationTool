@@ -37,6 +37,11 @@ public:
 	// The image index holding the given peak severity order under the currently active score type, or -1 if not found
 	int FindImageIndexOfPeak(int iWantedPeak) const;
 
+	// Generic access to the scorers, so callers (e.g. per-scorer logging) don't need
+	// to know the concrete set of score types
+	int GetNScorers() const { return (int)mvScorers.size(); }
+	class CScorerBase* GetScorerByIndex(int iScorer) const { return mvScorers[iScorer].get(); }
+
 	//float mScore = 0;
 	//int miRingOfScore = -1;
 
@@ -62,7 +67,5 @@ private:
 	std::vector<float> mvRingMean;
 	std::vector<CRingInfo> mvRingsInfo;
 	std::vector<std::unique_ptr<CScorerBase>> mvScorers;
-
-	bool mbLog = true;
 };
 

@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "ScorerBase.h"
 #include "Config.h"
+#include <string>
+#include <format>
 
 using namespace std;
 
@@ -26,6 +28,24 @@ void CScorerBase::Score(int iImage, const vector<CRingInfo>& vRingsInfo)
 
 	// Files the score just computed by Score() into mResults, under iImage
 	mResults.AddScore(mScore.mScore, mScore.miRing, iImage);
+}
+void CScorerBase::LogAllImages(int iFirst, int iStep) const
+{
+	string sfName(format("{}\\ScoreAllImages_{}.csv", gConfig.msCaseLogDir.c_str(), Name()));
+
+	FILE* pfLog = nullptr;
+	fopen_s(&pfLog, sfName.c_str(), "w");
+	if (!pfLog)
+		return;
+
+	fprintf(pfLog, "image, score, ring, peak, peak_order\n");
+	for (int iImage = 0; iImage < mResults.NumImages(); iImage++)
+	{
+		int iOriginal = iFirst + iImage * iStep;
+		const CImageScore& score = mResults[iImage];
+		fprintf(pfLog, "%d, %.2f, %d, %s, %d\n", iOriginal, score.mScore, score.miRing, score.mbPeak ? "Peak" : "-", score.miPeak);
+	}
+	fclose(pfLog);
 }
 void CScorerBase::FindMaxScorePerCurrentImage()
 {

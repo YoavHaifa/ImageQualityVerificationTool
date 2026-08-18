@@ -531,74 +531,10 @@ void CDemoAppDlg::OnFileOpen32771()
 		}
 	}
 }
-//void CDemoAppDlg::OnFileOpenbinary()
-//{
-//	CMyFileDialog dlg(CMyFileDialog::FD_OPEN, "Open Binary File for Display", "d:\\Dump");
-//	if (dlg.DoModal())
-//	{
-//		CString sImageName(dlg.m_ofn.lpstrFile);
-//
-//		if (!mpImageRIF)
-//		{
-//			if (LoadViewerWithImages(sImageName))
-//			{
-//				mpDataFiles = new CDataFiles(sImageName);
-//				miPos = mpDataFiles->GetCurrentPosition();
-//				DisplayPos();
-//				//mImages.AddTail(mpImages);
-//			}
-//		}
-//	}
-//
-//}
-//void CDemoAppDlg::OnFileOpencolorer()
-//{
-//	if (!mpImageRIF || !mpImages)
-//	{
-//		CMyWindows::MessBox("Please load some base images first","Notice");
-//		return;
-//	}
-//	
-//	CMyFileDialog dlg(CMyFileDialog::FD_OPEN,"Open Coloring Images","d:\\Cirs_Images");
-//	if (dlg.DoModal())
-//	{
-//		CString sImageName(dlg.m_ofn.lpstrFile);
-//		mpImageRIF->FileOpenColorer(sImageName);
-//	}
-//}
 void CDemoAppDlg::OnFileExit()
 {
 	OnCancel();
 }
-//void CDemoAppDlg::OnProcessSmooth()
-//{
-//	if (!mpImages)
-//		return;
-//	if (!mpImages->GetDicom())
-//	{
-//		CMyWindows::MessBox("This function requires DICOM images", "Input Error");
-//		return;
-//	}
-//	if (mpSmoother)
-//		return;
-//
-//	mpSmoother = new CSmoother(mpImages->GetNLines(), mpImages->GetNCols());
-//
-//	if (!mpSmoothed)
-//	{
-//		mpSmoothed = mpImages->CreateSharedImage("Smoothed");
-//		if (!mpSmoothed)
-//		{
-//			CMyWindows::MessBox("Failed to creat shared image", "SW Error");
-//			return;
-//		}
-//	}
-//	
-//	short *pInput = mpImages->GetImageDataStart(miPos);
-//	mpSmoother->Smooth((short *)mpSmoothed->GetDataStart(), pInput);
-//	mpImageRIF->DisplayShared(mpSmoothed);
-//	mpImageRIF->AddDiff();
-//}
 bool CDemoAppDlg::InitProcessVolume(void)
 {
 	if (!mpImages)
@@ -659,16 +595,6 @@ void CDemoAppDlg::ProcessImageInVolume(int iImage)
 		else
 			*pProcessed++ = (short)(value * mLowFactor);
 	}
-}
-void CDemoAppDlg::UpdateSmooth(void)
-{
-	if (!mpSmoother)
-		return;
-	short *pInput = mpImages->GetImageDataStart(miPos);
-	mpSmoothed->StartWriteSync();
-	mpSmoother->Smooth((short *)mpSmoothed->GetDataStart(), pInput);
-	mpSmoothed->EndWriteSync();
-	mpImageRIF->DisplayShared(mpSmoothed);
 }
 void CDemoAppDlg::OnGetWindow()
 {

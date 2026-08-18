@@ -4,6 +4,7 @@
 #include "ArinetaImages.h"
 #include "ImageRingsScorer.h"
 #include "ImageScore.h"
+#include "ScorerBase.h"
 #include "Config.h"
 #include "DemoAppDlg.h"
 #include <string>
@@ -50,6 +51,8 @@ int CRingsScorer::ScoreAllImages()
 
 	mpImageScorer->OnAllImagesScored();
 	Log();
+	LogPerScorer();
+	LogCaseInfo();
 
 	mbScoresComputed = true;
 	miCurrentPeak = 1;
@@ -85,6 +88,36 @@ void CRingsScorer::Log()
 			fprintf(pfLog, ", %.2f, %d, %s, %d", score.mScore, score.miRing, score.mbPeak ? "Peak" : "-", score.miPeak);
 		}
 		fprintf(pfLog, "\n");
+	}
+	fclose(pfLog);
+}
+void CRingsScorer::LogPerScorer()
+{
+	// One file per scorer, listing every image's score/ring/peak data - unlike Log() above,
+	// this doesn't need to know the concrete set of score types, so adding or removing a
+	// scorer needs no change here. Meant to let a later batch run's results be reloaded and
+	// displayed without rescoring.
+	for (int iScorer = 0; iScorer < mpImageScorer->GetNScorers(); iScorer++)
+		mpImageScorer->GetScorerByIndex(iScorer)->LogAllImages(miFirst, mStep);
+}
+void CRingsScorer::LogCaseInfo()
+{
+	// Lets a case be found and its scores reviewed later without reopening it through the
+	// GUI's File Open and rescoring it.
+	FILE* pfLog = nullptr;
+	string sfName(gConfig.msCaseLogDir + "\\CaseInfo.yaml");
+	fopen_s(&pfLog, sfName.c_str(), "w");
+	if (!pfLog)
+		return;
+
+	fprintf(pfLog, "case_path: %s\n", (LPCTSTR)mpImages->GetPath());
+	fprintf(pfLog, "n_images: %d\n", mnImages);
+	fprintf(pfLog, "scorers:\n");
+	for (int iScorer = 0; iScorer < mpImageScorer->GetNScorers(); iScorer++)
+	{
+		CScorerBase* pScorer = mpImageScorer->GetScorerByIndex(iScorer);
+		fprintf(pfLog, "  %s:\n", pScorer->Name());
+		fprintf(pfLog, "    worst_score: %.2f\n", pScorer->mResults.mMaxScore);
 	}
 	fclose(pfLog);
 }

@@ -37,6 +37,7 @@ void CConfig::SaveToFile()
 	dumpFile.Write("n_off_center_rings", mnOffCenterRings);
 	dumpFile.Write("score_type", (int)mScoreType);
 	dumpFile.Write("log_root", msLogRoot.c_str());
+	dumpFile.Write("log_image_ring_details", mbLogImageRingDetails);
 
 	dumpFile.Write("debug", mDebug);
 }
@@ -70,6 +71,8 @@ void CConfig::ReadFromFile()
 	CString sLogRoot;
 	if (pRoot->GetValue("log_root", sLogRoot))
 		msLogRoot = (const char*)sLogRoot;
+
+	pRoot->GetValue("log_image_ring_details", mbLogImageRingDetails);
 
 	pRoot->GetValue("debug", mDebug);
 

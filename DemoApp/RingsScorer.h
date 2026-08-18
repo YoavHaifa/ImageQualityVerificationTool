@@ -26,6 +26,8 @@ private:
 	static constexpr int N_SCORE_TYPES = (int)EScoreType::N_SCORE_TYPES;
 
 	void Log();
+	void LogPerScorer();
+	void LogCaseInfo();
 
 	bool LookForPeak(int iWantedPeak);
 
