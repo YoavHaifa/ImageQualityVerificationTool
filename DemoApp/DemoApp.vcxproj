@@ -210,7 +210,6 @@ copy ..\..\ImageRLib\$(Platform)\$(Configuration)\ImageRLib.dll $(OutDir)
     <ClInclude Include="IQVManager.h" />
     <ClInclude Include="MinMaxScorer.h" />
     <ClInclude Include="RadiusImage.h" />
-    <ClInclude Include="Range.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="RingInfo.h" />
     <ClInclude Include="RingsScorer.h" />
@@ -230,7 +229,6 @@ copy ..\..\ImageRLib\$(Platform)\$(Configuration)\ImageRLib.dll $(OutDir)
     <ClCompile Include="IQVManager.cpp" />
     <ClCompile Include="MinMaxScorer.cpp" />
     <ClCompile Include="RadiusImage.cpp" />
-    <ClCompile Include="Range.cpp" />
     <ClCompile Include="RingInfo.cpp" />
     <ClCompile Include="RingsScorer.cpp" />
     <ClCompile Include="ScorerBase.cpp" />

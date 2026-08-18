@@ -67,7 +67,7 @@ void CScorerBase::CorrectCenter(const vector<CRingInfo>& vRingsInfo)
 
 	// Find data range off-center area
 	int iFirstRingOffCenter = gConfig.mnCentralRings;
-	SRange<int> offDataRange = ComputeDataRange(iFirstRingOffCenter, gConfig.mnOffCenterRings, vRingsInfo);
+	STRange<int> offDataRange = ComputeDataRange(iFirstRingOffCenter, gConfig.mnOffCenterRings, vRingsInfo);
 
 	for (int iCentralRing = 0; iCentralRing < gConfig.mnCentralRings; iCentralRing++)
 	{
@@ -83,9 +83,9 @@ void CScorerBase::CorrectCenter(const vector<CRingInfo>& vRingsInfo)
 	}
 
 }
-SRange<int> CScorerBase::ComputeDataRange(int iFrom, int n, const std::vector<CRingInfo>& vRingsInfo)
+STRange<int> CScorerBase::ComputeDataRange(int iFrom, int n, const std::vector<CRingInfo>& vRingsInfo)
 {
-	SRange<int> range(vRingsInfo[iFrom].mMin, vRingsInfo[iFrom].mMax);
+	STRange<int> range(vRingsInfo[iFrom].mMin, vRingsInfo[iFrom].mMax);
 	
 	for (int iRing = iFrom + 1; iRing < iFrom + n; iRing++)
 		range.Add(vRingsInfo[iRing].mMin, vRingsInfo[iRing].mMax);

@@ -3,7 +3,7 @@
 #include "ScoreTypes.h"
 #include "RingInfo.h"
 #include "ScoreTypeResults.h"
-#include "Range.h"
+#include "..\..\yUtils\TRange.h"
 #include <vector>
 #include <algorithm>
 
@@ -44,7 +44,7 @@ protected:
 	void CorrectCenter(const std::vector<CRingInfo>& vRingsInfo);
 	void FindMaxScorePerCurrentImage();
 
-	SRange<int> ComputeDataRange(int iFrom, int n, const std::vector<CRingInfo>& vRingsInfo);
+	STRange<int> ComputeDataRange(int iFrom, int n, const std::vector<CRingInfo>& vRingsInfo);
 
 	const std::vector<float>& mvRingMean;
 	int mnRings;
