@@ -29,6 +29,13 @@ public:
 	// off by default so it doesn't blow up when batch-scoring many sets.
 	bool mbLogImageRingDetails = false;
 
+	// Filename pattern identifying a directory's DICOM image files, when scanning a directory tree for sets to score
+	std::string msDicomFilePattern = "I00*";
+
+	// Shows developer-only menu sections (Process/Set/Get/Test); real users only need File/Help.
+	// Defaults to on so this doesn't change what's visible on a dev machine until explicitly turned off.
+	bool mbDeveloperMode = true;
+
 	void SetCurrentCase(const char* zCaseName);
 
 	void SaveToFile();

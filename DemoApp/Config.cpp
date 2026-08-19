@@ -38,6 +38,8 @@ void CConfig::SaveToFile()
 	dumpFile.Write("score_type", (int)mScoreType);
 	dumpFile.Write("log_root", msLogRoot.c_str());
 	dumpFile.Write("log_image_ring_details", mbLogImageRingDetails);
+	dumpFile.Write("dicom_file_pattern", msDicomFilePattern.c_str());
+	dumpFile.Write("developer_mode", mbDeveloperMode);
 
 	dumpFile.Write("debug", mDebug);
 }
@@ -73,6 +75,12 @@ void CConfig::ReadFromFile()
 		msLogRoot = (const char*)sLogRoot;
 
 	pRoot->GetValue("log_image_ring_details", mbLogImageRingDetails);
+
+	CString sDicomFilePattern;
+	if (pRoot->GetValue("dicom_file_pattern", sDicomFilePattern))
+		msDicomFilePattern = (const char*)sDicomFilePattern;
+
+	pRoot->GetValue("developer_mode", mbDeveloperMode);
 
 	pRoot->GetValue("debug", mDebug);
 

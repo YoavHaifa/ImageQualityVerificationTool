@@ -165,6 +165,10 @@ BEGIN
         MENUITEM "Window",                      ID_GET_WINDOW
         MENUITEM "Test",                        ID_GET_TEST
     END
+    POPUP "Test"
+    BEGIN
+        MENUITEM "Find Dicom Sets",             ID_TEST_FINDDICOMSETS
+    END
     POPUP "Help"
     BEGIN
         MENUITEM "DemoApp v1.0",                ID_HELP_DEMOAPPV1

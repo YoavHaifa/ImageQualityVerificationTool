@@ -57,6 +57,7 @@ public:
 	//void DisplayPos(void);
 	afx_msg void OnBnClickedButtonUpPos();
 	afx_msg void OnFileOpen32771();
+	afx_msg void OnTestFinddicomsets();
 	afx_msg void OnFileExit();
 	//afx_msg void OnProcessSmooth();
 

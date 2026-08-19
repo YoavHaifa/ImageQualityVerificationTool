@@ -12,6 +12,8 @@
 
 #include "..\..\yUtils\MyMath.h"
 #include "..\..\yUtils\MyFileDialog.h"
+#include "..\..\yUtils\MyFolderDialog.h"
+#include "..\..\yUtils\FilesList.h"
 #include "..\..\yUtils\NameGetDialog.h"
 #include "..\..\yUtils\MyProgress.h"
 #include "..\..\yUtils\MyDicomWriter.h"
@@ -131,6 +133,7 @@ BEGIN_MESSAGE_MAP(CDemoAppDlg, CDialog)
 	ON_BN_CLICKED(IDC_BUTTON_ADD_ROI, &CDemoAppDlg::OnBnClickedButtonAddRoi)
 	ON_BN_CLICKED(IDC_BUTTON_UP_POS, &CDemoAppDlg::OnBnClickedButtonUpPos)
 	ON_COMMAND(ID_FILE_OPEN32771, &CDemoAppDlg::OnFileOpen32771)
+	ON_COMMAND(ID_TEST_FINDDICOMSETS, &CDemoAppDlg::OnTestFinddicomsets)
 	ON_COMMAND(ID_FILE_EXIT, &CDemoAppDlg::OnFileExit)
 	ON_COMMAND(ID_GET_WINDOW, &CDemoAppDlg::OnGetWindow)
 	ON_COMMAND(ID_SET_WINDOW, &CDemoAppDlg::OnSetWindow)
@@ -200,6 +203,22 @@ BOOL CDemoAppDlg::OnInitDialog()
 
 	// TODO: Add extra initialization here
 	//DisplayPos();
+
+	if (!gConfig.mbDeveloperMode)
+	{
+		CMenu* pMenu = GetMenu();
+		if (pMenu)
+		{
+			for (int i = pMenu->GetMenuItemCount() - 1; i >= 0; i--)
+			{
+				CString sLabel;
+				pMenu->GetMenuString(i, sLabel, MF_BYPOSITION);
+				if (sLabel != "File" && sLabel != "Help")
+					pMenu->RemoveMenu(i, MF_BYPOSITION);
+			}
+			DrawMenuBar();
+		}
+	}
 
 	gpDlg = this;
 	return TRUE;  // return TRUE  unless you set the focus to a control
@@ -530,6 +549,24 @@ void CDemoAppDlg::OnFileOpen32771()
 			}
 		}
 	}
+}
+void CDemoAppDlg::OnTestFinddicomsets()
+{
+	CMyFolderDialog dlg("Select Root Directory for Sample Files Scan");
+	if (!dlg.DoModal())
+		return;
+
+	CFilesList list;
+	int n = CMyWindows::ListSampleFilesInDirTree(dlg.msFolderName, gConfig.msDicomFilePattern.c_str(), list);
+
+	CString sfLogName(gConfig.msLogRoot.c_str());
+	sfLogName += "\\SampleFilesScan.txt";
+	list.Print(sfLogName, "Sample files found", true);
+
+	CString sMsg;
+	sMsg.Format("Found %d sample file(s) under:\n%s\n\nList written to:\n%s",
+		n, (LPCTSTR)dlg.msFolderName, (LPCTSTR)sfLogName);
+	CMyWindows::MessBox(sMsg, "Sample Files Scan");
 }
 void CDemoAppDlg::OnFileExit()
 {
