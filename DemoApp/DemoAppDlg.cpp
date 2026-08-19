@@ -7,6 +7,7 @@
 #include "ArinetaImages.h"
 #include "RingsScorer.h"
 #include "IQVManager.h"
+#include "BatchScorer.h"
 #include "ImageScore.h"
 #include "Config.h"
 
@@ -133,6 +134,7 @@ BEGIN_MESSAGE_MAP(CDemoAppDlg, CDialog)
 	ON_BN_CLICKED(IDC_BUTTON_ADD_ROI, &CDemoAppDlg::OnBnClickedButtonAddRoi)
 	ON_BN_CLICKED(IDC_BUTTON_UP_POS, &CDemoAppDlg::OnBnClickedButtonUpPos)
 	ON_COMMAND(ID_FILE_OPEN32771, &CDemoAppDlg::OnFileOpen32771)
+	ON_COMMAND(ID_FILE_BATCHSCORING, &CDemoAppDlg::OnFileBatchscoring)
 	ON_COMMAND(ID_TEST_FINDDICOMSETS, &CDemoAppDlg::OnTestFinddicomsets)
 	ON_COMMAND(ID_FILE_EXIT, &CDemoAppDlg::OnFileExit)
 	ON_COMMAND(ID_GET_WINDOW, &CDemoAppDlg::OnGetWindow)
@@ -549,6 +551,27 @@ void CDemoAppDlg::OnFileOpen32771()
 			}
 		}
 	}
+}
+void CDemoAppDlg::OnFileBatchscoring()
+{
+	CMyFolderDialog dlg("Select Root Directory for Batch Scoring");
+	if (!dlg.DoModal())
+		return;
+
+	CFilesList list;
+	int n = CMyWindows::ListSampleFilesInDirTree(dlg.msFolderName, gConfig.msDicomFilePattern.c_str(), list);
+	if (n == 0)
+	{
+		CMyWindows::MessBox("No matching DICOM sets found under the selected directory.", "Batch Scoring");
+		return;
+	}
+
+	CBatchScorer batchScorer;
+	int nScored = batchScorer.Run(list);
+
+	CString sMsg;
+	sMsg.Format("Batch scoring complete.\n%d of %d case(s) scored.", nScored, n);
+	CMyWindows::MessBox(sMsg, "Batch Scoring");
 }
 void CDemoAppDlg::OnTestFinddicomsets()
 {

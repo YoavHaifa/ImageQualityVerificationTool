@@ -138,6 +138,7 @@ BEGIN
     POPUP "File"
     BEGIN
         MENUITEM "Open Dicom",                  ID_FILE_OPEN32771
+        MENUITEM "Batch Scoring...",             ID_FILE_BATCHSCORING
         MENUITEM "Exit",                        ID_FILE_EXIT
     END
     POPUP "Process"
