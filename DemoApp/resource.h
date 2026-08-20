@@ -32,6 +32,7 @@
 #define IDC_BUTTON_PREV_CASE            1021
 #define IDC_BUTTON_WORST_CASE           1022
 #define IDC_BUTTON_NEXT_CASE            1023
+#define IDC_STATIC_CASE_INDEX           1024
 #define ID_FILE_OPEN32771               32771
 #define ID_FILE_EXIT                    32772
 #define ID_HELP_DEMOAPPV1               32773
@@ -56,14 +57,15 @@
 #define ID_TEST_FINDDICOMSETS           32792
 #define ID_FILE_BATCHSCORING            32793
 #define ID_FILE_OPENCASESCORING         32794
+#define ID_FILE_OPENBATCHSCORING        32795
 
 // Next default values for new objects
 //
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        131
-#define _APS_NEXT_COMMAND_VALUE         32795
-#define _APS_NEXT_CONTROL_VALUE         1024
+#define _APS_NEXT_COMMAND_VALUE         32796
+#define _APS_NEXT_CONTROL_VALUE         1025
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

@@ -59,6 +59,7 @@ public:
 	afx_msg void OnFileOpen32771();
 	afx_msg void OnFileBatchscoring();
 	afx_msg void OnFileOpencasescoring();
+	afx_msg void OnFileOpenbatchscoring();
 	afx_msg void OnTestFinddicomsets();
 	afx_msg void OnFileExit();
 	//afx_msg void OnProcessSmooth();
@@ -68,6 +69,7 @@ public:
 	class CRingsScorer* mpRingsScorer;
 	class CIQVManager* mpIQVManager;
 	class CCaseReviewer* mpCaseReviewer;
+	class CBatchReviewer* mpBatchReviewer;
 	class CDataFiles* mpDataFiles;
 	CList<class CArchivesImages*,class CArchivesImages*> mImages;
 	CTSharedImage<short> *mpSmoothed;
@@ -110,6 +112,11 @@ public:
 	afx_msg void OnBnClickedButtonNext();
 	afx_msg void OnBnClickedButtonPrev();
 	afx_msg void OnCbnSelchangeComboScoreType();
+
+	afx_msg void OnBnClickedButtonWorstCase();
+	afx_msg void OnBnClickedButtonNextCase();
+	afx_msg void OnBnClickedButtonPrevCase();
+	void DisplayBatchCase();
 };
 
 extern CDemoAppDlg* gpDlg;

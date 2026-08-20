@@ -9,6 +9,7 @@
 #include "IQVManager.h"
 #include "BatchScorer.h"
 #include "CaseReviewer.h"
+#include "BatchReviewer.h"
 #include "ImageScore.h"
 #include "Config.h"
 
@@ -84,6 +85,7 @@ CDemoAppDlg::CDemoAppDlg(CWnd* pParent /*=NULL*/)
 	, mpImages(NULL)
 	, mpIQVManager(NULL)
 	, mpCaseReviewer(NULL)
+	, mpBatchReviewer(NULL)
 	, mpDataFiles(NULL)
 	, mpSmoothed(NULL)
 	, mpColors(NULL)
@@ -105,6 +107,8 @@ CDemoAppDlg::~CDemoAppDlg(void)
 		delete mpIQVManager;
 	if (mpCaseReviewer)
 		delete mpCaseReviewer;
+	if (mpBatchReviewer)
+		delete mpBatchReviewer;
 	if (mpImageRIF)
 		delete mpImageRIF;
 	if (mpSmoother)
@@ -120,7 +124,7 @@ CDemoAppDlg::~CDemoAppDlg(void)
 	{
 		CArchivesImages* pImages = mImages.GetTail();
 		mImages.RemoveTail();
-		if (pImages != mpImages) // mpImages is owned and deleted by mpIQVManager/mpCaseReviewer
+		if (pImages != mpImages) // mpImages is owned and deleted by mpIQVManager/mpCaseReviewer/mpBatchReviewer
 			delete pImages;
 	}
 }
@@ -140,6 +144,7 @@ BEGIN_MESSAGE_MAP(CDemoAppDlg, CDialog)
 	ON_COMMAND(ID_FILE_OPEN32771, &CDemoAppDlg::OnFileOpen32771)
 	ON_COMMAND(ID_FILE_BATCHSCORING, &CDemoAppDlg::OnFileBatchscoring)
 	ON_COMMAND(ID_FILE_OPENCASESCORING, &CDemoAppDlg::OnFileOpencasescoring)
+	ON_COMMAND(ID_FILE_OPENBATCHSCORING, &CDemoAppDlg::OnFileOpenbatchscoring)
 	ON_COMMAND(ID_TEST_FINDDICOMSETS, &CDemoAppDlg::OnTestFinddicomsets)
 	ON_COMMAND(ID_FILE_EXIT, &CDemoAppDlg::OnFileExit)
 	ON_COMMAND(ID_GET_WINDOW, &CDemoAppDlg::OnGetWindow)
@@ -165,6 +170,9 @@ BEGIN_MESSAGE_MAP(CDemoAppDlg, CDialog)
 	ON_BN_CLICKED(IDC_BUTTON_NEXT, &CDemoAppDlg::OnBnClickedButtonNext)
 	ON_BN_CLICKED(IDC_BUTTON_PREV, &CDemoAppDlg::OnBnClickedButtonPrev)
 	ON_CBN_SELCHANGE(IDC_COMBO_SCORE_TYPE, &CDemoAppDlg::OnCbnSelchangeComboScoreType)
+	ON_BN_CLICKED(IDC_BUTTON_WORST_CASE, &CDemoAppDlg::OnBnClickedButtonWorstCase)
+	ON_BN_CLICKED(IDC_BUTTON_NEXT_CASE, &CDemoAppDlg::OnBnClickedButtonNextCase)
+	ON_BN_CLICKED(IDC_BUTTON_PREV_CASE, &CDemoAppDlg::OnBnClickedButtonPrevCase)
 END_MESSAGE_MAP()
 
 
@@ -610,6 +618,67 @@ void CDemoAppDlg::OnFileOpencasescoring()
 		mpImageRIF->DisplayShared(mpImages->GetSharedWideVolume());
 		OnCurrentSelectedByScorer(miPos);
 	}
+}
+void CDemoAppDlg::OnFileOpenbatchscoring()
+{
+	if (mpImageRIF)
+		return;
+
+	mpBatchReviewer = new CBatchReviewer();
+	if (!mpBatchReviewer->Init())
+		return;
+
+	DisplayBatchCase();
+}
+void CDemoAppDlg::OnBnClickedButtonWorstCase()
+{
+	if (!mpBatchReviewer)
+		return;
+	if (mpBatchReviewer->DisplayWorstCase())
+		DisplayBatchCase();
+}
+void CDemoAppDlg::OnBnClickedButtonNextCase()
+{
+	if (!mpBatchReviewer)
+		return;
+	if (mpBatchReviewer->DisplayNextCase())
+		DisplayBatchCase();
+}
+void CDemoAppDlg::OnBnClickedButtonPrevCase()
+{
+	if (!mpBatchReviewer)
+		return;
+	if (mpBatchReviewer->DisplayPrevCase())
+		DisplayBatchCase();
+}
+void CDemoAppDlg::DisplayBatchCase()
+{
+	CIQVManager* pManager = mpBatchReviewer->GetManager();
+	mpImages = pManager->GetImages();
+	mpRingsScorer = pManager->GetRingsScorer();
+	miPos = pManager->GetScoredPosition();
+
+	CString sCaseIndex;
+	sCaseIndex.Format("Case %d of %d", mpBatchReviewer->GetCurrentRank(), mpBatchReviewer->GetNumCases());
+	SetDlgItemText(IDC_STATIC_CASE_INDEX, sCaseIndex);
+
+	// Same one-shot-good-window-fit reasoning as OnFileOpencasescoring: show the target
+	// (worst-score) image, not an arbitrary one
+	CString sTargetFile = mpImages->GetName(miPos);
+
+	// The viewer accumulates displays rather than replacing them, so leafing to a new case
+	// needs a fresh viewer instead of reusing the current one
+	if (mpImageRIF)
+	{
+		delete mpImageRIF;
+		mpImageRIF = nullptr;
+	}
+
+	if (!LoadViewerWithImages(sTargetFile))
+		return;
+
+	mpImageRIF->DisplayShared(mpImages->GetSharedWideVolume());
+	OnCurrentSelectedByScorer(miPos);
 }
 void CDemoAppDlg::OnTestFinddicomsets()
 {
@@ -1116,6 +1185,16 @@ void CDemoAppDlg::OnCbnSelchangeComboScoreType()
 	gConfig.mScoreType = (EScoreType)iSel;
 	gConfig.SaveToFile();
 
-	if (mpRingsScorer)
+	if (mpBatchReviewer)
+	{
+		// In batch review, "active scorer changed" means jump to the worst case for the
+		// newly selected scorer (LoadCaseAtRank always keys off gConfig.mScoreType, so this
+		// also correctly repositions within the case if it turns out to be the same one)
+		if (mpBatchReviewer->DisplayWorstCase())
+			DisplayBatchCase();
+	}
+	else if (mpRingsScorer)
+	{
 		mpRingsScorer->OnActiveScoreTypeChanged();
+	}
 }

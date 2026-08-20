@@ -59,6 +59,7 @@ if (-not (Test-Path $RootDir)) {
     exit 1
 }
 
+$xmlPath = Join-Path (Split-Path $ExePath -Parent) "ReconTest.State.xml"
 $logRoot = Read-AppSetting -ExePath $ExePath -Name "log_root" -Default "d:\IQV_Log"
 $version = Read-AppSetting -ExePath $ExePath -Name "version" -Default "1.0"
 $baselineDir = "${logRoot}_${version}"
@@ -72,6 +73,13 @@ $proc = Start-Process -FilePath $ExePath -ArgumentList "`"$RootDir`"" -PassThru 
 if ($proc.ExitCode -ne 0) {
     Write-Error "IQV_tool.exe exited with code $($proc.ExitCode)"
     exit 1
+}
+
+# Keep a copy of the config state next to this run's results, so a later comparison can
+# tell "results changed because of a config edit" apart from an actual code regression.
+$configSnapshotName = Split-Path $xmlPath -Leaf
+if (Test-Path $xmlPath) {
+    Copy-Item -Path $xmlPath -Destination (Join-Path $logRoot $configSnapshotName) -Force
 }
 
 if ($SaveBaseline) {
@@ -88,6 +96,35 @@ if (-not (Test-Path $baselineDir)) {
     Write-Error "No baseline found at $baselineDir - run with -SaveBaseline first."
     exit 1
 }
+
+function Show-ConfigChanges {
+    param([string]$BaselineXmlPath, [string]$CurrentXmlPath)
+
+    if (-not (Test-Path $BaselineXmlPath) -or -not (Test-Path $CurrentXmlPath)) {
+        return
+    }
+
+    [xml]$baselineXml = Get-Content $BaselineXmlPath
+    [xml]$currentXml = Get-Content $CurrentXmlPath
+
+    $changes = @()
+    foreach ($node in $baselineXml.def.ChildNodes) {
+        $name = $node.Name
+        $oldValue = $node.InnerText.Trim()
+        $newNode = $currentXml.def.$name
+        $newValue = if ($null -ne $newNode) { $newNode.ToString().Trim() } else { "<missing>" }
+        if ($oldValue -ne $newValue) {
+            $changes += "  $name : $oldValue -> $newValue"
+        }
+    }
+
+    if ($changes.Count -gt 0) {
+        Write-Output "`nNOTE: Config changed since the baseline was saved - differences below may be caused by this, not a code regression:"
+        $changes | ForEach-Object { Write-Output $_ }
+    }
+}
+
+Show-ConfigChanges -BaselineXmlPath (Join-Path $baselineDir $configSnapshotName) -CurrentXmlPath (Join-Path $logRoot $configSnapshotName)
 
 Write-Output "`nComparing $logRoot against baseline $baselineDir ..."
 

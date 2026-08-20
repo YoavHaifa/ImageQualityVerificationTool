@@ -44,13 +44,14 @@ FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     PUSHBUTTON      "Shared Memory Display",IDC_BUTTON_SHARED,7,7,110,14,NOT WS_VISIBLE
     LTEXT           "Leaf Between Cases:",IDC_STATIC,7,9,90,8
-    PUSHBUTTON      "Previous Case",IDC_BUTTON_PREV_CASE,100,7,50,14
-    PUSHBUTTON      "Worst Case",IDC_BUTTON_WORST_CASE,161,7,50,14
-    PUSHBUTTON      "Next Case",IDC_BUTTON_NEXT_CASE,222,7,50,14
+    PUSHBUTTON      "Previous Case",IDC_BUTTON_PREV_CASE,100,7,65,14
+    PUSHBUTTON      "Worst Case",IDC_BUTTON_WORST_CASE,173,7,65,14
+    PUSHBUTTON      "Next Case",IDC_BUTTON_NEXT_CASE,246,7,65,14
+    LTEXT           "Case",IDC_STATIC_CASE_INDEX,323,9,150,8
     LTEXT           "Leaf in Current Case:",IDC_STATIC,7,28,90,8
-    PUSHBUTTON      "Previous",IDC_BUTTON_PREV,100,26,50,14
-    PUSHBUTTON      "Max Score",IDC_BUTTON_MAX,161,26,50,14
-    PUSHBUTTON      "Next",IDC_BUTTON_NEXT,222,26,50,14
+    PUSHBUTTON      "Previous",IDC_BUTTON_PREV,100,26,65,14
+    PUSHBUTTON      "Max Score",IDC_BUTTON_MAX,173,26,65,14
+    PUSHBUTTON      "Next",IDC_BUTTON_NEXT,246,26,65,14
     EDITTEXT        IDC_EDIT_I_IMAGE,96,62,40,14,ES_AUTOHSCROLL
     LTEXT           "Image",IDC_STATIC,62,65,21,8
     EDITTEXT        IDC_EDIT_SCORE,181,62,40,14,ES_AUTOHSCROLL
@@ -144,8 +145,9 @@ BEGIN
     POPUP "File"
     BEGIN
         MENUITEM "Open Dicom",                  ID_FILE_OPEN32771
-        MENUITEM "Batch Scoring...",             ID_FILE_BATCHSCORING
-        MENUITEM "Open Case Scoring...",        ID_FILE_OPENCASESCORING
+        MENUITEM "Batch Scoring",               ID_FILE_BATCHSCORING
+        MENUITEM "Open Case Scoring",           ID_FILE_OPENCASESCORING
+        MENUITEM "Open Batch Scoring",          ID_FILE_OPENBATCHSCORING
         MENUITEM "Exit",                        ID_FILE_EXIT
     END
     POPUP "Process"
