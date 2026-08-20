@@ -194,6 +194,9 @@ BOOL CDemoAppDlg::OnInitDialog()
 	CWnd *pWnd = GetDlgItem(IDC_STATIC_STATUS);
 	if (pWnd)
 		CMyWindows::SetStatusWindow(pWnd);
+	CWnd *pBatchStatusWnd = GetDlgItem(IDC_STATIC_BATCH_STATUS);
+	if (pBatchStatusWnd)
+		CMyWindows::SetStatusWindow1(pBatchStatusWnd);
 
 	CComboBox* pComboScoreType = (CComboBox*)GetDlgItem(IDC_COMBO_SCORE_TYPE);
 	if (pComboScoreType)
@@ -534,8 +537,6 @@ void CDemoAppDlg::OnFileOpen32771()
 					mpRingsScorer = mpIQVManager->GetRingsScorer();
 					miPos = mpIQVManager->GetScoredPosition();
 					mImages.AddTail(mpImages);
-
-					SetDlgItemText(IDC_STATIC_IMAGESET, mpIQVManager->GetSetInfo().c_str());
 
 					OnCurrentSelectedByScorer(miPos);
 					mpImageRIF->DisplayShared(mpImages->GetSharedWideVolume());

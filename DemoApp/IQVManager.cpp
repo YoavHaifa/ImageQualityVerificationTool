@@ -3,6 +3,7 @@
 #include "ArinetaImages.h"
 #include "RingsScorer.h"
 #include "Config.h"
+#include "DemoAppDlg.h"
 #include "..\..\yUtils\FileName.h"
 #include <format>
 
@@ -27,6 +28,11 @@ bool CIQVManager::LoadAndScore(const char* zImageFileName, CDemoAppDlg* pDlg)
 	if (!sDicomDir.IsEmpty() && (sDicomDir.Right(1) == "\\" || sDicomDir.Right(1) == "/"))
 		sDicomDir = sDicomDir.Left(sDicomDir.GetLength() - 1);
 	gConfig.SetCurrentCase(CFileName::GetLastDirName(sDicomDir));
+
+	// "Current Case" reflects whichever case is loading/scoring right now, in both the
+	// single-open and batch flows - independent of pDlg, which is only for the debug circle below
+	if (gpDlg)
+		gpDlg->SetDlgItemText(IDC_STATIC_IMAGESET, GetSetInfo().c_str());
 
 	mpImages->ComputeRotationCenter(pDlg);
 	mpImages->PrepareOnInit();
