@@ -22,6 +22,10 @@ public:
 
 	int mDebug = 0xff;
 
+	// Bump this when a change is expected to affect scoring results. Used e.g. to name
+	// baseline result snapshots ("<msLogRoot>_<msVersion>") for regression comparison.
+	std::string msVersion = "1.0";
+
 	std::string msLogRoot = "d:\\IQV_Log";
 	std::string msCaseLogDir; // <msLogRoot>\<current case name>, set by SetCurrentCase
 

@@ -64,17 +64,7 @@ BOOL CDemoAppApp::InitInstance()
 
 	bool bBatchMode = (__argc > 1);
 	if (bBatchMode)
-	{
-		// IQV_tool.exe is a Windows-subsystem (GUI) app, so it has no console of its own and
-		// printf output is otherwise invisible when run from a command prompt. Attach to
-		// whichever console launched us so batch output actually shows up there.
-		if (AttachConsole(ATTACH_PARENT_PROCESS))
-		{
-			FILE* pf = nullptr;
-			freopen_s(&pf, "CONOUT$", "w", stdout);
-			freopen_s(&pf, "CONOUT$", "w", stderr);
-		}
-	}
+		CMyWindows::AttachToParentConsole();
 
 	CString sCommandLine = GetCommandLine();
     CMyWindows::SetApplicationPath (sCommandLine);
