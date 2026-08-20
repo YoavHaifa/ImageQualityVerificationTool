@@ -174,6 +174,10 @@ BOOL CDemoAppDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 
+	CString sTitle;
+	sTitle.Format("Image Quality Verification App v%s", gConfig.msVersion.c_str());
+	SetWindowText(sTitle);
+
 	// Add "About..." menu item to system menu.
 
 	// IDM_ABOUTBOX must be in the system command range.

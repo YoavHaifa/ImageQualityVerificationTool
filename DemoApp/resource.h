@@ -29,6 +29,9 @@
 #define IDC_COMBO_SCORE_TYPE            1018
 #define IDC_STATIC_IMAGESET             1019
 #define IDC_STATIC_BATCH_STATUS         1020
+#define IDC_BUTTON_PREV_CASE            1021
+#define IDC_BUTTON_WORST_CASE           1022
+#define IDC_BUTTON_NEXT_CASE            1023
 #define ID_FILE_OPEN32771               32771
 #define ID_FILE_EXIT                    32772
 #define ID_HELP_DEMOAPPV1               32773
@@ -60,7 +63,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        131
 #define _APS_NEXT_COMMAND_VALUE         32795
-#define _APS_NEXT_CONTROL_VALUE         1021
+#define _APS_NEXT_CONTROL_VALUE         1024
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
