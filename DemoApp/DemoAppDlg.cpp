@@ -559,19 +559,11 @@ void CDemoAppDlg::OnFileBatchscoring()
 	if (!dlg.DoModal())
 		return;
 
-	CFilesList list;
-	int n = CMyWindows::ListSampleFilesInDirTree(dlg.msFolderName, gConfig.msDicomFilePattern.c_str(), list);
-	if (n == 0)
-	{
-		CMyWindows::MessBox("No matching DICOM sets found under the selected directory.", "Batch Scoring");
-		return;
-	}
-
 	CBatchScorer batchScorer;
-	int nScored = batchScorer.Run(list);
+	int nScored = batchScorer.RunOnDirTree(dlg.msFolderName);
 
 	CString sMsg;
-	sMsg.Format("Batch scoring complete.\n%d of %d case(s) scored.", nScored, n);
+	sMsg.Format("Batch scoring complete.\n%d case(s) scored.", nScored);
 	CMyWindows::MessBox(sMsg, "Batch Scoring");
 }
 void CDemoAppDlg::OnTestFinddicomsets()

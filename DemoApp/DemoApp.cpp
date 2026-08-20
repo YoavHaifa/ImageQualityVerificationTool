@@ -4,8 +4,10 @@
 #include "stdafx.h"
 #include "DemoApp.h"
 #include "DemoAppDlg.h"
+#include "BatchScorer.h"
 #include "Config.h"
 #include "..\..\yUtils\MyWindows.h"
+#include <cstdio>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -60,9 +62,37 @@ BOOL CDemoAppApp::InitInstance()
 	// such as the name of your company or organization
 	SetRegistryKey(_T("Local AppWizard-Generated Applications"));
 
+	bool bBatchMode = (__argc > 1);
+	if (bBatchMode)
+	{
+		// IQV_tool.exe is a Windows-subsystem (GUI) app, so it has no console of its own and
+		// printf output is otherwise invisible when run from a command prompt. Attach to
+		// whichever console launched us so batch output actually shows up there.
+		if (AttachConsole(ATTACH_PARENT_PROCESS))
+		{
+			FILE* pf = nullptr;
+			freopen_s(&pf, "CONOUT$", "w", stdout);
+			freopen_s(&pf, "CONOUT$", "w", stderr);
+		}
+	}
+
 	CString sCommandLine = GetCommandLine();
     CMyWindows::SetApplicationPath (sCommandLine);
 	gConfig.Init();
+
+	if (bBatchMode)
+	{
+		// Batch mode: score every DICOM set found under __argv[1], headless (no dialog)
+		if (!CMyWindows::IsDirectory(__argv[1]))
+		{
+			printf("Error: \"%s\" is not a directory\n", __argv[1]);
+			return FALSE;
+		}
+
+		CBatchScorer batchScorer;
+		batchScorer.RunOnDirTree(__argv[1]);
+		return FALSE;
+	}
 
 	CDemoAppDlg dlg;
 	m_pMainWnd = &dlg;

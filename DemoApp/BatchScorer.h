@@ -9,7 +9,15 @@ public:
 	CBatchScorer();
 	~CBatchScorer();
 
+	// Scans zRootDir for DICOM sets (one sample file per matching directory, per
+	// gConfig.msDicomFilePattern) and scores every one found. Returns the number scored.
+	int RunOnDirTree(const char* zRootDir);
+
 	// list holds one sample filename per case, e.g. as produced by
 	// CMyWindows::ListSampleFilesInDirTree. Returns the number of cases scored.
 	int Run(const class CFilesList& list);
+
+private:
+	// Reports zText both to the GUI's batch status line and to the console
+	void MyPrintStatus(const char* zText);
 };
