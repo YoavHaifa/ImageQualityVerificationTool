@@ -7,7 +7,7 @@ class CArinetaImages : public CArchivesImages
 public:
 	CArinetaImages(const char* zName);
 
-	bool ComputeRotationCenter(class CDemoAppDlg* pDlg);
+	bool ComputeRotationCenter();
 
 	bool GetFloatValueFromDicomString(unsigned short group, unsigned short num, float& value, const char* zFor);
 

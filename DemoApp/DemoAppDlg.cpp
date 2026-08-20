@@ -8,6 +8,7 @@
 #include "RingsScorer.h"
 #include "IQVManager.h"
 #include "BatchScorer.h"
+#include "CaseReviewer.h"
 #include "ImageScore.h"
 #include "Config.h"
 
@@ -82,6 +83,7 @@ CDemoAppDlg::CDemoAppDlg(CWnd* pParent /*=NULL*/)
 	, mbDisplayReadyImages(false)
 	, mpImages(NULL)
 	, mpIQVManager(NULL)
+	, mpCaseReviewer(NULL)
 	, mpDataFiles(NULL)
 	, mpSmoothed(NULL)
 	, mpColors(NULL)
@@ -101,6 +103,8 @@ CDemoAppDlg::~CDemoAppDlg(void)
 	gfLog.Log("<CDemoAppDlg::~CDemoAppDlg>");
 	if (mpIQVManager)
 		delete mpIQVManager;
+	if (mpCaseReviewer)
+		delete mpCaseReviewer;
 	if (mpImageRIF)
 		delete mpImageRIF;
 	if (mpSmoother)
@@ -116,7 +120,7 @@ CDemoAppDlg::~CDemoAppDlg(void)
 	{
 		CArchivesImages* pImages = mImages.GetTail();
 		mImages.RemoveTail();
-		if (pImages != mpImages) // mpImages is owned and deleted by mpIQVManager
+		if (pImages != mpImages) // mpImages is owned and deleted by mpIQVManager/mpCaseReviewer
 			delete pImages;
 	}
 }
@@ -135,6 +139,7 @@ BEGIN_MESSAGE_MAP(CDemoAppDlg, CDialog)
 	ON_BN_CLICKED(IDC_BUTTON_UP_POS, &CDemoAppDlg::OnBnClickedButtonUpPos)
 	ON_COMMAND(ID_FILE_OPEN32771, &CDemoAppDlg::OnFileOpen32771)
 	ON_COMMAND(ID_FILE_BATCHSCORING, &CDemoAppDlg::OnFileBatchscoring)
+	ON_COMMAND(ID_FILE_OPENCASESCORING, &CDemoAppDlg::OnFileOpencasescoring)
 	ON_COMMAND(ID_TEST_FINDDICOMSETS, &CDemoAppDlg::OnTestFinddicomsets)
 	ON_COMMAND(ID_FILE_EXIT, &CDemoAppDlg::OnFileExit)
 	ON_COMMAND(ID_GET_WINDOW, &CDemoAppDlg::OnGetWindow)
@@ -528,18 +533,24 @@ void CDemoAppDlg::OnFileOpen32771()
 		{
 			if (!mpImageRIF)
 			{
-				if (LoadViewerWithImages(sImageName))
+				// Score first (headless - no viewer needed for this), so we know which image
+				// is actually worth looking at before ever opening the viewer
+				mpIQVManager = new CIQVManager();
+				mpIQVManager->LoadAndScore(sImageName);
+
+				mpImages = mpIQVManager->GetImages();
+				mpRingsScorer = mpIQVManager->GetRingsScorer();
+				miPos = mpIQVManager->GetScoredPosition();
+
+				// Open the viewer directly on the target (worst-score) image - its one-time
+				// window/level auto-fit is keyed off whichever image is displayed first, and
+				// an arbitrary early image (e.g. the first) is often too sparse to fit well
+				CString sTargetFile = mpImages->GetName(miPos);
+				if (LoadViewerWithImages(sTargetFile))
 				{
-					mpIQVManager = new CIQVManager();
-					mpIQVManager->LoadAndScore(sImageName, this);
-
-					mpImages = mpIQVManager->GetImages();
-					mpRingsScorer = mpIQVManager->GetRingsScorer();
-					miPos = mpIQVManager->GetScoredPosition();
 					mImages.AddTail(mpImages);
-
-					OnCurrentSelectedByScorer(miPos);
 					mpImageRIF->DisplayShared(mpImages->GetSharedWideVolume());
+					OnCurrentSelectedByScorer(miPos);
 				}
 			}
 			else // Add Extra Images' series
@@ -565,6 +576,36 @@ void CDemoAppDlg::OnFileBatchscoring()
 	CString sMsg;
 	sMsg.Format("Batch scoring complete.\n%d case(s) scored.", nScored);
 	CMyWindows::MessBox(sMsg, "Batch Scoring");
+}
+void CDemoAppDlg::OnFileOpencasescoring()
+{
+	if (mpImageRIF)
+		return;
+
+	mpCaseReviewer = new CCaseReviewer();
+	if (!mpCaseReviewer->SelectCase())
+		return;
+
+	// Score first (headless - no viewer needed for this), so we know which image is
+	// actually worth looking at before ever opening the viewer
+	if (!mpCaseReviewer->LoadCase())
+		return;
+
+	CIQVManager* pManager = mpCaseReviewer->GetManager();
+	mpImages = pManager->GetImages();
+	mpRingsScorer = pManager->GetRingsScorer();
+	miPos = pManager->GetScoredPosition();
+
+	// Open the viewer directly on the target (worst-score) image - its one-time window/level
+	// auto-fit is keyed off whichever image is displayed first, and an arbitrary early image
+	// (e.g. the case's sample file) is often too sparse to fit well
+	CString sTargetFile = mpImages->GetName(miPos);
+	if (LoadViewerWithImages(sTargetFile))
+	{
+		mImages.AddTail(mpImages);
+		mpImageRIF->DisplayShared(mpImages->GetSharedWideVolume());
+		OnCurrentSelectedByScorer(miPos);
+	}
 }
 void CDemoAppDlg::OnTestFinddicomsets()
 {

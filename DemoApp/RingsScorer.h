@@ -14,6 +14,12 @@ public:
 	// Return miPos of image with max score (to be displayed)
 	int ScoreAllImages();
 
+	// Replays each named scorer's already-saved results (from zCaseDir) instead of rescoring.
+	// vScorerNames is the set of scorer names found in the case's CaseInfo.yaml; a name with
+	// no matching live scorer (or vice versa) is just left unscored. Returns the image with
+	// the max score, same convention as ScoreAllImages().
+	int LoadFromSavedResults(const char* zCaseDir, const std::vector<CString>& vScorerNames);
+
 	// Navigation in peaks by severity order
 	void DisplayMaxPeak();
 	void DisplayNextPeak();

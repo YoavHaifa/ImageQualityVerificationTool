@@ -58,6 +58,7 @@ public:
 	afx_msg void OnBnClickedButtonUpPos();
 	afx_msg void OnFileOpen32771();
 	afx_msg void OnFileBatchscoring();
+	afx_msg void OnFileOpencasescoring();
 	afx_msg void OnTestFinddicomsets();
 	afx_msg void OnFileExit();
 	//afx_msg void OnProcessSmooth();
@@ -66,6 +67,7 @@ public:
 	class CArinetaImages* mpImages;
 	class CRingsScorer* mpRingsScorer;
 	class CIQVManager* mpIQVManager;
+	class CCaseReviewer* mpCaseReviewer;
 	class CDataFiles* mpDataFiles;
 	CList<class CArchivesImages*,class CArchivesImages*> mImages;
 	CTSharedImage<short> *mpSmoothed;

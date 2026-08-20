@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "ArinetaImages.h"
-#include "DemoAppDlg.h"
 #include "Config.h"
 #include "..\..\yUtils\MyDicom.h"
 #include "..\..\yUtils\MyWindows.h"
@@ -22,7 +21,7 @@ CArinetaImages::CArinetaImages(const char* zfName)
 {
 
 }
-bool CArinetaImages::ComputeRotationCenter(CDemoAppDlg* pDlg)
+bool CArinetaImages::ComputeRotationCenter()
 {
 	mRotationCenter.mpImage = mCurrentImage.mpImage;
 	CMyDicom* pDicom = mCurrentImage.mpDicom;
@@ -43,8 +42,9 @@ bool CArinetaImages::ComputeRotationCenter(CDemoAppDlg* pDlg)
 	mRotationCenter.fx = (float)((mCurrentImage.mpImage->GetNCols() - 1) / 2.0 - xOffset / mCurrentImage.mpImage->mMmPerPixelWidth);
 	mRotationCenter.fy = (float)((mCurrentImage.mpImage->GetNLines() - 1) / 2.0 + yOffset / mCurrentImage.mpImage->mMmPerPixelHeight);
 
-	if (pDlg)
-		pDlg->DisplayCircle(mRotationCenter, 100.0f);
+	// Not drawn here - the viewer doesn't exist yet at this point in some flows (e.g. case
+	// review), and DisplayScore() draws the correctly-sized circle for the displayed image
+	// right after the caller shows it anyway, making an initial draw here redundant.
 	return true;
 }
 bool CArinetaImages::GetFloatValueFromDicomString(unsigned short group, unsigned short num, float& value, const char* zFor)

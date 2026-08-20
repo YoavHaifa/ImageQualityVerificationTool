@@ -47,6 +47,34 @@ void CScorerBase::LogAllImages(int iFirst, int iStep) const
 	}
 	fclose(pfLog);
 }
+bool CScorerBase::LoadSavedResults(const char* zCaseDir)
+{
+	string sfName(format("{}\\ScoreAllImages_{}.csv", zCaseDir, Name()));
+
+	FILE* pf = nullptr;
+	fopen_s(&pf, sfName.c_str(), "r");
+	if (!pf)
+		return false;
+
+	char zLine[256];
+	fgets(zLine, sizeof(zLine), pf); // header
+
+	while (fgets(zLine, sizeof(zLine), pf))
+	{
+		int iOriginal, iRing;
+		float score;
+		if (sscanf_s(zLine, "%d, %f, %d", &iOriginal, &score, &iRing) == 3)
+		{
+			// AddScore's iImage becomes mResults.miImageWithMaxScore verbatim if this is the
+			// best score so far, and a live scoring pass always stores the *original* DICOM
+			// slice number there (see CImageRingsScorer::Score) - not a 0-based index - so
+			// this must match, even though mvScores itself is still indexed by push order.
+			mResults.AddScore(score, iRing, iOriginal);
+		}
+	}
+	fclose(pf);
+	return true;
+}
 void CScorerBase::FindMaxScorePerCurrentImage()
 {
 	mScore.mScore = 0;

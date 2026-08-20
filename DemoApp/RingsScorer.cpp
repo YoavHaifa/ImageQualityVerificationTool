@@ -62,6 +62,35 @@ int CRingsScorer::ScoreAllImages()
 
 	return mpImageScorer->GetImageWithMaxScore();
 }
+int CRingsScorer::LoadFromSavedResults(const char* zCaseDir, const std::vector<CString>& vScorerNames)
+{
+	miFirst = mpImages->GetFirst();
+	miLast = mpImages->GetLast();
+	mStep = mpImages->GetStep();
+	mnImages = mpImages->GetNFiles();
+
+	for (const CString& sName : vScorerNames)
+	{
+		for (int iScorer = 0; iScorer < mpImageScorer->GetNScorers(); iScorer++)
+		{
+			CScorerBase* pScorer = mpImageScorer->GetScorerByIndex(iScorer);
+			if (sName == pScorer->Name())
+			{
+				pScorer->LoadSavedResults(zCaseDir);
+				break;
+			}
+		}
+	}
+
+	// Peaks weren't read back from the CSVs - recompute them from the replayed scores,
+	// same as a live run does once every image has been scored
+	mpImageScorer->OnAllImagesScored();
+
+	mbScoresComputed = true;
+	miCurrentPeak = 1;
+
+	return mpImageScorer->GetImageWithMaxScore();
+}
 void CRingsScorer::Log()
 {
 	FILE* pfLog = nullptr;

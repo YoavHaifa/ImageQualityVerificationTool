@@ -35,6 +35,12 @@ public:
 	// map internal image indices back to the original DICOM slice numbers.
 	void LogAllImages(int iFirst, int iStep) const;
 
+	// Reverse of LogAllImages: replays this scorer's score/ring data from
+	// <zCaseDir>\ScoreAllImages_<Name>.csv into mResults, in place of an actual scoring pass.
+	// Peak/peak_order columns aren't read back - OnAllImagesScored() recomputes them
+	// identically from the replayed scores. Returns false if the CSV can't be opened.
+	bool LoadSavedResults(const char* zCaseDir);
+
 	CImageScore mScore;
 	std::vector<float> mvRingScore; // score at every candidate ring this scorer considered, 0 elsewhere
 	CScoreTypeResults mResults; // score+ring per image scored so far, for peak finding/navigation
