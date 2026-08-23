@@ -20,7 +20,7 @@ CIQVManager::~CIQVManager()
 	delete mpRingsScorer;
 	delete mpImages;
 }
-bool CIQVManager::LoadImages(const char* zImageFileName)
+bool CIQVManager::LoadImages(const char* zImageFileName, int iCaseIndex)
 {
 	CArinetaImages::SetDebug(0xff);
 	mpImages = new CArinetaImages(zImageFileName);
@@ -30,7 +30,7 @@ bool CIQVManager::LoadImages(const char* zImageFileName)
 	CString sDicomDir(mpImages->GetPath());
 	if (!sDicomDir.IsEmpty() && (sDicomDir.Right(1) == "\\" || sDicomDir.Right(1) == "/"))
 		sDicomDir = sDicomDir.Left(sDicomDir.GetLength() - 1);
-	gConfig.SetCurrentCase(CFileName::GetLastDirName(sDicomDir));
+	gConfig.SetCurrentCase(CFileName::GetLastDirName(sDicomDir), iCaseIndex);
 
 	// "Current Case" reflects whichever case is loading right now, in every flow (single-open,
 	// batch, review)
@@ -42,9 +42,9 @@ bool CIQVManager::LoadImages(const char* zImageFileName)
 
 	return true;
 }
-bool CIQVManager::LoadAndScore(const char* zImageFileName)
+bool CIQVManager::LoadAndScore(const char* zImageFileName, int iCaseIndex)
 {
-	if (!LoadImages(zImageFileName))
+	if (!LoadImages(zImageFileName, iCaseIndex))
 		return false;
 
 	mpRingsScorer = new CRingsScorer(mpImages);

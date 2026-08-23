@@ -37,17 +37,19 @@ int CBatchScorer::Run(const CFilesList& list)
 {
 	int nTotal = list.N();
 	int nScored = 0;
+	int iCase = 0;
 
 	POSITION pos = list.GetHeadPosition();
 	while (pos)
 	{
-		string sBatch(format("Batch scoring: case {}/{}", nScored + 1, nTotal));
+		iCase++;
+		string sBatch(format("Batch scoring: case {}/{}", iCase, nTotal));
 		MyPrintStatus(sBatch.c_str());
 
 		CString* psfName = list.GetNext(pos);
 
 		CIQVManager manager;
-		if (manager.LoadAndScore(*psfName))
+		if (manager.LoadAndScore(*psfName, iCase))
 			nScored++;
 	}
 

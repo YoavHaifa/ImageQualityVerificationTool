@@ -1,5 +1,6 @@
 #pragma once
 #include "..\..\ImageRLib\TSharedImage.h"
+#include "..\..\yUtils\BoundHistogram.h"
 #include "ScoreTypes.h"
 #include "RingInfo.h"
 #include <vector>
@@ -24,6 +25,10 @@ public:
 
 	// Call once, after all images have been scored and recorded, to finalize each scorer's peaks
 	void OnAllImagesScored();
+
+	// Writes the case-wide pixel-value histogram (accumulated across all images scored so far)
+	// to Histogram.csv in the case log dir. Call once, after all images have been scored.
+	void LogHistogram();
 
 	// The score+ring already recorded for iImage, under the currently active score type (gConfig.mScoreType)
 	const CImageScore& GetCurrentScore(int iImage) const;
@@ -62,6 +67,8 @@ private:
 
 	int mnRings = 0;
 	int mnPixelsWithinThreshold = 0;
+
+	CBoundHistogram mHistogram;
 
 	std::vector<float> mvRingMean0;
 	std::vector<float> mvRingMean;

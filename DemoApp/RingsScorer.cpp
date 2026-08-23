@@ -50,6 +50,7 @@ int CRingsScorer::ScoreAllImages()
 	}
 
 	mpImageScorer->OnAllImagesScored();
+	mpImageScorer->LogHistogram();
 	Log();
 	LogPerScorer();
 	LogCaseInfo();

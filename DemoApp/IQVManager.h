@@ -8,7 +8,9 @@ public:
 	CIQVManager();
 	~CIQVManager();
 
-	bool LoadAndScore(const char* zImageFileName);
+	// iCaseIndex is this case's 1-based position within a batch run (0 outside of batch scoring);
+	// see CConfig::miCaseIndex.
+	bool LoadAndScore(const char* zImageFileName, int iCaseIndex = 0);
 
 	// Loads a case's already-saved scoring results instead of rescoring: reloads the real
 	// images (for display) from CaseInfo.yaml's case_path, but reads scores/rings back from
@@ -30,7 +32,7 @@ public:
 private:
 	// Common to both LoadAndScore and LoadFromSavedResults: loads the real images, sets up
 	// the case's log directory, and computes the rotation center.
-	bool LoadImages(const char* zImageFileName);
+	bool LoadImages(const char* zImageFileName, int iCaseIndex = 0);
 
 	class CArinetaImages* mpImages = nullptr;
 	class CRingsScorer* mpRingsScorer = nullptr;

@@ -12,6 +12,11 @@ public:
 	static const short CT_BIAS = 1024;
 	short mMinThreshold = 980;
 	short mMaxThreshold = 1080;
+
+	// Range of the per-case pixel-value histogram (research tool); same CT_BIAS convention as
+	// mMinThreshold/mMaxThreshold, so it's directly comparable to raw pixel values
+	short mHistogramMin = 924;
+	short mHistogramMax = 1124;
 	unsigned short mErodeLevel = 5;
 	unsigned short mnWantedSliceWidth = 11; // Number of consecutive input slices to average
 
@@ -27,7 +32,14 @@ public:
 	std::string msVersion = "0.8";
 
 	std::string msLogRoot = "d:\\IQV_Log";
-	std::string msCaseLogDir; // <msLogRoot>\<current case name>, set by SetCurrentCase
+	std::string msCaseLogDir; // <msLogRoot>\<current case name>[_<miCaseIndex>], set by SetCurrentCase
+
+	// Position (1-based) of the current case within a batch run, or 0 outside of batch scoring.
+	// Case names collide often enough in real data (same immediate/parent folder name reused
+	// across different sets) that msCaseLogDir alone isn't reliably unique - appending this
+	// disambiguates the case log directory, and per-case files that Excel won't let you have two
+	// same-named copies of open at once (e.g. Histogram_<miCaseIndex>.csv) can use it too.
+	int miCaseIndex = 0;
 
 	// Per-scorer directory with one ring-detail CSV per image (heavy: one dir + N files per scorer);
 	// off by default so it doesn't blow up when batch-scoring many sets.
@@ -40,7 +52,7 @@ public:
 	// Defaults to on so this doesn't change what's visible on a dev machine until explicitly turned off.
 	bool mbDeveloperMode = true;
 
-	void SetCurrentCase(const char* zCaseName);
+	void SetCurrentCase(const char* zCaseName, int iCaseIndex = 0);
 
 	void SaveToFile();
 	void ReadFromFile();

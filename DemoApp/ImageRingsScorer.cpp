@@ -17,6 +17,7 @@ using namespace std;
 CImageRingsScorer::CImageRingsScorer(CArinetaImages* pImages, CRadiusImage* pRadiusImage)
 	: mpImages(pImages)
 	, mpRadiusImage(pRadiusImage)
+	, mHistogram("PixelValues", gConfig.mHistogramMin, gConfig.mHistogramMax)
 {
 	mnRings = (int)mpRadiusImage->mMaxRadius;
 
@@ -49,6 +50,24 @@ void CImageRingsScorer::OnAllImagesScored()
 	for (auto& pScorer : mvScorers)
 		pScorer->OnAllImagesScored();
 }
+void CImageRingsScorer::LogHistogram()
+{
+	// Suffixed by case index (when scoring as part of a batch) so several cases' Histogram.csv
+	// don't collide on name - Excel refuses to have two same-named workbooks open at once, even
+	// from different folders.
+	string sfName = gConfig.miCaseIndex > 0
+		? format("{}\\Histogram_{}.csv", gConfig.msCaseLogDir.c_str(), gConfig.miCaseIndex)
+		: format("{}\\Histogram.csv", gConfig.msCaseLogDir.c_str());
+	FILE* pf = NULL;
+	fopen_s(&pf, sfName.c_str(), "w");
+	if (!pf)
+		return;
+
+	fprintf(pf, "value, count\n");
+	for (int i = 0; i < mHistogram.mLen; i++)
+		fprintf(pf, "%d, %d\n", (int)(mHistogram.mBase + i * mHistogram.mDelta), mHistogram.mpCounters[i]);
+	fclose(pf);
+}
 const CImageScore& CImageRingsScorer::GetCurrentScore(int iImage) const
 {
 	return GetScorer(gConfig.mScoreType)->mResults[iImage - 1];
@@ -80,6 +99,8 @@ void CImageRingsScorer::CollectRingsInfo()
 	float* pRadiusRaster = mpRadiusImage->GetData();
 	short* pImageRaster = mpImages->GetImageRaster(miImage);
 	mvRingsInfo.assign(mnRings + 1, CRingInfo()); // reset, not just resize - Add() accumulates per call
+
+	mHistogram.Add(pImageRaster, nToCheck);
 
 	int nLines = mpImages->GetNLines();
 	int nCols = mpImages->GetNCols();

@@ -20,9 +20,12 @@ void CConfig::Init()
 	if (mDebug)
 		gfLog.Init("IQV_App");
 }
-void CConfig::SetCurrentCase(const char* zCaseName)
+void CConfig::SetCurrentCase(const char* zCaseName, int iCaseIndex)
 {
+	miCaseIndex = iCaseIndex;
 	msCaseLogDir = msLogRoot + "\\" + zCaseName;
+	if (iCaseIndex > 0)
+		msCaseLogDir += "_" + std::to_string(iCaseIndex);
 	CMyWindows::VerifyDirectory(msCaseLogDir.c_str());
 }
 void CConfig::SaveToFile()
@@ -31,6 +34,8 @@ void CConfig::SaveToFile()
 
 	dumpFile.Write("min_ct_threshold", mMinThreshold - CT_BIAS);
 	dumpFile.Write("max_ct_threshold", mMaxThreshold - CT_BIAS);
+	dumpFile.Write("histogram_min", mHistogramMin - CT_BIAS);
+	dumpFile.Write("histogram_max", mHistogramMax - CT_BIAS);
 	dumpFile.Write("mask_erode_level", mErodeLevel);
 	dumpFile.Write("slice_width", mnWantedSliceWidth);
 	dumpFile.Write("n_central_rings", mnCentralRings);
@@ -62,6 +67,10 @@ void CConfig::ReadFromFile()
 		mMinThreshold += CT_BIAS;
 	if (pRoot->GetValue("max_ct_threshold", mMaxThreshold))
 		mMaxThreshold += CT_BIAS;
+	if (pRoot->GetValue("histogram_min", mHistogramMin))
+		mHistogramMin += CT_BIAS;
+	if (pRoot->GetValue("histogram_max", mHistogramMax))
+		mHistogramMax += CT_BIAS;
 	pRoot->GetValue("mask_erode_level", mErodeLevel);
 	pRoot->GetValue("slice_width", mnWantedSliceWidth);
 	pRoot->GetValue("n_central_rings", mnCentralRings);
