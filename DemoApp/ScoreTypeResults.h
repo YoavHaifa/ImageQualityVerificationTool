@@ -12,6 +12,10 @@ public:
 	// Call once, after all images have been scored and added, to find peaks and rank them by severity
 	void OnAllImagesScored();
 
+	// Multiplies every recorded score (and mMaxScore) by factor in place - a uniform positive
+	// scale doesn't change peak order, only the numbers shown/compared across cases
+	void ScaleScores(float factor);
+
 	// Returns the image index holding the given peak severity order, or -1 if not found
 	int FindImageIndexOfPeak(int iWantedPeak) const;
 

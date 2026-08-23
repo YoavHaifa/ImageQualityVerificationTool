@@ -36,6 +36,7 @@ void CConfig::SaveToFile()
 	dumpFile.Write("max_ct_threshold", mMaxThreshold - CT_BIAS);
 	dumpFile.Write("histogram_min", mHistogramMin - CT_BIAS);
 	dumpFile.Write("histogram_max", mHistogramMax - CT_BIAS);
+	dumpFile.Write("histogram_cut_percent", mHistogramCutPercent);
 	dumpFile.Write("mask_erode_level", mErodeLevel);
 	dumpFile.Write("slice_width", mnWantedSliceWidth);
 	dumpFile.Write("n_central_rings", mnCentralRings);
@@ -71,6 +72,7 @@ void CConfig::ReadFromFile()
 		mHistogramMin += CT_BIAS;
 	if (pRoot->GetValue("histogram_max", mHistogramMax))
 		mHistogramMax += CT_BIAS;
+	pRoot->GetValue("histogram_cut_percent", mHistogramCutPercent);
 	pRoot->GetValue("mask_erode_level", mErodeLevel);
 	pRoot->GetValue("slice_width", mnWantedSliceWidth);
 	pRoot->GetValue("n_central_rings", mnCentralRings);

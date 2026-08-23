@@ -28,6 +28,10 @@ public:
 	{
 		mResults.OnAllImagesScored();
 	}
+	void ScaleScores(float factor)
+	{
+		mResults.ScaleScores(factor);
+	}
 	const char* Name() const { return ScoreTypeName(meScoreType); }
 
 	// Writes this scorer's score/ring/peak data for every image scored so far to

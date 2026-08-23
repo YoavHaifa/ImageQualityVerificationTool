@@ -45,6 +45,12 @@ private:
 	int miCurrentPeak = 0;
 	int miCurrentPeakImage = 0;
 
+	// Width of the pixel-value histogram's main area, and the score-scaling factor derived from
+	// it (1000 / width^2) - set once in ScoreAllImages(), reused (rather than recomputed) when
+	// applying the scale and again when logging both to CaseInfo.yaml
+	int miMainAreaWidth = 0;
+	float mDataRangeScoreFactor = 1.0f;
+
 	bool mbScoresComputed = false;
 
 	class CArinetaImages* mpImages = nullptr;

@@ -1,6 +1,7 @@
 #pragma once
 #include "..\..\ImageRLib\TSharedImage.h"
 #include "..\..\yUtils\BoundHistogram.h"
+#include "..\..\yUtils\TRange.h"
 #include "ScoreTypes.h"
 #include "RingInfo.h"
 #include <vector>
@@ -26,9 +27,18 @@ public:
 	// Call once, after all images have been scored and recorded, to finalize each scorer's peaks
 	void OnAllImagesScored();
 
+	// Applies factor to every scorer's recorded scores (see CScoreTypeResults::ScaleScores) - the
+	// same factor for every scorer, since it normalizes for the case's own pixel-value spread
+	// rather than anything scorer-specific
+	void ScaleScores(float factor);
+
 	// Writes the case-wide pixel-value histogram (accumulated across all images scored so far)
 	// to Histogram.csv in the case log dir. Call once, after all images have been scored.
 	void LogHistogram();
+
+	// The pixel-value histogram's main area (see CBoundHistogram::GetMainArea), for logging
+	// alongside the rest of the case's summary info.
+	STRange<int> GetHistogramMainArea(float cutPercent) const { return mHistogram.GetMainArea(cutPercent); }
 
 	// The score+ring already recorded for iImage, under the currently active score type (gConfig.mScoreType)
 	const CImageScore& GetCurrentScore(int iImage) const;

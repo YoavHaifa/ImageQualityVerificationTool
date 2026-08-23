@@ -17,6 +17,10 @@ public:
 	// mMinThreshold/mMaxThreshold, so it's directly comparable to raw pixel values
 	short mHistogramMin = 924;
 	short mHistogramMax = 1124;
+
+	// Cutoff, as a percentage of the histogram's peak count, used to find the "main area" (the
+	// range around the peak that's still at least this fraction of it) - see CBoundHistogram::GetMainArea
+	float mHistogramCutPercent = 20.0f;
 	unsigned short mErodeLevel = 5;
 	unsigned short mnWantedSliceWidth = 11; // Number of consecutive input slices to average
 
@@ -29,7 +33,7 @@ public:
 
 	// Bump this when a change is expected to affect scoring results. Used e.g. to name
 	// baseline result snapshots ("<msLogRoot>_<msVersion>") for regression comparison.
-	std::string msVersion = "0.8";
+	std::string msVersion = "0.8.1";
 
 	std::string msLogRoot = "d:\\IQV_Log";
 	std::string msCaseLogDir; // <msLogRoot>\<current case name>[_<miCaseIndex>], set by SetCurrentCase

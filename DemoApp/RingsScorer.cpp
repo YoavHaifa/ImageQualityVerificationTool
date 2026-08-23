@@ -50,6 +50,15 @@ int CRingsScorer::ScoreAllImages()
 	}
 
 	mpImageScorer->OnAllImagesScored();
+
+	// Normalize scores against the case's own pixel-value spread, so scores become comparable
+	// across cases: a narrower main area means a more sharply-defined water phantom, so the same
+	// raw ring deviation is more significant than in a case with a wide, blurry main area
+	miMainAreaWidth = mpImageScorer->GetHistogramMainArea(gConfig.mHistogramCutPercent).Width();
+	float widthF = (float)miMainAreaWidth;
+	mDataRangeScoreFactor = 1000.0f / (widthF * widthF);
+	mpImageScorer->ScaleScores(mDataRangeScoreFactor);
+
 	mpImageScorer->LogHistogram();
 	Log();
 	LogPerScorer();
@@ -142,6 +151,14 @@ void CRingsScorer::LogCaseInfo()
 
 	fprintf(pfLog, "case_path: %s\n", (LPCTSTR)mpImages->GetPath());
 	fprintf(pfLog, "n_images: %d\n", mnImages);
+
+	STRange<int> histogramMainArea = mpImageScorer->GetHistogramMainArea(gConfig.mHistogramCutPercent);
+	fprintf(pfLog, "main_area:\n");
+	fprintf(pfLog, "  min: %d\n", histogramMainArea.mMin);
+	fprintf(pfLog, "  max: %d\n", histogramMainArea.mMax);
+	fprintf(pfLog, "  width: %d\n", miMainAreaWidth);
+	fprintf(pfLog, "data_range_score_factor: %.4f\n", mDataRangeScoreFactor);
+
 	fprintf(pfLog, "scorers:\n");
 	for (int iScorer = 0; iScorer < mpImageScorer->GetNScorers(); iScorer++)
 	{

@@ -16,6 +16,12 @@ void CScoreTypeResults::OnAllImagesScored()
 	FindPeaks();
 	OrderPeaks();
 }
+void CScoreTypeResults::ScaleScores(float factor)
+{
+	for (CImageScore& score : mvScores)
+		score.mScore *= factor;
+	mMaxScore *= factor;
+}
 void CScoreTypeResults::FindPeaks()
 {
 	int nImages = (int)mvScores.size();

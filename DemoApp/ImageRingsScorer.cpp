@@ -50,6 +50,11 @@ void CImageRingsScorer::OnAllImagesScored()
 	for (auto& pScorer : mvScorers)
 		pScorer->OnAllImagesScored();
 }
+void CImageRingsScorer::ScaleScores(float factor)
+{
+	for (auto& pScorer : mvScorers)
+		pScorer->ScaleScores(factor);
+}
 void CImageRingsScorer::LogHistogram()
 {
 	// Suffixed by case index (when scoring as part of a batch) so several cases' Histogram.csv
