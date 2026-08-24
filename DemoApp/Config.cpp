@@ -23,7 +23,13 @@ void CConfig::Init()
 void CConfig::SetCurrentCase(const char* zCaseName, int iCaseIndex)
 {
 	miCaseIndex = iCaseIndex;
-	msCaseLogDir = msLogRoot + "\\" + zCaseName;
+	msCaseLogDir = msLogRoot;
+	if (!msBatchRootDir.empty())
+	{
+		msCaseLogDir += "\\" + msBatchRootDir;
+		CMyWindows::VerifyDirectory(msCaseLogDir.c_str()); // CreateDirectory() isn't recursive
+	}
+	msCaseLogDir += string("\\") + zCaseName;
 	if (iCaseIndex > 0)
 		msCaseLogDir += "_" + std::to_string(iCaseIndex);
 	CMyWindows::VerifyDirectory(msCaseLogDir.c_str());

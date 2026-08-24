@@ -19,7 +19,7 @@ public:
 	CTSharedImage<short>* GetSharedWideVolume() { return mpWideVolume; }
 
 private:
-	void ComputeWideImages();
+	bool ComputeWideImages();
 
 	CTSharedImage<short>* mpWideVolume = nullptr;
 

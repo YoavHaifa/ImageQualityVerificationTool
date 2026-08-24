@@ -6,6 +6,7 @@
 #include <string>
 #include <format>
 #include <algorithm>
+#include <vector>
 
 using namespace std;
 
@@ -79,10 +80,10 @@ bool CArinetaImages::PrepareOnInit()
 
 	mnSliceWidth = min(gConfig.mnWantedSliceWidth, (unsigned short)GetNFiles());
 	if (mnSliceWidth > 1)
-		ComputeWideImages();
+		return ComputeWideImages();
 	return true;
 }
-void CArinetaImages::ComputeWideImages()
+bool CArinetaImages::ComputeWideImages()
 {
 	gConfig.PrintStatus("Computing wide images...");
 
@@ -90,27 +91,31 @@ void CArinetaImages::ComputeWideImages()
 	{
 		bool bOK = CreateSharedVolume("WideSlices", mpWideVolume);
 		if (!bOK)
-			return;
+			return false;
 	}
 
 	mpWideVolume->Zero();
 
-	// Sum first n slices in sum buffer
-	int* pSumBuf = new int[mnPixelsInImage];
-
 	// Copy first input image to the sum buffer
 	int iInput = miFirst;
 	short* pInput0 = mpSharedVolume->GetImageStart(iInput++);
+	if (!pInput0)
+		return false;
+
+	// Sum first n slices in sum buffer
+	vector<int> sumBuf(mnPixelsInImage);
 	for (int iPix = 0; iPix < mnPixelsInImage; iPix++)
-		pSumBuf[iPix] = pInput0[iPix];
+		sumBuf[iPix] = pInput0[iPix];
 	unsigned short nSummed = 1;
 
 	// Sum first images in sum buffer
 	while (nSummed < mnSliceWidth)
 	{
 		short* pInput = mpSharedVolume->GetImageStart(iInput++);
+		if (!pInput)
+			return false;
 		for (int iPix = 0; iPix < mnPixelsInImage; iPix++)
-			pSumBuf[iPix] += pInput[iPix];
+			sumBuf[iPix] += pInput[iPix];
 		nSummed++;
 	}
 
@@ -118,7 +123,7 @@ void CArinetaImages::ComputeWideImages()
 	int iTarget = miFirst;
 	short* pTarget = mpWideVolume->GetImageStart(iTarget++);
 	for (int iPix = 0; iPix < mnPixelsInImage; iPix++)
-		pTarget[iPix] = (short)(pSumBuf[iPix] / nSummed);
+		pTarget[iPix] = (short)(sumBuf[iPix] / nSummed);
 
 	// Copy first target until the sliding sum window can move
 	int nSame = mnSliceWidth / 2 + 1; // Assuming "slice width" is odd
@@ -137,12 +142,14 @@ void CArinetaImages::ComputeWideImages()
 	{
 		short* pInput = mpSharedVolume->GetImageStart(iInput++);
 		short* pSub = mpSharedVolume->GetImageStart(iSub++);
+		if (!pInput || !pSub)
+			return false;
 		short* pTarget = mpWideVolume->GetImageStart(iTarget++);
 
 		for (int iPix = 0; iPix < mnPixelsInImage; iPix++)
 		{
-			pSumBuf[iPix] += (pInput[iPix] - pSub[iPix]);
-			pTarget[iPix] = (short)(pSumBuf[iPix] / nSummed);
+			sumBuf[iPix] += (pInput[iPix] - pSub[iPix]);
+			pTarget[iPix] = (short)(sumBuf[iPix] / nSummed);
 		}
 	}
 
@@ -154,11 +161,11 @@ void CArinetaImages::ComputeWideImages()
 		memcpy(pTarget, pPrevTarget, mnPixelsInImage * sizeof(short));
 	}
 
-	delete[] pSumBuf;
 	mpWideVolume->Dump();
 
 	string s(format("All {} wide images computed", GetNFiles()));
 	gConfig.PrintStatus(s.c_str());
+	return true;
 }
 short* CArinetaImages::GetImageRaster(int iImage)
 {

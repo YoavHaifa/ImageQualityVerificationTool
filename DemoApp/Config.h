@@ -36,7 +36,7 @@ public:
 	std::string msVersion = "0.8.1";
 
 	std::string msLogRoot = "d:\\IQV_Log";
-	std::string msCaseLogDir; // <msLogRoot>\<current case name>[_<miCaseIndex>], set by SetCurrentCase
+	std::string msCaseLogDir; // <msLogRoot>\[<batch root name>\]<current case name>[_<miCaseIndex>], set by SetCurrentCase
 
 	// Position (1-based) of the current case within a batch run, or 0 outside of batch scoring.
 	// Case names collide often enough in real data (same immediate/parent folder name reused
@@ -44,6 +44,11 @@ public:
 	// disambiguates the case log directory, and per-case files that Excel won't let you have two
 	// same-named copies of open at once (e.g. Histogram_<miCaseIndex>.csv) can use it too.
 	int miCaseIndex = 0;
+
+	// Name of the current batch run's own log subdirectory (nests under msLogRoot; see
+	// SetCurrentCase), or empty outside of batch scoring. Set directly by CBatchScorer for the
+	// duration of a run rather than passed to every case - not read from/written to file.
+	std::string msBatchRootDir;
 
 	// Per-scorer directory with one ring-detail CSV per image (heavy: one dir + N files per scorer);
 	// off by default so it doesn't blow up when batch-scoring many sets.

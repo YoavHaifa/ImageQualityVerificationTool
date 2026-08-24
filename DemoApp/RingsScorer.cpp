@@ -7,6 +7,7 @@
 #include "ScorerBase.h"
 #include "Config.h"
 #include "DemoAppDlg.h"
+#include "..\..\yUtils\MyWindows.h"
 #include <string>
 #include <format>
 
@@ -41,6 +42,12 @@ int CRingsScorer::ScoreAllImages()
 	{
 		mpImages->SetCurrent(iImage);
 		mpImageScorer->Score(iImage);
+
+		// Caller (CIQVManager::LoadAndScore) has message boxes suppressed for this call and
+		// checks our return value - abort the rest of this case rather than plow through more
+		// images we already know can't be decoded
+		if (CMyWindows::GetMessBoxCount(nullptr) > 0)
+			return -1;
 
 		if (iImage % 10 == 0)
 		{

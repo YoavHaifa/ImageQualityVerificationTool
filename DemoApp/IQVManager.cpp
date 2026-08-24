@@ -25,12 +25,15 @@ bool CIQVManager::LoadImages(const char* zImageFileName, int iCaseIndex)
 	CArinetaImages::SetDebug(0xff);
 	mpImages = new CArinetaImages(zImageFileName);
 
-	// The images' immediate directory is usually a generic name (e.g. "Dicom"),
-	// so use its parent directory's name as the case name instead.
+	// The images' immediate directory is sometimes just a generic wrapper name ("Dicom") - only
+	// then does its parent directory hold the significant, case-identifying name instead.
 	CString sDicomDir(mpImages->GetPath());
 	if (!sDicomDir.IsEmpty() && (sDicomDir.Right(1) == "\\" || sDicomDir.Right(1) == "/"))
 		sDicomDir = sDicomDir.Left(sDicomDir.GetLength() - 1);
-	gConfig.SetCurrentCase(CFileName::GetLastDirName(sDicomDir), iCaseIndex);
+	CString sCaseName = CFileName::GetLastInPath(sDicomDir);
+	if (sCaseName.CompareNoCase("Dicom") == 0)
+		sCaseName = CFileName::GetLastDirName(sDicomDir);
+	gConfig.SetCurrentCase(sCaseName, iCaseIndex);
 
 	// "Current Case" reflects whichever case is loading right now, in every flow (single-open,
 	// batch, review)
@@ -38,19 +41,34 @@ bool CIQVManager::LoadImages(const char* zImageFileName, int iCaseIndex)
 		gpDlg->SetDlgItemText(IDC_STATIC_IMAGESET, GetSetInfo().c_str());
 
 	mpImages->ComputeRotationCenter();
-	mpImages->PrepareOnInit();
 
-	return true;
+	return mpImages->PrepareOnInit();
 }
 bool CIQVManager::LoadAndScore(const char* zImageFileName, int iCaseIndex)
 {
-	if (!LoadImages(zImageFileName, iCaseIndex))
-		return false;
+	// Some cases (e.g. an unexpected directory layout) have images ImageRLib can't actually
+	// decode - it pops a blocking "GetData NULL" box per bad image rather than failing cleanly.
+	// Suppress those for the duration of this case and treat any as "case data not found":
+	// abort without saving, instead of the user having to dismiss one box per bad image.
+	CMyWindows::DisableMessBox();
 
-	mpRingsScorer = new CRingsScorer(mpImages);
-	miScoredPosition = mpRingsScorer->ScoreAllImages();
+	bool bOK = LoadImages(zImageFileName, iCaseIndex);
+	if (bOK && CMyWindows::GetMessBoxCount(nullptr) > 0)
+		bOK = false;
 
-	return true;
+	if (bOK)
+	{
+		mpRingsScorer = new CRingsScorer(mpImages);
+		miScoredPosition = mpRingsScorer->ScoreAllImages();
+		bOK = (miScoredPosition >= 0);
+	}
+
+	CMyWindows::EnableMessBox(nullptr);
+
+	if (!bOK)
+		gConfig.PrintStatus("Case data could not be loaded - skipping without saving");
+
+	return bOK;
 }
 bool CIQVManager::ResolveCaseSampleFile(const char* zCaseDir, CString& osSampleFile)
 {

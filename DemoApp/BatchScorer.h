@@ -17,7 +17,13 @@ public:
 	// CMyWindows::ListSampleFilesInDirTree. Returns the number of cases scored.
 	int Run(const class CFilesList& list);
 
+	// This run's own log directory (msLogRoot\<batch root name>), valid after RunOnDirTree() -
+	// lets a caller jump straight into Batch Review on the results just produced.
+	const CString& GetLogDir(void) const { return msLogDir; }
+
 private:
 	// Reports zText both to the GUI's batch status line and to the console
 	void MyPrintStatus(const char* zText);
+
+	CString msLogDir;
 };
