@@ -6,6 +6,7 @@
 #define IDD_ABOUTBOX                    100
 #define IDS_ABOUTBOX                    101
 #define IDD_DEMOAPP_DIALOG              102
+#define IDD_BATCH_COMPLETE              130
 #define IDR_MAINFRAME                   128
 #define IDR_MENU1                       129
 #define IDC_BUTTON_SHARED               1000
@@ -33,6 +34,7 @@
 #define IDC_BUTTON_WORST_CASE           1022
 #define IDC_BUTTON_NEXT_CASE            1023
 #define IDC_STATIC_CASE_INDEX           1024
+#define IDC_STATIC_BATCH_COMPLETE_MSG   1025
 #define ID_FILE_OPEN32771               32771
 #define ID_FILE_EXIT                    32772
 #define ID_HELP_DEMOAPPV1               32773
@@ -65,7 +67,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        131
 #define _APS_NEXT_COMMAND_VALUE         32796
-#define _APS_NEXT_CONTROL_VALUE         1025
+#define _APS_NEXT_CONTROL_VALUE         1026
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

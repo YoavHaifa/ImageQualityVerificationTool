@@ -8,6 +8,7 @@
 #include "RingsScorer.h"
 #include "IQVManager.h"
 #include "BatchScorer.h"
+#include "BatchCompleteDlg.h"
 #include "CaseReviewer.h"
 #include "BatchReviewer.h"
 #include "ImageScore.h"
@@ -586,8 +587,20 @@ void CDemoAppDlg::OnFileBatchscoring()
 	int nScored = batchScorer.RunOnDirTree(dlg.msFolderName);
 
 	CString sMsg;
-	sMsg.Format("Batch scoring complete.\n%d case(s) scored.", nScored);
-	CMyWindows::MessBox(sMsg, "Batch Scoring");
+	sMsg.Format("Batch scoring complete.\n%d case(s) scored.\n\nBatch data root: %s\nBatch result root: %s",
+		nScored, (LPCTSTR)dlg.msFolderName, (LPCTSTR)batchScorer.GetLogDir());
+
+	// Offer to jump straight into reviewing what was just scored - the results are already on
+	// disk at batchScorer.GetLogDir(), so no need to ask the user to pick it again.
+	CBatchCompleteDlg completeDlg(sMsg, this);
+	if (completeDlg.DoModal() != IDOK || mpImageRIF)
+		return;
+
+	mpBatchReviewer = new CBatchReviewer();
+	if (!mpBatchReviewer->Init(batchScorer.GetLogDir()))
+		return;
+
+	DisplayBatchCase();
 }
 void CDemoAppDlg::OnFileOpencasescoring()
 {

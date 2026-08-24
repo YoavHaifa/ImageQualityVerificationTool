@@ -68,6 +68,16 @@ BEGIN
     PUSHBUTTON      "Cancel",IDC_CANCEL,428,162,50,14
 END
 
+IDD_BATCH_COMPLETE DIALOGEX 0, 0, 340, 110
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Batch Scoring"
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
+BEGIN
+    LTEXT           "",IDC_STATIC_BATCH_COMPLETE_MSG,7,7,326,70
+    DEFPUSHBUTTON   "Review Results",IDOK,158,85,75,14
+    PUSHBUTTON      "Close",IDCANCEL,241,85,60,14
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
