@@ -563,6 +563,10 @@ void CDemoAppDlg::OnFileOpen32771()
 				{
 					mImages.AddTail(mpImages);
 					mpImageRIF->DisplayShared(mpImages->GetSharedWideVolume());
+					// Only ever populated by live scoring (not Case/Batch Review), so still
+					// check for null even with the feature on
+					if (mpImages->GetSharedCtPerRadiusVolume())
+						mpImageRIF->DisplayShared(mpImages->GetSharedCtPerRadiusVolume());
 					OnCurrentSelectedByScorer(miPos);
 				}
 			}
@@ -629,6 +633,10 @@ void CDemoAppDlg::OnFileOpencasescoring()
 	{
 		mImages.AddTail(mpImages);
 		mpImageRIF->DisplayShared(mpImages->GetSharedWideVolume());
+		// Only ever populated by live scoring (not Case/Batch Review), so check for null
+		// even with the feature on
+		if (mpImages->GetSharedCtPerRadiusVolume())
+			mpImageRIF->DisplayShared(mpImages->GetSharedCtPerRadiusVolume());
 		OnCurrentSelectedByScorer(miPos);
 	}
 }
@@ -691,6 +699,10 @@ void CDemoAppDlg::DisplayBatchCase()
 		return;
 
 	mpImageRIF->DisplayShared(mpImages->GetSharedWideVolume());
+	// Only ever populated by live scoring (not Case/Batch Review), so check for null even
+	// with the feature on
+	if (mpImages->GetSharedCtPerRadiusVolume())
+		mpImageRIF->DisplayShared(mpImages->GetSharedCtPerRadiusVolume());
 	OnCurrentSelectedByScorer(miPos);
 }
 void CDemoAppDlg::OnTestFinddicomsets()

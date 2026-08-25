@@ -61,6 +61,13 @@ public:
 	// Defaults to on so this doesn't change what's visible on a dev machine until explicitly turned off.
 	bool mbDeveloperMode = true;
 
+	// Optional 3rd viewer column: for each pixel, its ring's mean CT value for the currently
+	// scored image, instead of the raw pixel value - a visual "what this would look like if
+	// perfectly radially symmetric" reference, for spotting ring artifacts (illegal/eroded
+	// pixels get a constant 10 below the image's lowest ring mean, to stand out). Only populated
+	// during live scoring (not Case/Batch Review, which doesn't recompute per-ring means).
+	bool mbDisplayCtPerRadius = true;
+
 	void SetCurrentCase(const char* zCaseName, int iCaseIndex = 0);
 
 	void SaveToFile();

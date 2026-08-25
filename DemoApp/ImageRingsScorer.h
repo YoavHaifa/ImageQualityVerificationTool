@@ -1,5 +1,6 @@
 #pragma once
 #include "..\..\ImageRLib\TSharedImage.h"
+#include "..\..\ImageRLib\Mask.h"
 #include "..\..\yUtils\BoundHistogram.h"
 #include "..\..\yUtils\TRange.h"
 #include "ScoreTypes.h"
@@ -69,6 +70,13 @@ private:
 	void CollectRingsInfo();
 	void ErodeValidArea();
 
+	// Paints mpImages' CT-per-radius volume for the current image: each pixel gets its ring's
+	// mean CT value (mvRingMean) instead of the raw pixel value, except pixels the erode mask
+	// excluded ("illegal"), which get a constant 10 CT numbers below this image's lowest ring
+	// mean, to stand out from any real value. Gated by gConfig.mbDisplayCtPerRadius; called once
+	// mvRingMean and mErodedMask are final for this image.
+	void FillCtPerRadiusImage();
+
 	void Log();
 
 	class CArinetaImages* mpImages = nullptr;
@@ -79,6 +87,10 @@ private:
 	int mnPixelsWithinThreshold = 0;
 
 	CBoundHistogram mHistogram;
+
+	// Filled fresh by CollectRingsInfo() each image; reused by FillCtPerRadiusImage() to mark
+	// pixels the erode step excluded, without redoing the threshold+erode pass
+	CMask mErodedMask;
 
 	std::vector<float> mvRingMean0;
 	std::vector<float> mvRingMean;

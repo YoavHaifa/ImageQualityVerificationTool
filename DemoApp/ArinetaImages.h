@@ -24,10 +24,20 @@ public:
 	short* GetImageRaster(int iImage);
 	CTSharedImage<short>* GetSharedWideVolume() { return mpWideVolume; }
 
+	// Sized/positioned the same as the wide volume, but only ever populated by the scorer
+	// (CImageRingsScorer::FillCtPerRadiusImage, gated by gConfig.mbDisplayCtPerRadius) - null
+	// until that first happens, e.g. always in Case/Batch Review, which doesn't rescore.
+	CTSharedImage<short>* GetSharedCtPerRadiusVolume() { return mpCtPerRadiusVolume; }
+
+	// Lazily creates the CT-per-radius volume if it doesn't exist yet. Returns false only if
+	// the underlying image isn't ready yet (see CArchivesImages::CreateSharedVolume).
+	bool EnsureCtPerRadiusVolume();
+
 private:
 	bool ComputeWideImages();
 
 	CTSharedImage<short>* mpWideVolume = nullptr;
+	CTSharedImage<short>* mpCtPerRadiusVolume = nullptr;
 
 	int mnPixelsInImage = 1;
 

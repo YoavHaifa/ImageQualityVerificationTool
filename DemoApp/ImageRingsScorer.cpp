@@ -18,6 +18,7 @@ CImageRingsScorer::CImageRingsScorer(CArinetaImages* pImages, CRadiusImage* pRad
 	: mpImages(pImages)
 	, mpRadiusImage(pRadiusImage)
 	, mHistogram("PixelValues", gConfig.mHistogramMin, gConfig.mHistogramMax)
+	, mErodedMask(pImages->GetNLines(), pImages->GetNCols())
 {
 	mnRings = (int)mpRadiusImage->mMaxRadius;
 
@@ -36,6 +37,9 @@ const CImageScore& CImageRingsScorer::Score(int iImage)
 
 	// Expand area of illegal samples
 	ErodeValidArea();
+
+	if (gConfig.mbDisplayCtPerRadius)
+		FillCtPerRadiusImage();
 
 	for (auto& pScorer : mvScorers)
 		pScorer->Score(iImage, mvRingsInfo);
@@ -110,10 +114,9 @@ void CImageRingsScorer::CollectRingsInfo()
 	int nLines = mpImages->GetNLines();
 	int nCols = mpImages->GetNCols();
 	CMask thresholdMask(nLines, nCols);
-	CMask erodedMask(nLines, nCols);
 	thresholdMask.Threshold(pImageRaster, gConfig.mMinThreshold, gConfig.mMaxThreshold);
-	erodedMask.FastErode(thresholdMask, gConfig.mErodeLevel);
-	unsigned char* mpMask = erodedMask.GetMaskRaster();
+	mErodedMask.FastErode(thresholdMask, gConfig.mErodeLevel);
+	unsigned char* mpMask = mErodedMask.GetMaskRaster();
 
 	// Check all pixels in image
 	for (int i = 0; i < nToCheck; i++)
@@ -163,6 +166,39 @@ void CImageRingsScorer::ErodeValidArea()
 			mvRingMean[iR] = IGNORE_RING;
 		else
 			mvRingMean[iR] = mvRingMean0[iR];
+	}
+}
+void CImageRingsScorer::FillCtPerRadiusImage()
+{
+	if (!mpImages->EnsureCtPerRadiusVolume())
+		return;
+
+	short* pTarget = mpImages->GetSharedCtPerRadiusVolume()->GetImageStart(miImage);
+	if (!pTarget)
+		return;
+
+	float minRingMean = IGNORE_RING;
+	for (int iRing = 0; iRing <= mnRings; iRing++)
+	{
+		if (mvRingMean[iRing] == IGNORE_RING)
+			continue;
+		if (minRingMean == IGNORE_RING || mvRingMean[iRing] < minRingMean)
+			minRingMean = mvRingMean[iRing];
+	}
+	short illegalValue = (short)(minRingMean - 10);
+
+	int nToCheck = mpRadiusImage->mnPixels;
+	float* pRadiusRaster = mpRadiusImage->GetData();
+	const unsigned char* pMask = mErodedMask.GetMaskRaster();
+	for (int i = 0; i < nToCheck; i++)
+	{
+		if (!pMask[i])
+		{
+			pTarget[i] = illegalValue;
+			continue;
+		}
+		int iRadius = (int)pRadiusRaster[i];
+		pTarget[i] = (short)mvRingMean[iRadius];
 	}
 }
 void CImageRingsScorer::Log()

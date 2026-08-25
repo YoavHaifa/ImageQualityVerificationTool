@@ -96,6 +96,12 @@ bool CArinetaImages::PrepareOnInit()
 		return ComputeWideImages();
 	return true;
 }
+bool CArinetaImages::EnsureCtPerRadiusVolume()
+{
+	if (mpCtPerRadiusVolume)
+		return true;
+	return CreateSharedVolume("CtPerRadius", mpCtPerRadiusVolume);
+}
 bool CArinetaImages::ComputeWideImages()
 {
 	gConfig.PrintStatus("Computing wide images...");

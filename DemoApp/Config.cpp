@@ -53,6 +53,7 @@ void CConfig::SaveToFile()
 	dumpFile.Write("log_image_ring_details", mbLogImageRingDetails);
 	dumpFile.Write("dicom_file_pattern", msDicomFilePattern.c_str());
 	dumpFile.Write("developer_mode", mbDeveloperMode);
+	dumpFile.Write("display_ct_per_radius", mbDisplayCtPerRadius);
 
 	dumpFile.Write("debug", mDebug);
 }
@@ -93,6 +94,7 @@ void CConfig::ReadFromFile()
 	pRoot->GetValue("log_image_ring_details", mbLogImageRingDetails);
 	pRoot->GetValue("dicom_file_pattern", msDicomFilePattern);
 	pRoot->GetValue("developer_mode", mbDeveloperMode);
+	pRoot->GetValue("display_ct_per_radius", mbDisplayCtPerRadius);
 
 	pRoot->GetValue("debug", mDebug);
 
