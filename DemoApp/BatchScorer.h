@@ -25,5 +25,9 @@ private:
 	// Reports zText both to the GUI's batch status line and to the console
 	void MyPrintStatus(const char* zText);
 
+	// Drops sets whose sample file isn't actually a CT image (e.g. a DICOM report file that
+	// happens to match the naming pattern) - assumes a set's files are either all images or none
+	void ScreenNonImageSets(class CFilesList& list);
+
 	CString msLogDir;
 };

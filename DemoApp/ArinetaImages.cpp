@@ -22,6 +22,19 @@ CArinetaImages::CArinetaImages(const char* zfName)
 {
 
 }
+bool CArinetaImages::IsImageDicom(const char* zfName)
+{
+	if (!CMyDicom::IsDicom(zfName))
+		return false;
+
+	CMyDicom dicom(zfName);
+	if (!dicom.HasTagRef(RECON_SHFT_X_GROUP, RECON_SHFT_X_NUM))
+		return false;
+	if (!dicom.HasTagRef(RECON_SHFT_Y_GROUP, RECON_SHFT_Y_NUM))
+		return false;
+
+	return true;
+}
 bool CArinetaImages::ComputeRotationCenter()
 {
 	mRotationCenter.mpImage = mCurrentImage.mpImage;

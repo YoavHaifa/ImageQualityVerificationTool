@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "BatchScorer.h"
 #include "IQVManager.h"
+#include "ArinetaImages.h"
 #include "Config.h"
 #include "..\..\yUtils\FilesList.h"
 #include "..\..\yUtils\MyWindows.h"
@@ -37,14 +38,47 @@ void CBatchScorer::MyPrintStatus(const char* zText)
 	CMyWindows::PrintStatus1(zText);
 	printf("%s\n", zText);
 }
+void CBatchScorer::ScreenNonImageSets(CFilesList& list)
+{
+	int nDropped = 0;
+	POSITION pos = list.GetHeadPosition();
+	while (pos)
+	{
+		POSITION posCur = pos;
+		CString* psfName = list.GetNext(pos);
+		if (!CArinetaImages::IsImageDicom(*psfName))
+		{
+			list.DeleteFileName(posCur);
+			nDropped++;
+		}
+	}
+	if (nDropped > 0)
+	{
+		string s(format("Dropped {} non-image set(s)", nDropped));
+		MyPrintStatus(s.c_str());
+	}
+}
 int CBatchScorer::RunOnDirTree(const char* zRootDir)
 {
 	MyPrintStatus("Looking for Dicom Sets");
 
 	CFilesList list;
 	int nFound = CMyWindows::ListSampleFilesInDirTree(zRootDir, gConfig.msDicomFilePattern.c_str(), list);
+	if (nFound < 1)
+	{
+		MyPrintStatus("No Dicom Sets Found");
+		return 0;
+	}
 
-	string s(format("Found {} case(s) under {}", nFound, zRootDir));
+	ScreenNonImageSets(list);
+
+	int nCases = list.N();
+	if (nCases < 1)
+	{
+		MyPrintStatus("No Image Dicom Sets Found");
+		return 0;
+	}
+	string s(format("Found {} case(s) under {}", nCases, zRootDir));
 	printf("%s\n", s.c_str());
 
 	// Set for the duration of this run so every case nests under the same log subdirectory
