@@ -54,6 +54,9 @@ void CConfig::SaveToFile()
 	dumpFile.Write("log_root", msLogRoot.c_str());
 	dumpFile.Write("log_image_ring_details", mbLogImageRingDetails);
 	dumpFile.Write("dicom_file_pattern", msDicomFilePattern.c_str());
+	dumpFile.Write("data_root", msDataRoot.c_str());
+	dumpFile.Write("download_dir_name_filter", msDownloadDirNameFilter.c_str());
+	dumpFile.Write("download_default_source", msDownloadDefaultSource.c_str());
 	dumpFile.Write("developer_mode", mbDeveloperMode);
 	dumpFile.Write("display_ct_per_radius", mbDisplayCtPerRadius);
 
@@ -98,6 +101,9 @@ void CConfig::ReadFromFile()
 	pRoot->GetValue("log_root", msLogRoot);
 	pRoot->GetValue("log_image_ring_details", mbLogImageRingDetails);
 	pRoot->GetValue("dicom_file_pattern", msDicomFilePattern);
+	pRoot->GetValue("data_root", msDataRoot);
+	pRoot->GetValue("download_dir_name_filter", msDownloadDirNameFilter);
+	pRoot->GetValue("download_default_source", msDownloadDefaultSource);
 	pRoot->GetValue("developer_mode", mbDeveloperMode);
 	pRoot->GetValue("display_ct_per_radius", mbDisplayCtPerRadius);
 

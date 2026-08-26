@@ -9,6 +9,7 @@
 #include "IQVManager.h"
 #include "BatchScorer.h"
 #include "BatchCompleteDlg.h"
+#include "DataDownloader.h"
 #include "CaseReviewer.h"
 #include "BatchReviewer.h"
 #include "ImageScore.h"
@@ -147,6 +148,7 @@ BEGIN_MESSAGE_MAP(CDemoAppDlg, CDialog)
 	ON_COMMAND(ID_FILE_OPENCASESCORING, &CDemoAppDlg::OnFileOpencasescoring)
 	ON_COMMAND(ID_FILE_OPENBATCHSCORING, &CDemoAppDlg::OnFileOpenbatchscoring)
 	ON_COMMAND(ID_TEST_FINDDICOMSETS, &CDemoAppDlg::OnTestFinddicomsets)
+	ON_COMMAND(ID_UTILS_DOWNLOADDATA, &CDemoAppDlg::OnUtilsDownloaddata)
 	ON_COMMAND(ID_FILE_EXIT, &CDemoAppDlg::OnFileExit)
 	ON_COMMAND(ID_GET_WINDOW, &CDemoAppDlg::OnGetWindow)
 	ON_COMMAND(ID_SET_WINDOW, &CDemoAppDlg::OnSetWindow)
@@ -236,7 +238,7 @@ BOOL CDemoAppDlg::OnInitDialog()
 			{
 				CString sLabel;
 				pMenu->GetMenuString(i, sLabel, MF_BYPOSITION);
-				if (sLabel != "File" && sLabel != "Help")
+				if (sLabel != "File" && sLabel != "Help" && sLabel != "Utils")
 					pMenu->RemoveMenu(i, MF_BYPOSITION);
 			}
 			DrawMenuBar();
@@ -722,6 +724,20 @@ void CDemoAppDlg::OnTestFinddicomsets()
 	sMsg.Format("Found %d sample file(s) under:\n%s\n\nList written to:\n%s",
 		n, (LPCTSTR)dlg.msFolderName, (LPCTSTR)sfLogName);
 	CMyWindows::MessBox(sMsg, "Sample Files Scan");
+}
+void CDemoAppDlg::OnUtilsDownloaddata()
+{
+	CMyFolderDialog dlg("Select Root Directory to Download From", gConfig.msDownloadDefaultSource.c_str());
+	if (!dlg.DoModal())
+		return;
+
+	CDataDownloader downloader;
+	int nCopied = downloader.DownloadFromRoot(dlg.msFolderName);
+
+	CString sMsg;
+	sMsg.Format("Copied %d image set(s) (under \"%s\" directories) from:\n%s\n\nTo:\n%s",
+		nCopied, gConfig.msDownloadDirNameFilter.c_str(), (LPCTSTR)dlg.msFolderName, gConfig.msDataRoot.c_str());
+	CMyWindows::MessBox(sMsg, "Download Data");
 }
 void CDemoAppDlg::OnFileExit()
 {

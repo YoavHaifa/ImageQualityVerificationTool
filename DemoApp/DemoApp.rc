@@ -189,6 +189,10 @@ BEGIN
     BEGIN
         MENUITEM "Find Dicom Sets",             ID_TEST_FINDDICOMSETS
     END
+    POPUP "Utils"
+    BEGIN
+        MENUITEM "Download Data",               ID_UTILS_DOWNLOADDATA
+    END
     POPUP "Help"
     BEGIN
         MENUITEM "DemoApp v1.0",                ID_HELP_DEMOAPPV1

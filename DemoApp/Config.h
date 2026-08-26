@@ -69,6 +69,17 @@ public:
 	// Filename pattern identifying a directory's DICOM image files, when scanning a directory tree for sets to score
 	std::string msDicomFilePattern = "I00*";
 
+	// Local root under which "Utils > Download Data" mirrors DICOM sets fetched from the network -
+	// see CDataDownloader
+	std::string msDataRoot = "d:\\IQV_Data";
+
+	// "Utils > Download Data" only searches under directories whose name contains this
+	// (case-insensitive) for DICOM sets to fetch, rather than the whole source tree
+	std::string msDownloadDirNameFilter = "Water";
+
+	// Network location offered as the default starting point for "Utils > Download Data"
+	std::string msDownloadDefaultSource = "\\\\192.168.110.219\\Production";
+
 	// Shows developer-only menu sections (Process/Set/Get/Test); real users only need File/Help.
 	// Defaults to on so this doesn't change what's visible on a dev machine until explicitly turned off.
 	bool mbDeveloperMode = true;

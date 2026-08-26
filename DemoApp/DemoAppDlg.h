@@ -61,6 +61,7 @@ public:
 	afx_msg void OnFileOpencasescoring();
 	afx_msg void OnFileOpenbatchscoring();
 	afx_msg void OnTestFinddicomsets();
+	afx_msg void OnUtilsDownloaddata();
 	afx_msg void OnFileExit();
 	//afx_msg void OnProcessSmooth();
 
