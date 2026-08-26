@@ -40,6 +40,8 @@ void CConfig::SaveToFile()
 
 	dumpFile.Write("min_ct_threshold", mMinThreshold - CT_BIAS);
 	dumpFile.Write("max_ct_threshold", mMaxThreshold - CT_BIAS);
+	dumpFile.Write("wide_min_threshold", mWideMinThreshold - CT_BIAS);
+	dumpFile.Write("filter_wide_image_range", mbFilterWideImageRange);
 	dumpFile.Write("histogram_min", mHistogramMin - CT_BIAS);
 	dumpFile.Write("histogram_max", mHistogramMax - CT_BIAS);
 	dumpFile.Write("histogram_cut_percent", mHistogramCutPercent);
@@ -75,6 +77,9 @@ void CConfig::ReadFromFile()
 		mMinThreshold += CT_BIAS;
 	if (pRoot->GetValue("max_ct_threshold", mMaxThreshold))
 		mMaxThreshold += CT_BIAS;
+	if (pRoot->GetValue("wide_min_threshold", mWideMinThreshold))
+		mWideMinThreshold += CT_BIAS;
+	pRoot->GetValue("filter_wide_image_range", mbFilterWideImageRange);
 	if (pRoot->GetValue("histogram_min", mHistogramMin))
 		mHistogramMin += CT_BIAS;
 	if (pRoot->GetValue("histogram_max", mHistogramMax))

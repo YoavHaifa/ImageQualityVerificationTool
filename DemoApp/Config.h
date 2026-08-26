@@ -13,6 +13,18 @@ public:
 	short mMinThreshold = 980;
 	short mMaxThreshold = 1080;
 
+	// Lower bound used to detect "out of range" pixels when building wide (averaged) slices -
+	// distinct from mMinThreshold, which governs ring validity during scoring, not this. Same
+	// CT_BIAS convention. No upper bound: unusually high values are still real data here.
+	short mWideMinThreshold = 500;
+
+	// When on, a wide-image pixel is only computed (by averaging mnWantedSliceWidth consecutive
+	// raw samples) if every one of those samples is at least mWideMinThreshold; otherwise it's
+	// left at 0. The first/last few images in a series often cover a smaller radius than the
+	// rest, so far-out pixels there aren't real data (read as low values) and would otherwise
+	// pull the average toward garbage. On by default - preserves the previous unconditional averaging.
+	bool mbFilterWideImageRange = true;
+
 	// Range of the per-case pixel-value histogram (research tool); same CT_BIAS convention as
 	// mMinThreshold/mMaxThreshold, so it's directly comparable to raw pixel values
 	short mHistogramMin = 924;

@@ -81,10 +81,16 @@ bool CArinetaImages::PrepareOnInit()
 	gConfig.PrintStatus("Loading...");
 	LoadFullRange();
 
-	mnPixelsInImage = mnLinesInPage * mnCols;
-
 	miFirst = GetFirst();
 	miLast = GetLast();
+
+	// LoadFullRange() has no way to report failure (it's void); detect it here instead - if the
+	// first image never actually decoded (e.g. it fails deep in DICOM parsing despite passing
+	// the sample-file screening check), nothing downstream can be trusted.
+	if (!mpSharedVolume || !mpSharedVolume->GetImageStart(miFirst))
+		return false;
+
+	mnPixelsInImage = mnLinesInPage * mnCols;
 
 	mpSharedVolume->Dump();
 
@@ -115,17 +121,44 @@ bool CArinetaImages::ComputeWideImages()
 
 	mpWideVolume->Zero();
 
+	// When gConfig.mbFilterWideImageRange is off, every value counts as "in range" - the loops
+	// below then behave exactly like the old unconditional average (outOfRangeCount always 0).
+	// When it's on, only values at least gConfig.mWideMinThreshold count: the first/last few
+	// images in a series often cover a smaller radius than the rest, so far-out pixels there
+	// aren't real data (read as low values) and would otherwise pull the average toward garbage.
+	auto isInRange = [](short value)
+	{
+		if (!gConfig.mbFilterWideImageRange)
+			return true;
+		return value >= gConfig.mWideMinThreshold;
+	};
+
 	// Copy first input image to the sum buffer
 	int iInput = miFirst;
 	short* pInput0 = mpSharedVolume->GetImageStart(iInput++);
 	if (!pInput0)
 		return false;
 
-	// Sum first n slices in sum buffer
-	vector<int> sumBuf(mnPixelsInImage);
+	// Sum first n slices in sum buffer, tracking (per pixel) how many of the samples summed so
+	// far are out of range. A wide pixel only gets a computed value once every sample in its
+	// window is in range; otherwise it's left at 0 (already zeroed above).
+	vector<int> sumBuf(mnPixelsInImage, 0);
+	vector<int> outOfRangeCount(mnPixelsInImage, 0);
+	int nValidInFirstImage = 0;
 	for (int iPix = 0; iPix < mnPixelsInImage; iPix++)
-		sumBuf[iPix] = pInput0[iPix];
+	{
+		if (isInRange(pInput0[iPix]))
+		{
+			sumBuf[iPix] = pInput0[iPix];
+			nValidInFirstImage++;
+		}
+		else
+			outOfRangeCount[iPix] = 1;
+	}
 	unsigned short nSummed = 1;
+	CString snFirstImage;
+	snFirstImage.Format("<ComputeWideImages> %d pixels valid in first image", nValidInFirstImage);
+	CMyWindows::PrintStatus(snFirstImage);
 
 	// Sum first images in sum buffer
 	while (nSummed < mnSliceWidth)
@@ -134,15 +167,23 @@ bool CArinetaImages::ComputeWideImages()
 		if (!pInput)
 			return false;
 		for (int iPix = 0; iPix < mnPixelsInImage; iPix++)
-			sumBuf[iPix] += pInput[iPix];
+		{
+			if (isInRange(pInput[iPix]))
+				sumBuf[iPix] += pInput[iPix];
+			else
+				outOfRangeCount[iPix]++;
+		}
 		nSummed++;
 	}
 
-	// Compute first average "wide" image 
+	// Compute first average "wide" image
 	int iTarget = miFirst;
 	short* pTarget = mpWideVolume->GetImageStart(iTarget++);
 	for (int iPix = 0; iPix < mnPixelsInImage; iPix++)
-		pTarget[iPix] = (short)(sumBuf[iPix] / nSummed);
+	{
+		if (outOfRangeCount[iPix] == 0)
+			pTarget[iPix] = (short)(sumBuf[iPix] / nSummed);
+	}
 
 	// Copy first target until the sliding sum window can move
 	int nSame = mnSliceWidth / 2 + 1; // Assuming "slice width" is odd
@@ -167,8 +208,18 @@ bool CArinetaImages::ComputeWideImages()
 
 		for (int iPix = 0; iPix < mnPixelsInImage; iPix++)
 		{
-			sumBuf[iPix] += (pInput[iPix] - pSub[iPix]);
-			pTarget[iPix] = (short)(sumBuf[iPix] / nSummed);
+			if (isInRange(pInput[iPix]))
+				sumBuf[iPix] += pInput[iPix];
+			else
+				outOfRangeCount[iPix]++;
+
+			if (isInRange(pSub[iPix]))
+				sumBuf[iPix] -= pSub[iPix];
+			else
+				outOfRangeCount[iPix]--;
+
+			if (outOfRangeCount[iPix] == 0)
+				pTarget[iPix] = (short)(sumBuf[iPix] / nSummed);
 		}
 	}
 
