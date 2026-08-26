@@ -22,7 +22,7 @@
     <VCProjectVersion>16.0</VCProjectVersion>
     <ProjectGuid>{8561AD42-7F1D-46C4-BC90-BE54813E707F}</ProjectGuid>
     <Keyword>MFCProj</Keyword>
-    <RootNamespace>DemoApp</RootNamespace>
+    <RootNamespace>IQV</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
     <ProjectName>IQV_tool</ProjectName>
   </PropertyGroup>
@@ -208,8 +208,8 @@ copy ..\..\ImageRLib\$(Platform)\$(Configuration)\ImageRLib.dll $(OutDir)
     <ClInclude Include="CaseReviewer.h" />
     <ClInclude Include="Config.h" />
     <ClInclude Include="DataDownloader.h" />
-    <ClInclude Include="DemoApp.h" />
-    <ClInclude Include="DemoAppDlg.h" />
+    <ClInclude Include="IQV.h" />
+    <ClInclude Include="IQVDlg.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="ImageRingsScorer.h" />
     <ClInclude Include="ImageScore.h" />
@@ -233,8 +233,8 @@ copy ..\..\ImageRLib\$(Platform)\$(Configuration)\ImageRLib.dll $(OutDir)
     <ClCompile Include="CaseReviewer.cpp" />
     <ClCompile Include="Config.cpp" />
     <ClCompile Include="DataDownloader.cpp" />
-    <ClCompile Include="DemoApp.cpp" />
-    <ClCompile Include="DemoAppDlg.cpp" />
+    <ClCompile Include="IQV.cpp" />
+    <ClCompile Include="IQVDlg.cpp" />
     <ClCompile Include="ImageRingsScorer.cpp" />
     <ClCompile Include="ImageScore.cpp" />
     <ClCompile Include="IQVManager.cpp" />
@@ -248,13 +248,13 @@ copy ..\..\ImageRLib\$(Platform)\$(Configuration)\ImageRLib.dll $(OutDir)
     <ClCompile Include="TentScorer.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="DemoApp.rc" />
+    <ResourceCompile Include="IQV.rc" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="res\DemoApp.rc2" />
+    <None Include="res\IQV.rc2" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="res\DemoApp.ico" />
+    <Image Include="res\IQV.ico" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\ImageRLib\ImageRLib.vcxproj">

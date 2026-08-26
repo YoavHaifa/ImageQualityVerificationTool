@@ -1,4 +1,4 @@
-// DemoApp.h : main header file for the PROJECT_NAME application
+// IQV.h : main header file for the PROJECT_NAME application
 //
 
 #pragma once
@@ -10,14 +10,14 @@
 #include "resource.h"		// main symbols
 
 
-// CDemoAppApp:
-// See DemoApp.cpp for the implementation of this class
+// CIQVApp:
+// See IQV.cpp for the implementation of this class
 //
 
-class CDemoAppApp : public CWinApp
+class CIQVApp : public CWinApp
 {
 public:
-	CDemoAppApp();
+	CIQVApp();
 
 // Overrides
 	public:
@@ -28,4 +28,4 @@ public:
 	DECLARE_MESSAGE_MAP()
 };
 
-extern CDemoAppApp theApp;
+extern CIQVApp theApp;

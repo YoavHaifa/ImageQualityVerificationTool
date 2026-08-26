@@ -1,9 +1,9 @@
-// DemoAppDlg.cpp : implementation file
+// IQVDlg.cpp : implementation file
 //
 
 #include "stdafx.h"
-#include "DemoApp.h"
-#include "DemoAppDlg.h"
+#include "IQV.h"
+#include "IQVDlg.h"
 #include "ArinetaImages.h"
 #include "RingsScorer.h"
 #include "IQVManager.h"
@@ -30,7 +30,7 @@
 #define new DEBUG_NEW
 #endif
 
-CDemoAppDlg* gpDlg = nullptr;
+CIQVDlg* gpDlg = nullptr;
 
 // CAboutDlg dialog used for App About
 
@@ -63,11 +63,11 @@ BEGIN_MESSAGE_MAP(CAboutDlg, CDialog)
 END_MESSAGE_MAP()
 
 
-// CDemoAppDlg dialog
+// CIQVDlg dialog
 
 
-CDemoAppDlg::CDemoAppDlg(CWnd* pParent /*=NULL*/)
-	: CMyDialogEx(CDemoAppDlg::IDD, pParent)
+CIQVDlg::CIQVDlg(CWnd* pParent /*=NULL*/)
+	: CMyDialogEx(CIQVDlg::IDD, pParent)
 	, mpImageRIF(NULL)
 	, mpSharedVolume(NULL)
 	, mnImagesInRow(10)
@@ -87,11 +87,11 @@ CDemoAppDlg::CDemoAppDlg(CWnd* pParent /*=NULL*/)
 	, mMyViewerOffsetY(250)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
-	gfLog.Log("<CDemoAppDlg::CDemoAppDlg>");
+	gfLog.Log("<CIQVDlg::CIQVDlg>");
 }
-CDemoAppDlg::~CDemoAppDlg(void)
+CIQVDlg::~CIQVDlg(void)
 {
-	gfLog.Log("<CDemoAppDlg::~CDemoAppDlg>");
+	gfLog.Log("<CIQVDlg::~CIQVDlg>");
 	if (mpIQVManager)
 		delete mpIQVManager;
 	if (mpCaseReviewer)
@@ -113,42 +113,42 @@ CDemoAppDlg::~CDemoAppDlg(void)
 			delete pImages;
 	}
 }
-void CDemoAppDlg::DoDataExchange(CDataExchange* pDX)
+void CIQVDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
 }
 
-BEGIN_MESSAGE_MAP(CDemoAppDlg, CDialog)
+BEGIN_MESSAGE_MAP(CIQVDlg, CDialog)
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
 	//}}AFX_MSG_MAP
-	ON_BN_CLICKED(IDC_BUTTON_SHARED, &CDemoAppDlg::OnBnClickedButtonShared)
-	ON_BN_CLICKED(IDC_BUTTON_ADD_ROI, &CDemoAppDlg::OnBnClickedButtonAddRoi)
-	ON_BN_CLICKED(IDC_BUTTON_UP_POS, &CDemoAppDlg::OnBnClickedButtonUpPos)
-	ON_COMMAND(ID_FILE_OPEN32771, &CDemoAppDlg::OnFileOpen32771)
-	ON_COMMAND(ID_FILE_BATCHSCORING, &CDemoAppDlg::OnFileBatchscoring)
-	ON_COMMAND(ID_FILE_OPENCASESCORING, &CDemoAppDlg::OnFileOpencasescoring)
-	ON_COMMAND(ID_FILE_OPENBATCHSCORING, &CDemoAppDlg::OnFileOpenbatchscoring)
-	ON_COMMAND(ID_TEST_FINDDICOMSETS, &CDemoAppDlg::OnTestFinddicomsets)
-	ON_COMMAND(ID_UTILS_DOWNLOADDATA, &CDemoAppDlg::OnUtilsDownloaddata)
-	ON_COMMAND(ID_FILE_EXIT, &CDemoAppDlg::OnFileExit)
-	ON_BN_CLICKED(IDC_BUTTON_ADD_COLORS, &CDemoAppDlg::OnBnClickedButtonAddColors)
-	ON_BN_CLICKED(IDC_OK, &CDemoAppDlg::OnBnClickedOk)
-	ON_BN_CLICKED(IDC_CANCEL, &CDemoAppDlg::OnBnClickedCancel)
-	ON_BN_CLICKED(IDC_BUTTON_MAX, &CDemoAppDlg::OnBnClickedButtonMax)
-	ON_BN_CLICKED(IDC_BUTTON_NEXT, &CDemoAppDlg::OnBnClickedButtonNext)
-	ON_BN_CLICKED(IDC_BUTTON_PREV, &CDemoAppDlg::OnBnClickedButtonPrev)
-	ON_CBN_SELCHANGE(IDC_COMBO_SCORE_TYPE, &CDemoAppDlg::OnCbnSelchangeComboScoreType)
-	ON_BN_CLICKED(IDC_BUTTON_WORST_CASE, &CDemoAppDlg::OnBnClickedButtonWorstCase)
-	ON_BN_CLICKED(IDC_BUTTON_NEXT_CASE, &CDemoAppDlg::OnBnClickedButtonNextCase)
-	ON_BN_CLICKED(IDC_BUTTON_PREV_CASE, &CDemoAppDlg::OnBnClickedButtonPrevCase)
+	ON_BN_CLICKED(IDC_BUTTON_SHARED, &CIQVDlg::OnBnClickedButtonShared)
+	ON_BN_CLICKED(IDC_BUTTON_ADD_ROI, &CIQVDlg::OnBnClickedButtonAddRoi)
+	ON_BN_CLICKED(IDC_BUTTON_UP_POS, &CIQVDlg::OnBnClickedButtonUpPos)
+	ON_COMMAND(ID_FILE_OPEN32771, &CIQVDlg::OnFileOpen32771)
+	ON_COMMAND(ID_FILE_BATCHSCORING, &CIQVDlg::OnFileBatchscoring)
+	ON_COMMAND(ID_FILE_OPENCASESCORING, &CIQVDlg::OnFileOpencasescoring)
+	ON_COMMAND(ID_FILE_OPENBATCHSCORING, &CIQVDlg::OnFileOpenbatchscoring)
+	ON_COMMAND(ID_TEST_FINDDICOMSETS, &CIQVDlg::OnTestFinddicomsets)
+	ON_COMMAND(ID_UTILS_DOWNLOADDATA, &CIQVDlg::OnUtilsDownloaddata)
+	ON_COMMAND(ID_FILE_EXIT, &CIQVDlg::OnFileExit)
+	ON_BN_CLICKED(IDC_BUTTON_ADD_COLORS, &CIQVDlg::OnBnClickedButtonAddColors)
+	ON_BN_CLICKED(IDC_OK, &CIQVDlg::OnBnClickedOk)
+	ON_BN_CLICKED(IDC_CANCEL, &CIQVDlg::OnBnClickedCancel)
+	ON_BN_CLICKED(IDC_BUTTON_MAX, &CIQVDlg::OnBnClickedButtonMax)
+	ON_BN_CLICKED(IDC_BUTTON_NEXT, &CIQVDlg::OnBnClickedButtonNext)
+	ON_BN_CLICKED(IDC_BUTTON_PREV, &CIQVDlg::OnBnClickedButtonPrev)
+	ON_CBN_SELCHANGE(IDC_COMBO_SCORE_TYPE, &CIQVDlg::OnCbnSelchangeComboScoreType)
+	ON_BN_CLICKED(IDC_BUTTON_WORST_CASE, &CIQVDlg::OnBnClickedButtonWorstCase)
+	ON_BN_CLICKED(IDC_BUTTON_NEXT_CASE, &CIQVDlg::OnBnClickedButtonNextCase)
+	ON_BN_CLICKED(IDC_BUTTON_PREV_CASE, &CIQVDlg::OnBnClickedButtonPrevCase)
 END_MESSAGE_MAP()
 
 
-// CDemoAppDlg message handlers
+// CIQVDlg message handlers
 
-BOOL CDemoAppDlg::OnInitDialog()
+BOOL CIQVDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 
@@ -205,7 +205,7 @@ BOOL CDemoAppDlg::OnInitDialog()
 			{
 				CString sLabel;
 				pMenu->GetMenuString(i, sLabel, MF_BYPOSITION);
-				if (sLabel != "File" && sLabel != "Help" && sLabel != "Utils")
+				if (sLabel != "File" && sLabel != "Utils")
 					pMenu->RemoveMenu(i, MF_BYPOSITION);
 			}
 			DrawMenuBar();
@@ -216,7 +216,7 @@ BOOL CDemoAppDlg::OnInitDialog()
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
 
-void CDemoAppDlg::OnSysCommand(UINT nID, LPARAM lParam)
+void CIQVDlg::OnSysCommand(UINT nID, LPARAM lParam)
 {
 	if ((nID & 0xFFF0) == IDM_ABOUTBOX)
 	{
@@ -233,7 +233,7 @@ void CDemoAppDlg::OnSysCommand(UINT nID, LPARAM lParam)
 //  to draw the icon.  For MFC applications using the document/view model,
 //  this is automatically done for you by the framework.
 
-void CDemoAppDlg::OnPaint()
+void CIQVDlg::OnPaint()
 {
 	if (IsIconic())
 	{
@@ -257,7 +257,7 @@ void CDemoAppDlg::OnPaint()
 		CDialog::OnPaint();
 	}
 }
-LRESULT CDemoAppDlg::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT CIQVDlg::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
 {
 	char zBuf[128];
 	if (mpImageRIF)
@@ -336,7 +336,7 @@ LRESULT CDemoAppDlg::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
     }
 	return CDialog::WindowProc(message, wParam, lParam);
 }
-void CDemoAppDlg::OnOK()
+void CIQVDlg::OnOK()
 {
 	static int i = 0;
 	i++;
@@ -344,11 +344,11 @@ void CDemoAppDlg::OnOK()
 }
 // The system calls this function to obtain the cursor to display while the user drags
 //  the minimized window.
-HCURSOR CDemoAppDlg::OnQueryDragIcon()
+HCURSOR CIQVDlg::OnQueryDragIcon()
 {
 	return static_cast<HCURSOR>(m_hIcon);
 }
-void CDemoAppDlg::OnBnClickedButtonShared()
+void CIQVDlg::OnBnClickedButtonShared()
 {
 	LoadViewer();
 
@@ -364,7 +364,7 @@ void CDemoAppDlg::OnBnClickedButtonShared()
 		mpImageRIF->DisplayShared(mpSharedVolume);
 	}
 }
-void CDemoAppDlg::LoadViewer(void)
+void CIQVDlg::LoadViewer(void)
 {
 	if (mpImageRIF)
 		return;
@@ -374,7 +374,7 @@ void CDemoAppDlg::LoadViewer(void)
 	mpImageRIF->SetViewerBroadPos();
 	mpImageRIF->SetIndicesToUpdatePosition2d(miPos,miPos2d);
 }
-bool CDemoAppDlg::LoadViewerWithImages(const char *zName)
+bool CIQVDlg::LoadViewerWithImages(const char *zName)
 {
 	if (mpImageRIF)
 		return false;
@@ -387,7 +387,7 @@ bool CDemoAppDlg::LoadViewerWithImages(const char *zName)
 	mbDisplayReadyImages = true;
 	return true;
 }
-void CDemoAppDlg::InitSharedVolume(void)
+void CIQVDlg::InitSharedVolume(void)
 {
 	FILE *pfLog = CMyWindows::FOpenLogFile("InitSharedVolume");
 	mpSharedVolume->Zero();
@@ -422,7 +422,7 @@ void CDemoAppDlg::InitSharedVolume(void)
 	if (pfLog)
 		fclose(pfLog);
 }
-void CDemoAppDlg::OnBnClickedButtonAddRoi()
+void CIQVDlg::OnBnClickedButtonAddRoi()
 {
 	if (!mpImageRIF)
 		return;
@@ -439,7 +439,7 @@ void CDemoAppDlg::OnBnClickedButtonAddRoi()
 	pRoi->mbReportClientOnActivation = true;
 	mpImageRIF->DisplayGraphic(pRoi);
 }
-//void CDemoAppDlg::DisplayPos(void)
+//void CIQVDlg::DisplayPos(void)
 //{
 //	CWnd *pWnd = GetDlgItem(IDC_EDIT_POS1);
 //	if (pWnd)
@@ -459,7 +459,7 @@ void CDemoAppDlg::OnBnClickedButtonAddRoi()
 //		pWnd->SetWindowText(zBuf);
 //	}
 //}
-void CDemoAppDlg::GetPos1(void)
+void CIQVDlg::GetPos1(void)
 {
 	CWnd *pWnd = GetDlgItem(IDC_EDIT_POS1);
 	if (pWnd)
@@ -476,7 +476,7 @@ void CDemoAppDlg::GetPos1(void)
 	else
 		miPos = 0;
 }
-void CDemoAppDlg::OnBnClickedButtonUpPos()
+void CIQVDlg::OnBnClickedButtonUpPos()
 {
 	GetPos1();
 	CWnd *pWnd = GetDlgItem(IDC_EDIT_POS2);
@@ -501,7 +501,7 @@ void CDemoAppDlg::OnBnClickedButtonUpPos()
 		}
 	}
 }
-void CDemoAppDlg::OnFileOpen32771()
+void CIQVDlg::OnFileOpen32771()
 {
 	CMyFileDialog dlg(CMyFileDialog::FD_OPEN,"Open Dicom Images for Display","d:\\Cirs_Images");
 	if (dlg.DoModal())
@@ -550,7 +550,7 @@ void CDemoAppDlg::OnFileOpen32771()
 		}
 	}
 }
-void CDemoAppDlg::OnFileBatchscoring()
+void CIQVDlg::OnFileBatchscoring()
 {
 	CMyFolderDialog dlg("Select Root Directory for Batch Scoring");
 	if (!dlg.DoModal())
@@ -575,7 +575,7 @@ void CDemoAppDlg::OnFileBatchscoring()
 
 	DisplayBatchCase();
 }
-void CDemoAppDlg::OnFileOpencasescoring()
+void CIQVDlg::OnFileOpencasescoring()
 {
 	if (mpImageRIF)
 		return;
@@ -609,7 +609,7 @@ void CDemoAppDlg::OnFileOpencasescoring()
 		OnCurrentSelectedByScorer(miPos);
 	}
 }
-void CDemoAppDlg::OnFileOpenbatchscoring()
+void CIQVDlg::OnFileOpenbatchscoring()
 {
 	if (mpImageRIF)
 		return;
@@ -620,28 +620,28 @@ void CDemoAppDlg::OnFileOpenbatchscoring()
 
 	DisplayBatchCase();
 }
-void CDemoAppDlg::OnBnClickedButtonWorstCase()
+void CIQVDlg::OnBnClickedButtonWorstCase()
 {
 	if (!mpBatchReviewer)
 		return;
 	if (mpBatchReviewer->DisplayWorstCase())
 		DisplayBatchCase();
 }
-void CDemoAppDlg::OnBnClickedButtonNextCase()
+void CIQVDlg::OnBnClickedButtonNextCase()
 {
 	if (!mpBatchReviewer)
 		return;
 	if (mpBatchReviewer->DisplayNextCase())
 		DisplayBatchCase();
 }
-void CDemoAppDlg::OnBnClickedButtonPrevCase()
+void CIQVDlg::OnBnClickedButtonPrevCase()
 {
 	if (!mpBatchReviewer)
 		return;
 	if (mpBatchReviewer->DisplayPrevCase())
 		DisplayBatchCase();
 }
-void CDemoAppDlg::DisplayBatchCase()
+void CIQVDlg::DisplayBatchCase()
 {
 	CIQVManager* pManager = mpBatchReviewer->GetManager();
 	mpImages = pManager->GetImages();
@@ -674,7 +674,7 @@ void CDemoAppDlg::DisplayBatchCase()
 		mpImageRIF->DisplayShared(mpImages->GetSharedCtPerRadiusVolume());
 	OnCurrentSelectedByScorer(miPos);
 }
-void CDemoAppDlg::OnTestFinddicomsets()
+void CIQVDlg::OnTestFinddicomsets()
 {
 	CMyFolderDialog dlg("Select Root Directory for Sample Files Scan");
 	if (!dlg.DoModal())
@@ -692,7 +692,7 @@ void CDemoAppDlg::OnTestFinddicomsets()
 		n, (LPCTSTR)dlg.msFolderName, (LPCTSTR)sfLogName);
 	CMyWindows::MessBox(sMsg, "Sample Files Scan");
 }
-void CDemoAppDlg::OnUtilsDownloaddata()
+void CIQVDlg::OnUtilsDownloaddata()
 {
 	CMyFolderDialog dlg("Select Root Directory to Download From", gConfig.msDownloadDefaultSource.c_str());
 	if (!dlg.DoModal())
@@ -706,11 +706,11 @@ void CDemoAppDlg::OnUtilsDownloaddata()
 		nCopied, gConfig.msDownloadDirNameFilter.c_str(), (LPCTSTR)dlg.msFolderName, gConfig.msDataRoot.c_str());
 	CMyWindows::MessBox(sMsg, "Download Data");
 }
-void CDemoAppDlg::OnFileExit()
+void CIQVDlg::OnFileExit()
 {
 	OnCancel();
 }
-void CDemoAppDlg::OnBnClickedButtonAddColors()
+void CIQVDlg::OnBnClickedButtonAddColors()
 {
 	if (!mpImages && !mpSharedVolume)
 		return;
@@ -771,7 +771,7 @@ void CDemoAppDlg::OnBnClickedButtonAddColors()
 	
 	mpImageRIF->DisplayShared(mpColors);
 }
-void CDemoAppDlg::DisplayCircle(CDataCoordinates& center, float radius)
+void CIQVDlg::DisplayCircle(CDataCoordinates& center, float radius)
 {
 	static int count = 0;
 	//if (count > 0)
@@ -790,14 +790,14 @@ void CDemoAppDlg::DisplayCircle(CDataCoordinates& center, float radius)
 	mpImageRIF->SetCurrentDR(0);
 	mpImageRIF->DisplayGraphic(pCircle);
 }
-void CDemoAppDlg::OnCurrentSelectedByScorer(int iPos)
+void CIQVDlg::OnCurrentSelectedByScorer(int iPos)
 {
 	miPos = iPos;
 	mpImages->SetCurrent(miPos);
 	mpImageRIF->SetPosition(mpImages->GetPatternName(), miPos);
 	DisplayScore();
 }
-void CDemoAppDlg::DisplayScore()
+void CIQVDlg::DisplayScore()
 {
 	const CImageScore& score = mpRingsScorer->ScoreCurrentImage(miPos);
 	SetParameter(IDC_EDIT_I_IMAGE, miPos);
@@ -806,28 +806,28 @@ void CDemoAppDlg::DisplayScore()
 	if (score.miRing >= 1)
 		DisplayCircle(mpImages->GetRotationCenter(), (float)score.miRing);
 }
-void CDemoAppDlg::OnBnClickedOk()
+void CIQVDlg::OnBnClickedOk()
 {
 	gConfig.SaveToFile();
 	CMyDialogEx::OnOK();
 }
-void CDemoAppDlg::OnBnClickedCancel()
+void CIQVDlg::OnBnClickedCancel()
 {
 	CMyDialogEx::OnCancel();
 }
-void CDemoAppDlg::OnBnClickedButtonMax()
+void CIQVDlg::OnBnClickedButtonMax()
 {
 	mpRingsScorer->DisplayMaxPeak();
 }
-void CDemoAppDlg::OnBnClickedButtonNext()
+void CIQVDlg::OnBnClickedButtonNext()
 {
 	mpRingsScorer->DisplayNextPeak();
 }
-void CDemoAppDlg::OnBnClickedButtonPrev()
+void CIQVDlg::OnBnClickedButtonPrev()
 {
 	mpRingsScorer->DisplayPrevPeak();
 }
-void CDemoAppDlg::OnCbnSelchangeComboScoreType()
+void CIQVDlg::OnCbnSelchangeComboScoreType()
 {
 	CComboBox* pCombo = (CComboBox*)GetDlgItem(IDC_COMBO_SCORE_TYPE);
 	int iSel = pCombo ? pCombo->GetCurSel() : -1;

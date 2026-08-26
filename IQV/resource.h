@@ -1,11 +1,11 @@
 //{{NO_DEPENDENCIES}}
 // Microsoft Visual C++ generated include file.
-// Used by DemoApp.rc
+// Used by IQV.rc
 //
 #define IDM_ABOUTBOX                    0x0010
 #define IDD_ABOUTBOX                    100
 #define IDS_ABOUTBOX                    101
-#define IDD_DEMOAPP_DIALOG              102
+#define IDD_IQV_DIALOG                  102
 #define IDD_BATCH_COMPLETE              130
 #define IDR_MAINFRAME                   128
 #define IDR_MENU1                       129
@@ -37,7 +37,6 @@
 #define IDC_STATIC_BATCH_COMPLETE_MSG   1025
 #define ID_FILE_OPEN32771               32771
 #define ID_FILE_EXIT                    32772
-#define ID_HELP_DEMOAPPV1               32773
 #define ID_FILE_OPENCOLORER             32788
 #define ID_FILE_OPENBINARY              32791
 #define ID_TEST_FINDDICOMSETS           32792

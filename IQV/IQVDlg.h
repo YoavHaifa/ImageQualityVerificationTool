@@ -1,22 +1,22 @@
 #pragma once
 
-// DemoAppDlg.h : header file
+// IQVDlg.h : header file
 //
 
 #include "..\..\ImageRLib\TSharedImage.h"
 #include "..\..\yUtils\MyDialogEx.h"
 #include "resource.h"		// main symbols
 
-// CDemoAppDlg dialog
-class CDemoAppDlg : public CMyDialogEx
+// CIQVDlg dialog
+class CIQVDlg : public CMyDialogEx
 {
 // Construction
 public:
-	CDemoAppDlg(CWnd* pParent = NULL);	// standard constructor
-	~CDemoAppDlg(void);	// standard constructor
+	CIQVDlg(CWnd* pParent = NULL);	// standard constructor
+	~CIQVDlg(void);	// standard constructor
 
 // Dialog Data
-	enum { IDD = IDD_DEMOAPP_DIALOG };
+	enum { IDD = IDD_IQV_DIALOG };
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV support
@@ -91,4 +91,4 @@ public:
 	void DisplayBatchCase();
 };
 
-extern CDemoAppDlg* gpDlg;
+extern CIQVDlg* gpDlg;

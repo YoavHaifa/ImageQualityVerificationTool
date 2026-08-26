@@ -1,9 +1,9 @@
-// DemoApp.cpp : Defines the class behaviors for the application.
+// IQV.cpp : Defines the class behaviors for the application.
 //
 
 #include "stdafx.h"
-#include "DemoApp.h"
-#include "DemoAppDlg.h"
+#include "IQV.h"
+#include "IQVDlg.h"
 #include "BatchScorer.h"
 #include "Config.h"
 #include "..\..\yUtils\MyWindows.h"
@@ -14,30 +14,30 @@
 #endif
 
 
-// CDemoAppApp
+// CIQVApp
 
-BEGIN_MESSAGE_MAP(CDemoAppApp, CWinApp)
+BEGIN_MESSAGE_MAP(CIQVApp, CWinApp)
 	ON_COMMAND(ID_HELP, &CWinApp::OnHelp)
 END_MESSAGE_MAP()
 
 
-// CDemoAppApp construction
+// CIQVApp construction
 
-CDemoAppApp::CDemoAppApp()
+CIQVApp::CIQVApp()
 {
 	// TODO: add construction code here,
 	// Place all significant initialization in InitInstance
 }
 
 
-// The one and only CDemoAppApp object
+// The one and only CIQVApp object
 
-CDemoAppApp theApp;
+CIQVApp theApp;
 
 
-// CDemoAppApp initialization
+// CIQVApp initialization
 
-BOOL CDemoAppApp::InitInstance()
+BOOL CIQVApp::InitInstance()
 {
 	// InitCommonControlsEx() is required on Windows XP if an application
 	// manifest specifies use of ComCtl32.dll version 6 or later to enable
@@ -84,7 +84,7 @@ BOOL CDemoAppApp::InitInstance()
 		return FALSE;
 	}
 
-	CDemoAppDlg dlg;
+	CIQVDlg dlg;
 	m_pMainWnd = &dlg;
 	CMyWindows::SetMainWindow(&dlg);
 	INT_PTR nResponse = dlg.DoModal();

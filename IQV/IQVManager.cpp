@@ -3,7 +3,7 @@
 #include "ArinetaImages.h"
 #include "RingsScorer.h"
 #include "Config.h"
-#include "DemoAppDlg.h"
+#include "IQVDlg.h"
 #include "..\..\yUtils\FileName.h"
 #include "..\..\yUtils\MyWindows.h"
 #include "..\..\yUtils\FilesList.h"

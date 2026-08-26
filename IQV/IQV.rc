@@ -26,16 +26,16 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 
 IDD_ABOUTBOX DIALOGEX 0, 0, 235, 55
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "About DemoApp"
+CAPTION "About IQV_tool"
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     ICON            IDR_MAINFRAME,IDC_STATIC,11,17,20,20
-    LTEXT           "DemoApp Version 1.0",IDC_STATIC,40,10,119,8,SS_NOPREFIX
+    LTEXT           "IQV_tool Version 1.0",IDC_STATIC,40,10,119,8,SS_NOPREFIX
     LTEXT           "Copyright (C) 2008",IDC_STATIC,40,25,119,8
     DEFPUSHBUTTON   "OK",IDOK,178,7,50,16,WS_GROUP
 END
 
-IDD_DEMOAPP_DIALOG DIALOGEX 5, 5, 485, 183
+IDD_IQV_DIALOG DIALOGEX 5, 5, 485, 183
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_MINIMIZEBOX | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_APPWINDOW
 CAPTION "Image Quality Verification App"
@@ -104,9 +104,9 @@ BEGIN
             VALUE "CompanyName", "TODO: <Company name>"
             VALUE "FileDescription", "TODO: <File description>"
             VALUE "FileVersion", "1.0.0.1"
-            VALUE "InternalName", "DemoApp.exe"
+            VALUE "InternalName", "IQV_tool.exe"
             VALUE "LegalCopyright", "TODO: (c) <Company name>.  All rights reserved."
-            VALUE "OriginalFilename", "DemoApp.exe"
+            VALUE "OriginalFilename", "IQV_tool.exe"
             VALUE "ProductName", "TODO: <Product name>"
             VALUE "ProductVersion", "1.0.0.1"
         END
@@ -134,7 +134,7 @@ BEGIN
         BOTTOMMARGIN, 48
     END
 
-    IDD_DEMOAPP_DIALOG, DIALOG
+    IDD_IQV_DIALOG, DIALOG
     BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 478
@@ -168,10 +168,6 @@ BEGIN
     BEGIN
         MENUITEM "Download Data",               ID_UTILS_DOWNLOADDATA
     END
-    POPUP "Help"
-    BEGIN
-        MENUITEM "DemoApp v1.0",                ID_HELP_DEMOAPPV1
-    END
 END
 
 
@@ -180,7 +176,7 @@ END
 // AFX_DIALOG_LAYOUT
 //
 
-IDD_DEMOAPP_DIALOG AFX_DIALOG_LAYOUT
+IDD_IQV_DIALOG AFX_DIALOG_LAYOUT
 BEGIN
     0
 END
@@ -193,7 +189,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_ABOUTBOX            "&About DemoApp..."
+    IDS_ABOUTBOX            "&About IQV_tool..."
 END
 
 #endif    // English (United States) resources
@@ -234,7 +230,7 @@ BEGIN
     "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)\r\n"
     "LANGUAGE 9, 1\r\n"
     "#pragma code_page(1252)\r\n"
-    "#include ""res\\DemoApp.rc2""  // non-Microsoft Visual C++ edited resources\r\n"
+    "#include ""res\\IQV.rc2""  // non-Microsoft Visual C++ edited resources\r\n"
     "#include ""afxres.rc""     // Standard components\r\n"
     "#endif\r\n"
     "\0"
@@ -250,7 +246,7 @@ END
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDR_MAINFRAME           ICON                    "res\\DemoApp.ico"
+IDR_MAINFRAME           ICON                    "res\\IQV.ico"
 
 #endif    // English (United Kingdom) resources
 /////////////////////////////////////////////////////////////////////////////
@@ -270,7 +266,7 @@ IDR_MAINFRAME           ICON                    "res\\DemoApp.ico"
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
 LANGUAGE 9, 1
 #pragma code_page(1252)
-#include "res\DemoApp.rc2"  // non-Microsoft Visual C++ edited resources
+#include "res\IQV.rc2"  // non-Microsoft Visual C++ edited resources
 #include "afxres.rc"     // Standard components
 #endif
 

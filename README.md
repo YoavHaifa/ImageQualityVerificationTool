@@ -8,20 +8,20 @@ A native C++/MFC Windows desktop application for detecting and scoring **ring ar
 
 | Project | Location | Role |
 |---|---|---|
-| `DemoApp` | `DemoApp/` | The application executable (MFC dialog app) |
+| `IQV` | `IQV/` | The application executable (MFC dialog app) |
 | `yUtils` | `../yUtils/` (sibling repo) | Shared utilities: DICOM I/O, file logging, math/dialog helpers |
 | `ImageRLib` | `../ImageRLib/` (sibling repo) | Imaging library: volumes, ROI, segmentation, image comparison |
 
-> **Note:** `yUtils` and `ImageRLib` are separate repositories expected to be checked out as siblings of this repo (e.g. `D:\SW_IR\yUtils`, `D:\SW_IR\ImageRLib`), since `DemoApp` references them via relative paths (`..\..\yUtils\...`, `..\..\ImageRLib\...`).
+> **Note:** `yUtils` and `ImageRLib` are separate repositories expected to be checked out as siblings of this repo (e.g. `D:\SW_IR\yUtils`, `D:\SW_IR\ImageRLib`), since `IQV` references them via relative paths (`..\..\yUtils\...`, `..\..\ImageRLib\...`).
 
-## Key components (`DemoApp/`)
+## Key components (`IQV/`)
 
 - **`ArinetaImages.h/.cpp`** (`CArinetaImages`) — loads Arineta DICOM CT volumes, computes the rotation center, and builds averaged "wide" volumes from consecutive slices.
 - **`RadiusImage.h/.cpp`** — builds a per-pixel radial-distance map from the rotation center, used to sample ring positions.
 - **`RingsScorer.h/.cpp`** / **`ImageRingsScorer.h/.cpp`** (`CRingsScorer`) — scores each slice for ring-artifact severity and ranks "peaks" (worst slices) for navigation (`DisplayMaxPeak` / `NextPeak` / `PrevPeak`).
 - **`Config.h/.cpp`** (`CConfig gConfig`) — global configuration: intensity thresholds (`mMinThreshold`/`mMaxThreshold`, CT bias 1024), erode level, slice-averaging width, score-graph output directory. Supports save/load to file.
-- **`DemoAppDlg.h/.cpp`** (`CDemoAppDlg`) — main MFC dialog UI: opens datasets, displays the image viewer, ROI tools, color mapping, and peak navigation buttons (Max/Next/Prev, Add ROI, Shared, etc.).
-- **`DemoApp.cpp`** — application entry point (`CDemoAppApp theApp`); initializes config/logging and shows the main dialog.
+- **`IQVDlg.h/.cpp`** (`CIQVDlg`) — main MFC dialog UI: opens datasets, displays the image viewer, ROI tools, color mapping, and peak navigation buttons (Max/Next/Prev, Add ROI, Shared, etc.).
+- **`IQV.cpp`** — application entry point (`CIQVApp theApp`); initializes config/logging and shows the main dialog.
 
 Supporting shared libraries (outside this repo):
 - **`yUtils`** — `CFileLogger` (global `gfLog`) file logging, DICOM tag helpers, generic dialog/math utilities.
@@ -32,7 +32,7 @@ Supporting shared libraries (outside this repo):
 1. Ensure the sibling repos `yUtils` and `ImageRLib` are checked out next to this repo.
 2. Open `IQV_tool.sln` in Visual Studio (toolset v145, Windows 10 SDK).
 3. Build the `Debug` or `Release` configuration for `x86` or `x64`.
-4. Run `DemoApp` as the startup project.
+4. Run `IQV` as the startup project.
 
 No NuGet/external package dependencies — this is a pure native C++ project.
 

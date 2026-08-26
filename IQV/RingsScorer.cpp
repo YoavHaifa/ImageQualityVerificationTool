@@ -6,7 +6,7 @@
 #include "ImageScore.h"
 #include "ScorerBase.h"
 #include "Config.h"
-#include "DemoAppDlg.h"
+#include "IQVDlg.h"
 #include "..\..\yUtils\MyWindows.h"
 #include <string>
 #include <format>
