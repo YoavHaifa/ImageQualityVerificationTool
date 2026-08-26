@@ -62,6 +62,12 @@ public:
 	// duration of a run rather than passed to every case - not read from/written to file.
 	std::string msBatchRootDir;
 
+	// Full path of the directory tree the current batch run was scanned from (see
+	// CBatchScorer::RunOnDirTree), or empty outside of batch scoring. Used by
+	// CIQVManager::LoadImages to compose a case name from the real "junction" directories
+	// between this root and each set - not read from/written to file.
+	std::string msBatchScanRootPath;
+
 	// Per-scorer directory with one ring-detail CSV per image (heavy: one dir + N files per scorer);
 	// off by default so it doesn't blow up when batch-scoring many sets.
 	bool mbLogImageRingDetails = false;

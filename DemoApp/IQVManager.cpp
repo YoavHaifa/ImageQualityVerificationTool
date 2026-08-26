@@ -6,6 +6,7 @@
 #include "DemoAppDlg.h"
 #include "..\..\yUtils\FileName.h"
 #include "..\..\yUtils\MyWindows.h"
+#include "..\..\yUtils\FilesList.h"
 #include "..\..\yUtils\YamlParser.h"
 #include <format>
 #include <vector>
@@ -25,14 +26,23 @@ bool CIQVManager::LoadImages(const char* zImageFileName, int iCaseIndex)
 	CArinetaImages::SetDebug(0xff);
 	mpImages = new CArinetaImages(zImageFileName);
 
-	// The images' immediate directory is sometimes just a generic wrapper name ("Dicom") - only
-	// then does its parent directory hold the significant, case-identifying name instead.
 	CString sDicomDir(mpImages->GetPath());
 	if (!sDicomDir.IsEmpty() && (sDicomDir.Right(1) == "\\" || sDicomDir.Right(1) == "/"))
 		sDicomDir = sDicomDir.Left(sDicomDir.GetLength() - 1);
-	CString sCaseName = CFileName::GetLastInPath(sDicomDir);
-	if (sCaseName.CompareNoCase("Dicom") == 0)
-		sCaseName = CFileName::GetLastDirName(sDicomDir);
+
+	CString sCaseName;
+	if (!gConfig.msBatchScanRootPath.empty())
+		sCaseName = ComposeCaseNameFromJunctions(gConfig.msBatchScanRootPath.c_str(), sDicomDir);
+	else
+	{
+		// No batch-scan root to compose a junction-based name from (single open, or reviewing
+		// already-saved results) - fall back to the simple rule: the images' immediate directory
+		// is sometimes just a generic wrapper name ("Dicom"), in which case its parent directory
+		// holds the significant, case-identifying name instead.
+		sCaseName = CFileName::GetLastInPath(sDicomDir);
+		if (sCaseName.CompareNoCase("Dicom") == 0)
+			sCaseName = CFileName::GetLastDirName(sDicomDir);
+	}
 	gConfig.SetCurrentCase(sCaseName, iCaseIndex);
 
 	// "Current Case" reflects whichever case is loading right now, in every flow (single-open,
@@ -43,6 +53,38 @@ bool CIQVManager::LoadImages(const char* zImageFileName, int iCaseIndex)
 	mpImages->ComputeRotationCenter();
 
 	return mpImages->PrepareOnInit();
+}
+CString CIQVManager::ComposeCaseNameFromJunctions(const CString& sRoot, const CString& sSetDir)
+{
+	if (!CFileName::IsSubDir(sSetDir, sRoot))
+		return CFileName::GetLastInPath(sSetDir); // shouldn't happen - sSetDir wasn't found under sRoot
+
+	CString sRelative(sSetDir.Mid(sRoot.GetLength()));
+	while (!sRelative.IsEmpty() && (sRelative[0] == '\\' || sRelative[0] == '/'))
+		sRelative = sRelative.Mid(1);
+
+	CString sCaseName;
+	CString sCurrentDir(sRoot);
+	while (!sRelative.IsEmpty())
+	{
+		int iSep = sRelative.FindOneOf("\\/");
+		CString sSegment((iSep < 0) ? sRelative : sRelative.Left(iSep));
+		sRelative = (iSep < 0) ? CString() : sRelative.Mid(iSep + 1);
+
+		// A real junction: sCurrentDir had more than one real subdirectory to choose from -
+		// sSegment is whichever one was actually taken toward sSetDir, so it's the informative part
+		CFilesList subDirs;
+		CMyWindows::ListSubDirsInDir(sCurrentDir, subDirs);
+		if (subDirs.N() > 1)
+			sCaseName += (sCaseName.IsEmpty() ? CString() : CString("_")) + sSegment;
+
+		sCurrentDir += "\\" + sSegment;
+	}
+
+	if (sCaseName.IsEmpty())
+		sCaseName = "SingleSet"; // no junction anywhere - sSetDir is the only set under sRoot
+
+	return sCaseName;
 }
 bool CIQVManager::LoadAndScore(const char* zImageFileName, int iCaseIndex)
 {

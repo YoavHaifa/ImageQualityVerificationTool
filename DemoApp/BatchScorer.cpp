@@ -81,13 +81,19 @@ int CBatchScorer::RunOnDirTree(const char* zRootDir)
 	string s(format("Found {} case(s) under {}", nCases, zRootDir));
 	printf("%s\n", s.c_str());
 
-	// Set for the duration of this run so every case nests under the same log subdirectory
-	// without threading it through each LoadAndScore() call; cleared again once done so it
-	// doesn't leak into any later interactive/review flow.
+	// Set for the duration of this run so every case nests under the same log subdirectory and
+	// can compose its case name relative to this root, without threading either through each
+	// LoadAndScore() call; cleared again once done so neither leaks into any later
+	// interactive/review flow.
 	gConfig.msBatchRootDir = (LPCTSTR)CFileName::GetLastInPath(zRootDir);
+	CString sScanRoot(zRootDir);
+	while (!sScanRoot.IsEmpty() && (sScanRoot.Right(1) == "\\" || sScanRoot.Right(1) == "/"))
+		sScanRoot = sScanRoot.Left(sScanRoot.GetLength() - 1);
+	gConfig.msBatchScanRootPath = (LPCTSTR)sScanRoot;
 	msLogDir = CString(gConfig.msLogRoot.c_str()) + "\\" + gConfig.msBatchRootDir.c_str();
 	int nScored = Run(list);
 	gConfig.msBatchRootDir.clear();
+	gConfig.msBatchScanRootPath.clear();
 
 	return nScored;
 }

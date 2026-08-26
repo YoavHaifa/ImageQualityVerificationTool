@@ -34,6 +34,12 @@ private:
 	// the case's log directory, and computes the rotation center.
 	bool LoadImages(const char* zImageFileName, int iCaseIndex = 0);
 
+	// Composes a case name from the real "junction" directories (ones with more than one real
+	// subdirectory) between sRoot and sSetDir, using at each junction whichever child was
+	// actually taken toward sSetDir. Returns "SingleSet" if there's no junction at all, i.e.
+	// sSetDir is the only set anywhere under sRoot.
+	static CString ComposeCaseNameFromJunctions(const CString& sRoot, const CString& sSetDir);
+
 	class CArinetaImages* mpImages = nullptr;
 	class CRingsScorer* mpRingsScorer = nullptr;
 	int miScoredPosition = 0;
