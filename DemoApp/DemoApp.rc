@@ -160,31 +160,6 @@ BEGIN
         MENUITEM "Open Batch Scoring",          ID_FILE_OPENBATCHSCORING
         MENUITEM "Exit",                        ID_FILE_EXIT
     END
-    POPUP "Process"
-    BEGIN
-        MENUITEM "Smooth",                      ID_PROCESS_SMOOTH
-        MENUITEM "Process Volume ",             ID_PROCESS_PROCESSVOLUME
-        MENUITEM "Current In Volume",           ID_PROCESS_CURRENTINVOLUME
-        MENUITEM "Save",                        ID_PROCESS_SAVE
-        MENUITEM "Save All",                    ID_PROCESS_SAVEALL
-        MENUITEM "Save All With New Name",      ID_PROCESS_SAVEALLWITHNEWNAME
-        MENUITEM "Save With New Matrix",        ID_PROCESS_SAVEWITHNEWMATRIX
-    END
-    POPUP "Set"
-    BEGIN
-        MENUITEM "Window",                      ID_SET_WINDOW
-        MENUITEM "Auto Window",                 ID_SET_AUTOWINDOW
-        MENUITEM "Status Text",                 ID_SET_STATUSTEXT
-        MENUITEM "Cursur Broadcast",            ID_SET_CURSURBROADCAST
-        MENUITEM "Title",                       ID_SET_TITLE
-        MENUITEM "Toggle Color Map",            ID_SET_TOGGLECOLORMAP
-        MENUITEM "Window Range",                ID_SET_WINDOWRANGE
-    END
-    POPUP "Get"
-    BEGIN
-        MENUITEM "Window",                      ID_GET_WINDOW
-        MENUITEM "Test",                        ID_GET_TEST
-    END
     POPUP "Test"
     BEGIN
         MENUITEM "Find Dicom Sets",             ID_TEST_FINDDICOMSETS

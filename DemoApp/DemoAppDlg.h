@@ -54,7 +54,6 @@ public:
 	afx_msg void OnBnClickedButtonAddRoi();
 	int miPos;
 	int miPos2d;
-	//void DisplayPos(void);
 	afx_msg void OnBnClickedButtonUpPos();
 	afx_msg void OnFileOpen32771();
 	afx_msg void OnFileBatchscoring();
@@ -63,7 +62,6 @@ public:
 	afx_msg void OnTestFinddicomsets();
 	afx_msg void OnUtilsDownloaddata();
 	afx_msg void OnFileExit();
-	//afx_msg void OnProcessSmooth();
 
 	bool mbDisplayReadyImages;
 	class CArinetaImages* mpImages;
@@ -73,38 +71,11 @@ public:
 	class CBatchReviewer* mpBatchReviewer;
 	class CDataFiles* mpDataFiles;
 	CList<class CArchivesImages*,class CArchivesImages*> mImages;
-	CTSharedImage<short> *mpSmoothed;
 	CTSharedImage<COLORREF> *mpColors;
 
-	class CSmoother *mpSmoother;
-	void ProcessImageInVolume(int iImage);
-	bool InitProcessVolume(void);
-	float mLowFactor;
-	float mHighFactor;
-	CString msAppendToPatientName;
-
-	afx_msg void OnGetWindow();
-	afx_msg void OnSetWindow();
-	afx_msg void OnSetAutoWindow();
-	afx_msg void OnProcessSave();
-	afx_msg void OnProcessSaveall();
-	afx_msg void OnProcessSaveallwithnewname();
-	afx_msg void OnSetStatustext();
-	afx_msg void OnSetCursurbroadcast();
 	afx_msg void OnBnClickedButtonAddColors();
-	afx_msg void OnProcessProcessvolume();
-	afx_msg void OnProcessCurrentinvolume();
 	int mMyViewerOffsetX;
 	int mMyViewerOffsetY;
-	afx_msg void OnProcessSavewithnewmatrix();
-	afx_msg void OnSetTitle();
-	afx_msg void OnBnClickedButtonAddColorMap();
-	afx_msg void OnSetTogglecolormap();
-	bool mbColormapOn;
-	//afx_msg void OnFileOpencolorer();
-	afx_msg void OnSetWindowrange();
-	afx_msg void OnGetTest();
-	//afx_msg void OnFileOpenbinary();
 
 	void DisplayCircle(CDataCoordinates& center, float radius);
 	afx_msg void OnBnClickedOk();

@@ -19,16 +19,9 @@
 #include "..\..\yUtils\MyFileDialog.h"
 #include "..\..\yUtils\MyFolderDialog.h"
 #include "..\..\yUtils\FilesList.h"
-#include "..\..\yUtils\NameGetDialog.h"
-#include "..\..\yUtils\MyProgress.h"
-#include "..\..\yUtils\MyDicomWriter.h"
-#include "..\..\yUtils\UserTextDialog.h"
 
 #include "..\..\ImageRLib\ImageRIF.h"
 #include "..\..\ImageRLib\DataRoi.h"
-//#include "..\..\ImageRLib\ArchivesImages.h"
-#include "..\..\ImageRLib\Smoother.h"
-#include "..\..\ImageRLib\Zoomer.h"
 #include "..\..\ImageRLib\Rle1read.h"
 #include "..\..\ImageRLib\DataFiles.h"
 
@@ -89,15 +82,9 @@ CDemoAppDlg::CDemoAppDlg(CWnd* pParent /*=NULL*/)
 	, mpCaseReviewer(NULL)
 	, mpBatchReviewer(NULL)
 	, mpDataFiles(NULL)
-	, mpSmoothed(NULL)
 	, mpColors(NULL)
-	, mpSmoother(NULL)
-	, msAppendToPatientName(_T(""))
-	, mLowFactor(0.95f)
-	, mHighFactor(1.0f)
 	, mMyViewerOffsetX(100)
 	, mMyViewerOffsetY(250)
-	, mbColormapOn(false)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 	gfLog.Log("<CDemoAppDlg::CDemoAppDlg>");
@@ -113,10 +100,6 @@ CDemoAppDlg::~CDemoAppDlg(void)
 		delete mpBatchReviewer;
 	if (mpImageRIF)
 		delete mpImageRIF;
-	if (mpSmoother)
-		delete mpSmoother;
-	if (mpSmoothed)
-		delete mpSmoothed;
 	if (mpSharedVolume)
 		delete mpSharedVolume;
 	if (mpColors)
@@ -150,23 +133,7 @@ BEGIN_MESSAGE_MAP(CDemoAppDlg, CDialog)
 	ON_COMMAND(ID_TEST_FINDDICOMSETS, &CDemoAppDlg::OnTestFinddicomsets)
 	ON_COMMAND(ID_UTILS_DOWNLOADDATA, &CDemoAppDlg::OnUtilsDownloaddata)
 	ON_COMMAND(ID_FILE_EXIT, &CDemoAppDlg::OnFileExit)
-	ON_COMMAND(ID_GET_WINDOW, &CDemoAppDlg::OnGetWindow)
-	ON_COMMAND(ID_SET_WINDOW, &CDemoAppDlg::OnSetWindow)
-	ON_COMMAND(ID_SET_AUTOWINDOW, &CDemoAppDlg::OnSetAutoWindow)
-	ON_COMMAND(ID_PROCESS_SAVE, &CDemoAppDlg::OnProcessSave)
-	ON_COMMAND(ID_PROCESS_SAVEALL, &CDemoAppDlg::OnProcessSaveall)
-	ON_COMMAND(ID_PROCESS_SAVEALLWITHNEWNAME, &CDemoAppDlg::OnProcessSaveallwithnewname)
-	ON_COMMAND(ID_SET_STATUSTEXT, &CDemoAppDlg::OnSetStatustext)
-	ON_COMMAND(ID_SET_CURSURBROADCAST, &CDemoAppDlg::OnSetCursurbroadcast)
 	ON_BN_CLICKED(IDC_BUTTON_ADD_COLORS, &CDemoAppDlg::OnBnClickedButtonAddColors)
-	ON_COMMAND(ID_PROCESS_PROCESSVOLUME, &CDemoAppDlg::OnProcessProcessvolume)
-	ON_COMMAND(ID_PROCESS_CURRENTINVOLUME, &CDemoAppDlg::OnProcessCurrentinvolume)
-	ON_COMMAND(ID_PROCESS_SAVEWITHNEWMATRIX, &CDemoAppDlg::OnProcessSavewithnewmatrix)
-	ON_COMMAND(ID_SET_TITLE, &CDemoAppDlg::OnSetTitle)
-	//ON_BN_CLICKED(IDC_BUTTON_ADD_COLOR_MAP, &CDemoAppDlg::OnBnClickedButtonAddColorMap)
-	ON_COMMAND(ID_SET_TOGGLECOLORMAP, &CDemoAppDlg::OnSetTogglecolormap)
-	ON_COMMAND(ID_SET_WINDOWRANGE, &CDemoAppDlg::OnSetWindowrange)
-	ON_COMMAND(ID_GET_TEST, &CDemoAppDlg::OnGetTest)
 	ON_BN_CLICKED(IDC_OK, &CDemoAppDlg::OnBnClickedOk)
 	ON_BN_CLICKED(IDC_CANCEL, &CDemoAppDlg::OnBnClickedCancel)
 	ON_BN_CLICKED(IDC_BUTTON_MAX, &CDemoAppDlg::OnBnClickedButtonMax)
@@ -743,259 +710,6 @@ void CDemoAppDlg::OnFileExit()
 {
 	OnCancel();
 }
-bool CDemoAppDlg::InitProcessVolume(void)
-{
-	if (!mpImages)
-		return false;
-	if (!mpSharedVolume)
-	{
-		if (!mpImages->CreateSharedVolume("SharedVolume",mpSharedVolume))
-			return false;
-	}
-	return true;
-}
-void CDemoAppDlg::OnProcessCurrentinvolume()
-{
-	if (!InitProcessVolume())
-		return;
-
-	mHighFactor += 0.01f;
-
-	mpSharedVolume->StartWrite();
-	ProcessImageInVolume(miPos);
-	mpSharedVolume->OnPageUpdate(miPos);
-	mpImageRIF->DisplayShared(mpSharedVolume);
-}
-void CDemoAppDlg::OnProcessProcessvolume()
-{
-	if (!InitProcessVolume())
-		return;
-
-	mpSharedVolume->StartWrite();
-	CPosition *pPos = mpImages->GetPosition();
-	for (int iImage = pPos->miFirst; iImage <= pPos->miLast; iImage += pPos->mStep)
-	{
-		ProcessImageInVolume(iImage);
-	}
-	mpSharedVolume->OnAllUpdated();
-	mpImageRIF->DisplayShared(mpSharedVolume);
-	mpImages->SetCurrent(miPos);
-}
-void CDemoAppDlg::ProcessImageInVolume(int iImage)
-{
-	if (!mpImages || !mpSharedVolume)
-		return;
-
-	mpImages->SetCurrent(iImage);
-
-	short * pProcessed = mpSharedVolume->GetImageStart(iImage);
-	short *pImageRaster = mpImages->GetImageDataStart(iImage);
-	int n = mpImages->GetNLines() * mpImages->GetNCols();
-
-	CTImage<short> *pImage = mpImages->GetImage();
-
-	short avg = (short)pImage->Average();
-	while (n-- > 0)
-	{
-		short value = *pImageRaster++;
-		if (value > avg)
-			*pProcessed++ = (short)(value * mHighFactor);
-		else
-			*pProcessed++ = (short)(value * mLowFactor);
-	}
-}
-void CDemoAppDlg::OnGetWindow()
-{
-	if (!mpImageRIF)
-		return;
-	int iRectangle = - 1;
-	CNameGetDialog::GetIntValue("Enter index of rectangle", iRectangle);
-	mpImageRIF->GetWindow(iRectangle);
-}
-void CDemoAppDlg::OnSetWindow()
-{
-	if (!mpImageRIF)
-		return;
-
-	int center = 100;
-	int width = 500;
-	int iRectangle = - 1;
-
-	CNameGetDialog::GetIntValue("Enter Window Center", center);
-	CNameGetDialog::GetIntValue("Enter Window Width", width);
-	CNameGetDialog::GetIntValue("Enter index of rectangle", iRectangle);
-
-	mpImageRIF->SetWindow(center,width,iRectangle);
-}
-void CDemoAppDlg::OnSetStatustext()
-{
-	CString sText("Status Text");
-	int iField = 4;
-
-	CNameGetDialog::GetStringValue("Get Target Field Index", sText);
-	CNameGetDialog::GetIntValue("Get Target Field Index", iField);
-
-	mpImageRIF->SetStatusText(sText,iField);
-}
-void CDemoAppDlg::OnSetCursurbroadcast()
-{
-	int iRectangle = -1;
-	CNameGetDialog::GetIntValue("Select Rectangle Index", iRectangle);
-	mpImageRIF->SetCursorBroadcast(iRectangle);
-}
-void CDemoAppDlg::OnSetAutoWindow()
-{
-	if (!mpImageRIF)
-		return;
-
-	CDataCoordinates coo(200,200);
-	CString sName(mpSharedVolume->Name());
-	mpImageRIF->SetAutoWindow(sName,coo);
-}
-void CDemoAppDlg::OnProcessSave()
-{
-	if (!mpImages)
-		return;
-	if (!mpSmoothed)
-		return;
-
-	short *pRaster = mpSmoothed->GetData();
-	
-	mpImages->SaveDicomWithNewRaster(mpImages->GetCurrentPosition(), (short *)pRaster, "Smoothed");
-}
-void CDemoAppDlg::OnProcessSaveall()
-{
-	if (!mpImages)
-	{
-		CMyWindows::MessBox("Failed to find images to save", "Application Node");
-		return;
-	}
-	if (!mpSmoothed)
-	{
-		CMyWindows::MessBox("Failed to find smoothed images to save", "Application Node");
-		return;
-	}
-
-	CString saveDir("d:\\Dump\\SaveDemo");
-	CMyWindows::DeleteDirFiles(saveDir, false, false);
-
-	mpImages->StartSeriesSave(true, "Smoothed", "Smoothed Image", saveDir);
-	if (!msAppendToPatientName.IsEmpty())
-	{
-		CMyDicom *pDicom = mpImages->GetDicom();
-		if (pDicom)
-		{
-			CString sPatName = pDicom->GetPatientName(true);
-			sPatName += msAppendToPatientName;
-			CMyDicomWriter::AddTextTag(PATIENT_NAME_GROUP, PATIENT_NAME_NUM, sPatName);
-		}
-	}
-
-	int iFirst = mpImages->GetFirst();
-	int iLast = mpImages->GetLast();
-	int step = mpImages->GetStep();
-
-	CMyProgress sand(iFirst,iLast);
-
-	int nSaved = 0;
-	for (int iSave = iFirst; iSave <= iLast; iSave += step)
-	{
-		short *pInput = mpImages->GetImageDataStart(iSave);
-		mpSmoother->Smooth((short *)mpSmoothed->GetDataStart(), pInput);
-		short *pRaster = mpSmoothed->GetData();
-
-		//CMyDicom *pDicom = mpImages->GetDicom();
-		//CFileName fName = pDicom->Name();
-
-		//CString sFileName(saveDir);
-		//sFileName += "\\";
-		//sFileName += fName.Private();
-
-		if (!mpImages->SaveDicomInSeries(iSave, NULL/*sFileName*/, (short *)pRaster))
-		{
-			CMyWindows::MessBox("Failed to save series","SW Error");
-			return;
-		}
-
-		sand.SetPos(iSave);
-		nSaved++;
-	}
-	char zBuf[512];
-	sprintf_s(zBuf, sizeof(zBuf), "%d images saved in <%s>", nSaved, (const char *)saveDir);
-	CMyWindows::MessBox(zBuf, "Save All Finished");
-}
-void CDemoAppDlg::OnProcessSaveallwithnewname()
-{
-	CString sText;
-	if (!CMyWindows::GetUserText("Enter Text to Append to Patients' Name", sText))
-		return;
-
-	msAppendToPatientName = " ";
-	msAppendToPatientName += sText;
-	OnProcessSaveall();
-	msAppendToPatientName.Empty();
-}
-void CDemoAppDlg::OnProcessSavewithnewmatrix()
-{
-	if (!mpImages)
-	{
-		CMyWindows::MessBox("Failed to find images to save", "Application Node");
-		return;
-	}
-
-	CString sText;
-	if (!CMyWindows::GetUserText("Enter New Matrix (128 - 2048)", sText))
-		return;
-	int matrix = atoi(sText);
-	if (matrix < 128 || matrix > 2048)
-	{
-		CMyWindows::MessBox("Required matrix is out of range", "Warning");
-		return;
-	}
-
-	CString saveDir("d:\\Dump\\SaveWithNewMatrixDemo");
-	CMyWindows::DeleteDirFiles(saveDir, false, false);
-
-	mpImages->StartSeriesSave(true, "NewMatrix", "New Matrix Image", saveDir);
-	CMyDicomWriter::PrepareNewSize(matrix, matrix, true, mpImages->GetDicom());
-
-	int iFirst = mpImages->GetFirst();
-	int iLast = mpImages->GetLast();
-	int step = mpImages->GetStep();
-
-	CMyProgress sand(iFirst,iLast);
-	CTImage<float> zoomedRaster("zoomedFloat", matrix, matrix);
-	CTImage<short> zoomedRasterUShort("zoomedShort", matrix, matrix);
-
-	CZoomPanParams params("zoomParams");
-	float originalMmPerPixel = mpImages->MmPerPixel();
-	params.SetMmPerPixel(originalMmPerPixel * mpImages->GetNCols() / matrix);
-
-	int nSaved = 0;
-	for (int iSave = iFirst; iSave <= iLast; iSave += step)
-	{
-		mpImages->SetCurrent(iSave);
-		CTImage<short> *pInputImage = mpImages->GetImage();
-		CZoomer::Zoom(zoomedRaster, pInputImage, &params);
-
-		// Float to short
-		int count = zoomedRaster.GetNPixels();
-		float *pZoomed = zoomedRaster.GetData();
-		short *pResultRaster = zoomedRasterUShort.GetData();
-		short *pResult = pResultRaster;
-		while (count--)
-		{
-			*pResult++ = (short)*pZoomed++;
-		}
-
-		mpImages->SaveDicomInSeries(iSave, NULL, (short *)pResultRaster);
-		sand.SetPos(iSave);
-		nSaved++;
-	}
-	char zBuf[512];
-	sprintf_s(zBuf, sizeof(zBuf), "%d images saved in <%s>", nSaved, (const char *)saveDir);
-	CMyWindows::MessBox(zBuf, "Save All Finished");
-}
 void CDemoAppDlg::OnBnClickedButtonAddColors()
 {
 	if (!mpImages && !mpSharedVolume)
@@ -1056,109 +770,6 @@ void CDemoAppDlg::OnBnClickedButtonAddColors()
 	mpColors->EndWrite();
 	
 	mpImageRIF->DisplayShared(mpColors);
-}
-//void CDemoAppDlg::OnBnClickedButtonAddColorMap()
-//{
-//	if (!mpImages && !mpSharedVolume)
-//		return;
-//	if (!mpImageRIF)
-//		return;
-//
-//	CString sPath("d:\\tmp");
-//	if (!CMyWindows::VerifyDirectory(sPath))
-//		return;
-//
-//	const int N_GRAY_LEVELS = 256;
-//	typedef struct
-//	{
-//		float red;
-//		float green;
-//		float blue;
-//	} SRGB_Entry;
-//	SRGB_Entry aLut[N_GRAY_LEVELS];
-//	int GREEN_MIN = N_GRAY_LEVELS / 4;
-//	int GREEN_MAX = N_GRAY_LEVELS * 3 / 4;
-//	int GREEN_MIDDLE = (GREEN_MIN + GREEN_MAX) / 2;
-//	int GREEN_HALF_SPAN = GREEN_MIDDLE - GREEN_MIN;
-//
-//	for (int i = 0; i < N_GRAY_LEVELS; i++)
-//	{
-//		float relative = (float)i / (N_GRAY_LEVELS - 1);
-//		aLut[i].blue = 1 - relative;
-//		aLut[i].red = relative;
-//		if (i > GREEN_MIN && i < GREEN_MAX)
-//		{
-//			aLut[i].green = 1 - (float)(abs(i - GREEN_MIDDLE)) / GREEN_HALF_SPAN;
-//		}
-//	}
-//
-//	CString sfName(sPath + "\\DemoApp.ColorMap");
-//	FILE *pf = MyFOpenWithErrorBox(sfName,"wb","ColorMap Example");
-//	if (!pf)
-//		return;
-//
-//	fwrite (&aLut[0], sizeof(aLut[0]), N_GRAY_LEVELS, pf);
-//	fclose(pf);
-//
-//	mpImageRIF->DisplayColorMap(sfName);
-//	mbColormapOn = true;
-//}
-void CDemoAppDlg::OnSetTitle()
-{
-	if (!mpImageRIF)
-		return;
-
-	CUserTextDialog dlg("Select Title for MyViewer");
-	if (dlg.DoModal() == IDOK)
-	{
-		CString sText = dlg.GetText();
-		if (!sText.IsEmpty())
-		{
-			mpImageRIF->SetTitle(sText);
-			mpImageRIF->Refresh();
-		}
-	}
-}
-
-
-void CDemoAppDlg::OnSetTogglecolormap()
-{
-	if (!mpImageRIF)
-		return;
-
-	mbColormapOn = !mbColormapOn;
-	mpImageRIF->SetColorMap(mbColormapOn);
-}
-
-
-void CDemoAppDlg::OnSetWindowrange()
-{
-	if (!mpImageRIF)
-		return;
-
-	int minVal = 0;
-	int maxVal = 100;
-
-	int iRectangle = -1;
-	CNameGetDialog::GetIntValue("Enter Window Min Value", minVal);
-	CNameGetDialog::GetIntValue("Enter Window Max Value", maxVal);
-
-	if (maxVal > minVal)
-		mpImageRIF->SetWindowRange(minVal,maxVal,iRectangle);
-}
-
-static double ux = 0;
-
-void CDemoAppDlg::OnGetTest()
-{
-       CArchivesImages Image("F:\\MyViewer\\_From_Users\\Decode error\\S20190\\00001\\Image0001.dcm"); //file = path of S20190 Iodine series
-	   ux = 1;
-	   /*
-       CString var;
-       Image.GetDicom()->GetTextField(0x0008, 0x0033, var); //get content time
-       double x = atof(var);
-       ux = x; // heap error by return from the function
-	   */
 }
 void CDemoAppDlg::DisplayCircle(CDataCoordinates& center, float radius)
 {
