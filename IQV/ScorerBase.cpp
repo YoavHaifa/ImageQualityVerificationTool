@@ -14,16 +14,20 @@ CScorerBase::CScorerBase(const vector<float>& vRingMean, EScoreType eScoreType)
 	mvRingScore.assign(vRingMean.size(), 0.0f);
 }
 
-void CScorerBase::Score(int iImage, const vector<CRingInfo>& vRingsInfo)
+void CScorerBase::Score(int iImage, const vector<CRingInfo>& vRingsInfo, bool bEnoughData)
 {
 	mScore = CImageScore(); // Start clean score for every new image
 	std::fill(mvRingScore.begin(), mvRingScore.end(), 0.0f);
 
-	// Scorer specific computations
-	ComputeScore();
+	if (bEnoughData)
+	{
+		// Scorer specific computations
+		mpRingsInfo = &vRingsInfo;
+		ComputeScore();
 
-	// For all scorers again
-	CorrectCenter(vRingsInfo);
+		// For all scorers again
+		CorrectCenter(vRingsInfo);
+	}
 	FindMaxScorePerCurrentImage();
 
 	// Files the score just computed by Score() into mResults, under iImage

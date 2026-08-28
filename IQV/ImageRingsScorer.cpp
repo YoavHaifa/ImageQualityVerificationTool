@@ -5,6 +5,7 @@
 #include "RadiusImage.h"
 #include "MinMaxScorer.h"
 #include "TentScorer.h"
+#include "CenterScorer.h"
 #include "..\..\yUtils\MyWindows.h"
 #include <string>
 #include <cmath>
@@ -41,8 +42,9 @@ const CImageScore& CImageRingsScorer::Score(int iImage)
 	if (gConfig.mbDisplayCtPerRadius)
 		FillCtPerRadiusImage();
 
+	bool bEnoughData = mnPixelsWithinThreshold >= gConfig.mnMinPixelsInMask;
 	for (auto& pScorer : mvScorers)
-		pScorer->Score(iImage, mvRingsInfo);
+		pScorer->Score(iImage, mvRingsInfo, bEnoughData);
 
 	if (gConfig.mbLogImageRingDetails)
 		Log();
@@ -100,6 +102,7 @@ void CImageRingsScorer::CreateScorers()
 	mvScorers.push_back(std::make_unique<CMinMaxScorer>(mvRingMean));
 	mvScorers.push_back(std::make_unique<CTentScorer>(mvRingMean));
 	mvScorers.push_back(std::make_unique<CTentMinScorer>(mvRingMean));
+	mvScorers.push_back(std::make_unique<CCenterScorer>(mvRingMean));
 }
 void CImageRingsScorer::CollectRingsInfo()
 {

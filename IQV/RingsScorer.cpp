@@ -203,6 +203,7 @@ bool CRingsScorer::LookForPeak(int iWantedPeak)
 	if (iImage < 0)
 	{
 		gfLog.Printf("<CRingsScorer::LookForPeak> Failed to find peak %d", iWantedPeak);
+		gConfig.PrintStatus(format("no more relevant scores for {}", ScoreTypeName(gConfig.mScoreType)).c_str());
 		return false;
 	}
 

@@ -37,6 +37,7 @@ private:
 	void BuildCaseList(const char* zRootDir);
 	void ComputeOrder();
 	int FindScorerIndex(const char* zName) const;
+	const CCaseInfo* FindCaseAtRank(int iRank) const;
 	bool LoadCaseAtRank(int iRank);
 
 	std::vector<CString> mvScorerNames;

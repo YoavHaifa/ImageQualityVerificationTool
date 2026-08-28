@@ -20,8 +20,9 @@ public:
 	CScorerBase(const std::vector<float>& vRingMean, EScoreType eScoreType);
 	virtual ~CScorerBase() = default;
 
-	// Clears state left over from whatever image was scored previously, then scores mvRingMean as it is now
-	void Score(int iImage, const std::vector<CRingInfo>& vRingsInfo);
+	// Clears state left over from whatever image was scored previously, then scores mvRingMean as it is now.
+	// bEnoughData false (too few in-mask pixels to trust this image) scores it 0 without calling ComputeScore().
+	void Score(int iImage, const std::vector<CRingInfo>& vRingsInfo, bool bEnoughData);
 
 	// Called once all images have been scored and recorded - finalizes mResults' peaks
 	void OnAllImagesScored()
@@ -57,6 +58,7 @@ protected:
 	STRange<int> ComputeDataRange(int iFrom, int n, const std::vector<CRingInfo>& vRingsInfo);
 
 	const std::vector<float>& mvRingMean;
+	const std::vector<CRingInfo>* mpRingsInfo = nullptr; // valid only during ComputeScore(), set by Score()
 	int mnRings;
 	EScoreType meScoreType;
 };

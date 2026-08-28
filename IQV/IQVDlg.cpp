@@ -780,8 +780,8 @@ void CIQVDlg::DisplayCircle(CDataCoordinates& center, float radius)
 
 	//char zName[128];
 	//sprintf_s(zName, "CenteredCircle", count, miPos + 1, miPos2d + 1);
-	CDataRoi* pCircle = new CDataRoi(NULL, "CenteredCircle", 0xff0080);
-	pCircle->InitEllipse(center, radius);
+	CDataRoi* pCircle = new CDataRoi(NULL, "CenteredCircle", RGB(255, 255, 0)); // bright yellow - visible against grayscale CT
+	pCircle->InitEllipse(center, max(radius, 5.0f)); // otherwise too small to see on screen
 	pCircle->SetCircle();
 	pCircle->SetFixedCenter();
 	//pCircle->LockToPosition2d(miPos, miPos2d);
@@ -803,7 +803,7 @@ void CIQVDlg::DisplayScore()
 	SetParameter(IDC_EDIT_I_IMAGE, miPos);
 	SetParameter(IDC_EDIT_SCORE, score.mScore);
 	SetParameter(IDC_EDIT_RADIUS, score.miRing);
-	if (score.miRing >= 1)
+	if (score.miRing >= 0)
 		DisplayCircle(mpImages->GetRotationCenter(), (float)score.miRing);
 }
 void CIQVDlg::OnBnClickedOk()

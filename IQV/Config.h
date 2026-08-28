@@ -36,8 +36,12 @@ public:
 	unsigned short mErodeLevel = 5;
 	unsigned short mnWantedSliceWidth = 11; // Number of consecutive input slices to average
 
-	int mnCentralRings = 2; // Number of innermost rings scored as "central"
+	int mnCentralRings = 3; // Number of innermost rings scored as "central"
 	int mnOffCenterRings = 2; // Number of rings beyond the central rings scored as "off-center"
+
+	// Below this many in-mask pixels, an image is scored 0 by every scorer rather than
+	// trusted - e.g. wide images sharing a mask with the very first slice, which has little data
+	int mnMinPixelsInMask = 1000;
 
 	EScoreType mScoreType = EScoreType::MinMax;
 

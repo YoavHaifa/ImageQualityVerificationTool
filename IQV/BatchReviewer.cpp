@@ -8,6 +8,7 @@
 #include "..\..\yUtils\FileName.h"
 #include "..\..\yUtils\YamlParser.h"
 #include <algorithm>
+#include <format>
 
 CBatchReviewer::CBatchReviewer()
 {
@@ -126,24 +127,23 @@ int CBatchReviewer::FindScorerIndex(const char* zName) const
 			return i;
 	return -1;
 }
-bool CBatchReviewer::LoadCaseAtRank(int iRank)
+const CCaseInfo* CBatchReviewer::FindCaseAtRank(int iRank) const
 {
 	int iScorer = FindScorerIndex(ScoreTypeName(gConfig.mScoreType));
 	if (iScorer < 0)
-		return false;
+		return nullptr;
 
 	if (iRank < 1 || iRank > (int)mvCases.size())
-		return false;
+		return nullptr;
 
-	const CCaseInfo* pTarget = nullptr;
 	for (const CCaseInfo& c : mvCases)
-	{
 		if (c.mvOrder[iScorer] == iRank)
-		{
-			pTarget = &c;
-			break;
-		}
-	}
+			return &c;
+	return nullptr;
+}
+bool CBatchReviewer::LoadCaseAtRank(int iRank)
+{
+	const CCaseInfo* pTarget = FindCaseAtRank(iRank);
 	if (!pTarget)
 		return false;
 
@@ -170,6 +170,16 @@ bool CBatchReviewer::DisplayNextCase()
 		gConfig.PrintStatus("Best case already displayed");
 		return false;
 	}
+
+	const char* zScorerName = ScoreTypeName(gConfig.mScoreType);
+	int iScorer = FindScorerIndex(zScorerName);
+	const CCaseInfo* pNext = FindCaseAtRank(miCurrentRank + 1);
+	if (iScorer < 0 || !pNext || pNext->mvWorstScore[iScorer] <= 0)
+	{
+		gConfig.PrintStatus(std::format("no more relevant scores for {}", zScorerName).c_str());
+		return false;
+	}
+
 	return LoadCaseAtRank(miCurrentRank + 1);
 }
 bool CBatchReviewer::DisplayPrevCase()

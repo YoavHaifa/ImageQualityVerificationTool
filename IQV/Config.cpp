@@ -49,6 +49,7 @@ void CConfig::SaveToFile()
 	dumpFile.Write("slice_width", mnWantedSliceWidth);
 	dumpFile.Write("n_central_rings", mnCentralRings);
 	dumpFile.Write("n_off_center_rings", mnOffCenterRings);
+	dumpFile.Write("min_pixels_in_mask", mnMinPixelsInMask);
 	dumpFile.Write("score_type", (int)mScoreType);
 	dumpFile.Write("version", msVersion.c_str());
 	dumpFile.Write("log_root", msLogRoot.c_str());
@@ -92,6 +93,7 @@ void CConfig::ReadFromFile()
 	pRoot->GetValue("slice_width", mnWantedSliceWidth);
 	pRoot->GetValue("n_central_rings", mnCentralRings);
 	pRoot->GetValue("n_off_center_rings", mnOffCenterRings);
+	pRoot->GetValue("min_pixels_in_mask", mnMinPixelsInMask);
 
 	int iScoreType = (int)mScoreType;
 	if (pRoot->GetValue("score_type", iScoreType))

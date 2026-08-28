@@ -206,6 +206,7 @@ copy ..\..\ImageRLib\$(Platform)\$(Configuration)\ImageRLib.dll $(OutDir)
     <ClInclude Include="BatchScorer.h" />
     <ClInclude Include="CaseInfo.h" />
     <ClInclude Include="CaseReviewer.h" />
+    <ClInclude Include="CenterScorer.h" />
     <ClInclude Include="Config.h" />
     <ClInclude Include="DataDownloader.h" />
     <ClInclude Include="IQV.h" />
@@ -231,6 +232,7 @@ copy ..\..\ImageRLib\$(Platform)\$(Configuration)\ImageRLib.dll $(OutDir)
     <ClCompile Include="BatchReviewer.cpp" />
     <ClCompile Include="BatchScorer.cpp" />
     <ClCompile Include="CaseReviewer.cpp" />
+    <ClCompile Include="CenterScorer.cpp" />
     <ClCompile Include="Config.cpp" />
     <ClCompile Include="DataDownloader.cpp" />
     <ClCompile Include="IQV.cpp" />
