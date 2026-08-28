@@ -11,11 +11,11 @@ typedef enum EDir
 }EDir;
 
 
-CTentScorer::CTentScorer(const std::vector<float>& vRingMean)
-	: CScorerBase(vRingMean, EScoreType::Tent)
+CTentScorerBase::CTentScorerBase(const std::vector<float>& vRingMean, EScoreType eScoreType)
+	: CScorerBase(vRingMean, eScoreType)
 {
 }
-void CTentScorer::ComputeScore()
+void CTentScorerBase::ComputeScore()
 {
 	// Look for all rings that are internal local mean
 	float maxScore = 0;
@@ -48,7 +48,7 @@ void CTentScorer::ComputeScore()
 		prev = value;
 	}
 }
-void CTentScorer::ComputeLocalMaxScore(int iRing)
+void CTentScorerBase::ComputeLocalMaxScore(int iRing)
 {
 	float value = mvRingMean[iRing];
 
@@ -70,10 +70,10 @@ void CTentScorer::ComputeLocalMaxScore(int iRing)
 	while (iNext < mnRings - 1 && mvRingMean[iNext + 1] != IGNORE_RING && mvRingMean[iNext + 1] < mvRingMean[iNext])
 		iNext++;
 
-	float score = ((value - mvRingMean[iPrev]) + (value - mvRingMean[iNext])) / 2.0f;
+	float score = CombineLegs(value - mvRingMean[iPrev], value - mvRingMean[iNext]);
 	mvRingScore[iRing] = score;
 }
-void CTentScorer::ComputeLocalMinScore(int iRing)
+void CTentScorerBase::ComputeLocalMinScore(int iRing)
 {
 	float value = mvRingMean[iRing];
 
@@ -95,6 +95,24 @@ void CTentScorer::ComputeLocalMinScore(int iRing)
 	while (iNext < mnRings - 1 && mvRingMean[iNext + 1] != IGNORE_RING && mvRingMean[iNext + 1] > mvRingMean[iNext])
 		iNext++;
 
-	float score = ((mvRingMean[iPrev] - value) + (mvRingMean[iNext] - value)) / 2.0f;
+	float score = CombineLegs(mvRingMean[iPrev] - value, mvRingMean[iNext] - value);
 	mvRingScore[iRing] = score;
+}
+
+CTentScorer::CTentScorer(const std::vector<float>& vRingMean)
+	: CTentScorerBase(vRingMean, EScoreType::Tent)
+{
+}
+float CTentScorer::CombineLegs(float leftHeight, float rightHeight) const
+{
+	return (leftHeight + rightHeight) / 2.0f;
+}
+
+CTentMinScorer::CTentMinScorer(const std::vector<float>& vRingMean)
+	: CTentScorerBase(vRingMean, EScoreType::TentMin)
+{
+}
+float CTentMinScorer::CombineLegs(float leftHeight, float rightHeight) const
+{
+	return min(leftHeight, rightHeight);
 }

@@ -99,6 +99,7 @@ void CImageRingsScorer::CreateScorers()
 	mvScorers.clear();
 	mvScorers.push_back(std::make_unique<CMinMaxScorer>(mvRingMean));
 	mvScorers.push_back(std::make_unique<CTentScorer>(mvRingMean));
+	mvScorers.push_back(std::make_unique<CTentMinScorer>(mvRingMean));
 }
 void CImageRingsScorer::CollectRingsInfo()
 {
