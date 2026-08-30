@@ -33,6 +33,7 @@ const CImageScore& CRingsScorer::ScoreCurrentImage(int iImage)
 }
 int CRingsScorer::ScoreAllImages()
 {
+	CMyWindows::PrintStatus("Scoring...");
 	miFirst = mpImages->GetFirst();
 	miLast = mpImages->GetLast();
 	mStep = mpImages->GetStep();
@@ -43,8 +44,8 @@ int CRingsScorer::ScoreAllImages()
 		mpImages->SetCurrent(iImage);
 		mpImageScorer->Score(iImage);
 
-		// Caller (CIQVManager::LoadAndScore) has message boxes suppressed for this call and
-		// checks our return value - abort the rest of this case rather than plow through more
+		// A message box just fired for this image (e.g. ImageRLib's "GetData NULL" on
+		// undecodable data) - abort the rest of this case rather than plow through more
 		// images we already know can't be decoded
 		if (CMyWindows::GetMessBoxCount(nullptr) > 0)
 			return -1;

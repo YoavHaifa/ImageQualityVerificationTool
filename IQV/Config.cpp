@@ -17,8 +17,14 @@ void CConfig::Init()
 {
 	ReadFromFile();
 	CMyWindows::VerifyDirectory(msLogRoot.c_str());
+	CMyWindows::VerifyDirectory("d:\\MyLog");
+	CMyWindows::VerifyDirectory("d:\\MyLog\\Images");
+	CMyWindows::VerifyDirectory(msLogRoot.c_str());
 	if (mDebug)
+	{
 		gfLog.Init("IQV_App");
+		gfLog.Log("<CConfig::Init()> version", msVersion);
+	}
 }
 void CConfig::SetCurrentCase(const char* zCaseName, int iCaseIndex)
 {

@@ -88,15 +88,7 @@ CString CIQVManager::ComposeCaseNameFromJunctions(const CString& sRoot, const CS
 }
 bool CIQVManager::LoadAndScore(const char* zImageFileName, int iCaseIndex)
 {
-	// Some cases (e.g. an unexpected directory layout) have images ImageRLib can't actually
-	// decode - it pops a blocking "GetData NULL" box per bad image rather than failing cleanly.
-	// Suppress those for the duration of this case and treat any as "case data not found":
-	// abort without saving, instead of the user having to dismiss one box per bad image.
-	CMyWindows::DisableMessBox();
-
 	bool bOK = LoadImages(zImageFileName, iCaseIndex);
-	if (bOK && CMyWindows::GetMessBoxCount(nullptr) > 0)
-		bOK = false;
 
 	if (bOK)
 	{
@@ -104,8 +96,6 @@ bool CIQVManager::LoadAndScore(const char* zImageFileName, int iCaseIndex)
 		miScoredPosition = mpRingsScorer->ScoreAllImages();
 		bOK = (miScoredPosition >= 0);
 	}
-
-	CMyWindows::EnableMessBox(nullptr);
 
 	if (!bOK)
 		gConfig.PrintStatus("Case data could not be loaded - skipping without saving");

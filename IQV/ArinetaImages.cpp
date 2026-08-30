@@ -59,6 +59,7 @@ bool CArinetaImages::ComputeRotationCenter()
 	// Not drawn here - the viewer doesn't exist yet at this point in some flows (e.g. case
 	// review), and DisplayScore() draws the correctly-sized circle for the displayed image
 	// right after the caller shows it anyway, making an initial draw here redundant.
+	gfLog.Printf("<CArinetaImages::ComputeRotationCenter> mRotationCenter [%2.f, %2.f]", mRotationCenter.fx, mRotationCenter.fy);
 	return true;
 }
 bool CArinetaImages::GetFloatValueFromDicomString(unsigned short group, unsigned short num, float& value, const char* zFor)
@@ -83,6 +84,7 @@ bool CArinetaImages::PrepareOnInit()
 
 	miFirst = GetFirst();
 	miLast = GetLast();
+	gfLog.Printf("<CArinetaImages::PrepareOnInit> Full Range Loaded [%d - %d]", miFirst, miLast);
 
 	// LoadFullRange() has no way to report failure (it's void); detect it here instead - if the
 	// first image never actually decoded (e.g. it fails deep in DICOM parsing despite passing
