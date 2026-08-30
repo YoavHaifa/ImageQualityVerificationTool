@@ -34,6 +34,7 @@ public:
 		mResults.ScaleScores(factor);
 	}
 	const char* Name() const { return ScoreTypeName(meScoreType); }
+	EScoreType GetScoreType() const { return meScoreType; }
 
 	// Writes this scorer's score/ring/peak data for every image scored so far to
 	// <gConfig.msCaseLogDir>\ScoreAllImages_<Name>.csv, one row per image. iFirst/iStep
@@ -44,7 +45,9 @@ public:
 	// <zCaseDir>\ScoreAllImages_<Name>.csv into mResults, in place of an actual scoring pass.
 	// Peak/peak_order columns aren't read back - OnAllImagesScored() recomputes them
 	// identically from the replayed scores. Returns false if the CSV can't be opened.
-	bool LoadSavedResults(const char* zCaseDir);
+	// Virtual: CAllMaxScorer overrides this to recompute itself from its siblings' (by then
+	// already-loaded, possibly newly-reweighted) mResults instead of reading its own CSV.
+	virtual bool LoadSavedResults(const char* zCaseDir);
 
 	CImageScore mScore;
 	std::vector<float> mvRingScore; // score at every candidate ring this scorer considered, 0 elsewhere

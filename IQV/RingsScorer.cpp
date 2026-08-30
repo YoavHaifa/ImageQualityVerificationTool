@@ -80,25 +80,22 @@ int CRingsScorer::ScoreAllImages()
 
 	return mpImageScorer->GetImageWithMaxScore();
 }
-int CRingsScorer::LoadFromSavedResults(const char* zCaseDir, const std::vector<CString>& vScorerNames)
+int CRingsScorer::LoadFromSavedResults(const char* zCaseDir)
 {
 	miFirst = mpImages->GetFirst();
 	miLast = mpImages->GetLast();
 	mStep = mpImages->GetStep();
 	mnImages = mpImages->GetNFiles();
 
-	for (const CString& sName : vScorerNames)
-	{
-		for (int iScorer = 0; iScorer < mpImageScorer->GetNScorers(); iScorer++)
-		{
-			CScorerBase* pScorer = mpImageScorer->GetScorerByIndex(iScorer);
-			if (sName == pScorer->Name())
-			{
-				pScorer->LoadSavedResults(zCaseDir);
-				break;
-			}
-		}
-	}
+	// Every scorer's own LoadSavedResults() already handles a missing CSV gracefully (returns
+	// false, leaves it unscored) - no need to pre-filter by name. Iterating in registration
+	// order (not whatever order CaseInfo.yaml happens to list names in) also guarantees
+	// CAllMaxScorer - always last, see CImageRingsScorer::CreateScorers() - loads only after
+	// every sibling it depends on has already replayed its own (possibly newly-reweighted)
+	// results; and since its override doesn't read a CSV at all, this also lets it compute
+	// itself for a case scored before AllMax existed, not just ones that already had it.
+	for (int iScorer = 0; iScorer < mpImageScorer->GetNScorers(); iScorer++)
+		mpImageScorer->GetScorerByIndex(iScorer)->LoadSavedResults(zCaseDir);
 
 	// Peaks weren't read back from the CSVs - recompute them from the replayed scores,
 	// same as a live run does once every image has been scored
@@ -157,6 +154,7 @@ void CRingsScorer::LogCaseInfo()
 	if (!pfLog)
 		return;
 
+	fprintf(pfLog, "csv_version: %d\n", gConfig.mCsvVersion);
 	fprintf(pfLog, "case_path: %s\n", (LPCTSTR)mpImages->GetPath());
 	fprintf(pfLog, "n_images: %d\n", mnImages);
 

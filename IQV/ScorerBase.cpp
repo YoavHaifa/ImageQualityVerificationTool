@@ -36,8 +36,10 @@ void CScorerBase::Score(int iImage, const vector<CRingInfo>& vRingsInfo, bool bE
 	mScore.mRawScore = mScore.mScore;
 	mScore.mScore *= mWeight;
 
-	// Files the score just computed by Score() into mResults, under iImage
-	mResults.AddScore(mScore.mRawScore, mScore.mScore, mScore.miRing, iImage);
+	// Files the score just computed by Score() into mResults, under iImage. mScore.meSourceType
+	// is left at its default (N_SCORE_TYPES) for every scorer except CAllMaxScorer, which sets
+	// it directly in its own ComputeScore().
+	mResults.AddScore(mScore, iImage);
 }
 void CScorerBase::LogAllImages(int iFirst, int iStep) const
 {
@@ -81,7 +83,11 @@ bool CScorerBase::LoadSavedResults(const char* zCaseDir)
 			// if this is the best score so far, and a live scoring pass always stores the
 			// *original* DICOM slice number there (see CImageRingsScorer::Score) - not a 0-based
 			// index - so this must match, even though mvScores itself is still indexed by push order.
-			mResults.AddScore(rawScore, rawScore * mWeight, iRing, iOriginal);
+			CImageScore score;
+			score.mRawScore = rawScore;
+			score.mScore = rawScore * mWeight;
+			score.miRing = iRing;
+			mResults.AddScore(score, iOriginal);
 		}
 	}
 	fclose(pf);

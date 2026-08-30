@@ -2,16 +2,14 @@
 #include "ScoreTypeResults.h"
 #include "Config.h"
 
-void CScoreTypeResults::AddScore(float rawScore, float weightedScore, int iRing, int iImage)
+void CScoreTypeResults::AddScore(const CImageScore& score, int iImage)
 {
-	CImageScore score;
-	score.mScore = weightedScore;
-	score.mRawScore = rawScore;
-	score.miRing = iRing;
-	mvScores.push_back(score);
-	if (mvScores.size() == 1 || weightedScore > mMaxScore)
+	CImageScore stored = score;
+	stored.miOriginalImage = iImage;
+	mvScores.push_back(stored);
+	if (mvScores.size() == 1 || score.mScore > mMaxScore)
 	{
-		mMaxScore = weightedScore;
+		mMaxScore = score.mScore;
 		miImageWithMaxScore = iImage;
 	}
 }

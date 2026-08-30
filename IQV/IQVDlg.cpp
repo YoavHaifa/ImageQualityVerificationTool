@@ -805,6 +805,15 @@ void CIQVDlg::DisplayScore()
 	SetParameter(IDC_EDIT_RADIUS, score.miRing);
 	if (score.miRing >= 0)
 		DisplayCircle(mpImages->GetRotationCenter(), (float)score.miRing);
+
+	// Only meaningful while AllMax is the active scorer - hide it otherwise
+	bool bShowSource = (gConfig.mScoreType == EScoreType::AllMax);
+	if (CWnd* pField = GetDlgItem(IDC_EDIT_SOURCE_SCORER))
+		pField->ShowWindow(bShowSource ? SW_SHOW : SW_HIDE);
+	if (CWnd* pLabel = GetDlgItem(IDC_STATIC_SOURCE_SCORER))
+		pLabel->ShowWindow(bShowSource ? SW_SHOW : SW_HIDE);
+	if (bShowSource)
+		SetParameter(IDC_EDIT_SOURCE_SCORER, ScoreTypeName(score.meSourceType));
 }
 void CIQVDlg::OnBnClickedOk()
 {

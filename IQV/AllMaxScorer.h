@@ -10,6 +10,12 @@ class CAllMaxScorer : public CScorerBase
 public:
 	CAllMaxScorer(const std::vector<float>& vRingMean, const std::vector<std::unique_ptr<CScorerBase>>* pAllScorers);
 
+	// Overridden: ignores its own saved CSV and recomputes itself, image by image, as the max
+	// of its siblings' mResults - which by then already reflect ScorerWeights.csv as it is now
+	// (see CRingsScorer::LoadFromSavedResults, which loads scorers in registration order so
+	// every sibling is loaded before this runs)
+	bool LoadSavedResults(const char* zCaseDir) override;
+
 protected:
 	void ComputeScore() override;
 

@@ -7,10 +7,11 @@
 class CScoreTypeResults
 {
 public:
-	// weightedScore is what every comparison/display uses (mMaxScore, peak order, ...);
-	// rawScore is kept alongside only so it can be logged and, on replay, re-weighted with
-	// a possibly-changed weight without rescoring - see CScorerBase::LoadSavedResults
-	void AddScore(float rawScore, float weightedScore, int iRing, int iImage);
+	// Files score under iImage (stamped onto the stored copy as miOriginalImage). score.mScore
+	// (the weighted value) is what every comparison/display uses (mMaxScore, peak order, ...);
+	// score.mRawScore is kept alongside only so it can be logged and, on replay, re-weighted
+	// with a possibly-changed weight without rescoring - see CScorerBase::LoadSavedResults.
+	void AddScore(const CImageScore& score, int iImage);
 
 	// Call once, after all images have been scored and added, to find peaks and rank them by severity
 	void OnAllImagesScored();

@@ -34,6 +34,10 @@ private:
 	// the case's log directory, and computes the rotation center.
 	bool LoadImages(const char* zImageFileName, int iCaseIndex = 0);
 
+	// Refuses to replay a case whose CaseInfo.yaml csv_version doesn't match gConfig.mCsvVersion -
+	// its per-scorer CSVs would otherwise be parsed under a column layout this build doesn't write
+	bool CheckCsvVersion(const char* zCaseDir);
+
 	// Composes a case name from the real "junction" directories (ones with more than one real
 	// subdirectory) between sRoot and sSetDir, using at each junction whichever child was
 	// actually taken toward sSetDir. Returns "SingleSet" if there's no junction at all, i.e.

@@ -122,25 +122,32 @@ bool CIQVManager::LoadFromSavedResults(const char* zCaseDir)
 	if (!ResolveCaseSampleFile(zCaseDir, sSampleFile))
 		return false;
 
+	if (!CheckCsvVersion(zCaseDir))
+		return false;
+
 	if (!LoadImages(sSampleFile))
 		return false;
 
+	mpRingsScorer = new CRingsScorer(mpImages);
+	miScoredPosition = mpRingsScorer->LoadFromSavedResults(zCaseDir);
+
+	return true;
+}
+bool CIQVManager::CheckCsvVersion(const char* zCaseDir)
+{
 	CYamlParser parser;
 	string sYamlName(string(zCaseDir) + "\\CaseInfo.yaml");
-	parser.Parse(sYamlName.c_str()); // already validated by ResolveCaseSampleFile above
+	if (!parser.Parse(sYamlName.c_str()))
+		return false;
 
-	vector<CString> vScorerNames;
-	CYamlLine* pScorers = parser.GetRoot()->GetFirst("scorers");
-	if (pScorers)
+	int csvVersion = 0; // Cases logged before csv_version existed have none - never matches
+	parser.GetRoot()->GetValue("csv_version", csvVersion);
+	if (csvVersion != gConfig.mCsvVersion)
 	{
-		POSITION pos = pScorers->GetHeadPosition();
-		while (pos)
-			vScorerNames.push_back(pScorers->GetNext(pos)->Key());
+		gConfig.PrintStatus(format("Case's CSV format (v{}) does not match this build (v{}) - rescore to review it",
+			csvVersion, gConfig.mCsvVersion).c_str());
+		return false;
 	}
-
-	mpRingsScorer = new CRingsScorer(mpImages);
-	miScoredPosition = mpRingsScorer->LoadFromSavedResults(zCaseDir, vScorerNames);
-
 	return true;
 }
 string CIQVManager::GetSetInfo(void)
