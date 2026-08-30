@@ -7,13 +7,17 @@
 class CScoreTypeResults
 {
 public:
-	void AddScore(float score, int iRing, int iImage);
+	// weightedScore is what every comparison/display uses (mMaxScore, peak order, ...);
+	// rawScore is kept alongside only so it can be logged and, on replay, re-weighted with
+	// a possibly-changed weight without rescoring - see CScorerBase::LoadSavedResults
+	void AddScore(float rawScore, float weightedScore, int iRing, int iImage);
 
 	// Call once, after all images have been scored and added, to find peaks and rank them by severity
 	void OnAllImagesScored();
 
-	// Multiplies every recorded score (and mMaxScore) by factor in place - a uniform positive
-	// scale doesn't change peak order, only the numbers shown/compared across cases
+	// Multiplies every recorded score - both raw and weighted - and mMaxScore by factor in
+	// place - a uniform positive scale doesn't change peak order, only the numbers shown/
+	// compared across cases. Applied equally to both fields to keep weighted == raw * weight.
 	void ScaleScores(float factor);
 
 	// Returns the image index holding the given peak severity order, or -1 if not found

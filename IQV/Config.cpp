@@ -19,12 +19,54 @@ void CConfig::Init()
 	CMyWindows::VerifyDirectory(msLogRoot.c_str());
 	CMyWindows::VerifyDirectory("d:\\MyLog");
 	CMyWindows::VerifyDirectory("d:\\MyLog\\Images");
-	CMyWindows::VerifyDirectory(msLogRoot.c_str());
 	if (mDebug)
 	{
 		gfLog.Init("IQV_App");
 		gfLog.Log("<CConfig::Init()> version", msVersion);
 	}
+	LoadScorerWeights();
+}
+void CConfig::LoadScorerWeights()
+{
+	mvScorerWeights.assign((int)EScoreType::N_SCORE_TYPES, 1.0f);
+
+	string sfName(CMyWindows::GetApplicationPath() + "\\ScorerWeights.csv");
+	if (!CFileName::Exist(sfName.c_str()))
+	{
+		FILE* pfOut = nullptr;
+		fopen_s(&pfOut, sfName.c_str(), "w");
+		if (pfOut)
+		{
+			fprintf(pfOut, "code, name, weight\n");
+			for (int i = 0; i < (int)EScoreType::N_SCORE_TYPES; i++)
+				fprintf(pfOut, "%d, %s, %.2f\n", i, ScoreTypeName((EScoreType)i), mvScorerWeights[i]);
+			fclose(pfOut);
+		}
+		return;
+	}
+
+	FILE* pf = nullptr;
+	fopen_s(&pf, sfName.c_str(), "r");
+	if (!pf)
+		return;
+
+	char zLine[128];
+	fgets(zLine, sizeof(zLine), pf); // header
+	while (fgets(zLine, sizeof(zLine), pf))
+	{
+		int iCode;
+		char zName[64];
+		float weight;
+		if (sscanf_s(zLine, "%d, %63[^,], %f", &iCode, zName, (unsigned)sizeof(zName), &weight) == 3
+			&& iCode >= 0 && iCode < (int)mvScorerWeights.size())
+			mvScorerWeights[iCode] = weight;
+	}
+	fclose(pf);
+}
+float CConfig::GetScorerWeight(EScoreType type) const
+{
+	int i = (int)type;
+	return (i >= 0 && i < (int)mvScorerWeights.size()) ? mvScorerWeights[i] : 1.0f;
 }
 void CConfig::SetCurrentCase(const char* zCaseName, int iCaseIndex)
 {

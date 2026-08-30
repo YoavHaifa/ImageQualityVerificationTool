@@ -200,6 +200,7 @@ copy ..\..\ImageRLib\$(Platform)\$(Configuration)\ImageRLib.dll $(OutDir)
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="AllMaxScorer.h" />
     <ClInclude Include="ArinetaImages.h" />
     <ClInclude Include="BatchCompleteDlg.h" />
     <ClInclude Include="BatchReviewer.h" />
@@ -227,6 +228,7 @@ copy ..\..\ImageRLib\$(Platform)\$(Configuration)\ImageRLib.dll $(OutDir)
     <ClInclude Include="TentScorer.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AllMaxScorer.cpp" />
     <ClCompile Include="ArinetaImages.cpp" />
     <ClCompile Include="BatchCompleteDlg.cpp" />
     <ClCompile Include="BatchReviewer.cpp" />

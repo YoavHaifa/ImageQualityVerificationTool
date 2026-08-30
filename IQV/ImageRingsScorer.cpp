@@ -6,6 +6,7 @@
 #include "MinMaxScorer.h"
 #include "TentScorer.h"
 #include "CenterScorer.h"
+#include "AllMaxScorer.h"
 #include "..\..\yUtils\MyWindows.h"
 #include <string>
 #include <cmath>
@@ -103,6 +104,8 @@ void CImageRingsScorer::CreateScorers()
 	mvScorers.push_back(std::make_unique<CTentScorer>(mvRingMean));
 	mvScorers.push_back(std::make_unique<CTentMinScorer>(mvRingMean));
 	mvScorers.push_back(std::make_unique<CCenterScorer>(mvRingMean));
+	// Must stay last - it depends on every scorer above already having scored the current image
+	mvScorers.push_back(std::make_unique<CAllMaxScorer>(mvRingMean, &mvScorers));
 }
 void CImageRingsScorer::CollectRingsInfo()
 {

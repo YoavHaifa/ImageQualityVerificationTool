@@ -61,4 +61,10 @@ protected:
 	const std::vector<CRingInfo>* mpRingsInfo = nullptr; // valid only during ComputeScore(), set by Score()
 	int mnRings;
 	EScoreType meScoreType;
+
+	// Multiplies this scorer's raw per-image score to bring it to a similar scale as the others
+	// (see gConfig.GetScorerWeight) - applied in Score(), right after the raw score is known.
+	// CAllMaxScorer overrides this to 1 in its own constructor, since it's already built from
+	// its siblings' weighted scores.
+	float mWeight = 1.0f;
 };

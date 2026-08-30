@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <vector>
 #include "..\..\yUtils\FileLogger.h"
 #include "ScoreTypes.h"
 
@@ -107,6 +108,19 @@ public:
 	void ReadFromFile();
 
 	void PrintStatus(const char* zStatus);
+
+	// Per-scorer weight, brings different scorers' scores to a similar scale before they're
+	// compared (e.g. by CAllMaxScorer) or displayed. Read from ScorerWeights.csv (app directory,
+	// created with every weight defaulted to 1.0 if missing) once at startup - changing a weight
+	// there needs an app restart to take effect, but Case/Batch Review's replay path (which
+	// re-weights each scorer's saved raw score, not just replaying the old weighted one) then
+	// reflects it without rescoring.
+	float GetScorerWeight(EScoreType type) const;
+
+private:
+	void LoadScorerWeights();
+
+	std::vector<float> mvScorerWeights;
 };
 
 static constexpr float IGNORE_RING = -100.0;

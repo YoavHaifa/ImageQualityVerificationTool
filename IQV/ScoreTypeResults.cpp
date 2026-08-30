@@ -2,12 +2,16 @@
 #include "ScoreTypeResults.h"
 #include "Config.h"
 
-void CScoreTypeResults::AddScore(float score, int iRing, int iImage)
+void CScoreTypeResults::AddScore(float rawScore, float weightedScore, int iRing, int iImage)
 {
-	mvScores.push_back(CImageScore{ score, iRing });
-	if (mvScores.size() == 1 || score > mMaxScore)
+	CImageScore score;
+	score.mScore = weightedScore;
+	score.mRawScore = rawScore;
+	score.miRing = iRing;
+	mvScores.push_back(score);
+	if (mvScores.size() == 1 || weightedScore > mMaxScore)
 	{
-		mMaxScore = score;
+		mMaxScore = weightedScore;
 		miImageWithMaxScore = iImage;
 	}
 }
@@ -19,7 +23,10 @@ void CScoreTypeResults::OnAllImagesScored()
 void CScoreTypeResults::ScaleScores(float factor)
 {
 	for (CImageScore& score : mvScores)
+	{
 		score.mScore *= factor;
+		score.mRawScore *= factor;
+	}
 	mMaxScore *= factor;
 }
 void CScoreTypeResults::FindPeaks()

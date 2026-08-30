@@ -10,6 +10,7 @@ CScorerBase::CScorerBase(const vector<float>& vRingMean, EScoreType eScoreType)
 	: mvRingMean(vRingMean)
 	, mnRings((int)vRingMean.size() - 1)
 	, meScoreType(eScoreType)
+	, mWeight(gConfig.GetScorerWeight(eScoreType))
 {
 	mvRingScore.assign(vRingMean.size(), 0.0f);
 }
@@ -30,8 +31,13 @@ void CScorerBase::Score(int iImage, const vector<CRingInfo>& vRingsInfo, bool bE
 	}
 	FindMaxScorePerCurrentImage();
 
+	// Weight this scorer's score before anyone else (e.g. CAllMaxScorer, later in the same
+	// per-image loop) reads mScore.mScore, and before it's filed into mResults/logged
+	mScore.mRawScore = mScore.mScore;
+	mScore.mScore *= mWeight;
+
 	// Files the score just computed by Score() into mResults, under iImage
-	mResults.AddScore(mScore.mScore, mScore.miRing, iImage);
+	mResults.AddScore(mScore.mRawScore, mScore.mScore, mScore.miRing, iImage);
 }
 void CScorerBase::LogAllImages(int iFirst, int iStep) const
 {
@@ -42,12 +48,12 @@ void CScorerBase::LogAllImages(int iFirst, int iStep) const
 	if (!pfLog)
 		return;
 
-	fprintf(pfLog, "image, score, ring, peak, peak_order\n");
+	fprintf(pfLog, "image, raw_score, score, ring, peak, peak_order\n");
 	for (int iImage = 0; iImage < mResults.NumImages(); iImage++)
 	{
 		int iOriginal = iFirst + iImage * iStep;
 		const CImageScore& score = mResults[iImage];
-		fprintf(pfLog, "%d, %.2f, %d, %s, %d\n", iOriginal, score.mScore, score.miRing, score.mbPeak ? "Peak" : "-", score.miPeak);
+		fprintf(pfLog, "%d, %.2f, %.2f, %d, %s, %d\n", iOriginal, score.mRawScore, score.mScore, score.miRing, score.mbPeak ? "Peak" : "-", score.miPeak);
 	}
 	fclose(pfLog);
 }
@@ -66,14 +72,16 @@ bool CScorerBase::LoadSavedResults(const char* zCaseDir)
 	while (fgets(zLine, sizeof(zLine), pf))
 	{
 		int iOriginal, iRing;
-		float score;
-		if (sscanf_s(zLine, "%d, %f, %d", &iOriginal, &score, &iRing) == 3)
+		float rawScore, oldWeightedScore;
+		if (sscanf_s(zLine, "%d, %f, %f, %d", &iOriginal, &rawScore, &oldWeightedScore, &iRing) == 4)
 		{
-			// AddScore's iImage becomes mResults.miImageWithMaxScore verbatim if this is the
-			// best score so far, and a live scoring pass always stores the *original* DICOM
-			// slice number there (see CImageRingsScorer::Score) - not a 0-based index - so
-			// this must match, even though mvScores itself is still indexed by push order.
-			mResults.AddScore(score, iRing, iOriginal);
+			// Re-weight from the saved raw score with mWeight as it is *now*, rather than trust
+			// the saved weighted column - lets a changed ScorerWeights.csv take effect on replay
+			// without rescoring. AddScore's iImage becomes mResults.miImageWithMaxScore verbatim
+			// if this is the best score so far, and a live scoring pass always stores the
+			// *original* DICOM slice number there (see CImageRingsScorer::Score) - not a 0-based
+			// index - so this must match, even though mvScores itself is still indexed by push order.
+			mResults.AddScore(rawScore, rawScore * mWeight, iRing, iOriginal);
 		}
 	}
 	fclose(pf);
