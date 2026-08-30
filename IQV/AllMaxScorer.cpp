@@ -49,11 +49,16 @@ bool CAllMaxScorer::LoadSavedResults(const char* zCaseDir)
 				continue;
 
 			const CImageScore& s = pSibling->mResults[iImage];
+			// Every sibling at this push-order index shares the same original image number,
+			// even one scored 0 - grab it unconditionally so this index is never skipped, or
+			// every later index would drift out of the push-order == original image - 1
+			// alignment that GetCurrentScore()/FindImageIndexOfPeak() rely on
+			if (iOriginal < 0)
+				iOriginal = s.miOriginalImage;
 			if (s.mScore > maxScore)
 			{
 				maxScore = s.mScore;
 				iRingOfMax = s.miRing;
-				iOriginal = s.miOriginalImage;
 				eSource = pSibling->GetScoreType();
 			}
 		}
