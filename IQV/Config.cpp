@@ -83,6 +83,26 @@ void CConfig::LoadScorerWeights()
 	}
 	fclose(pf);
 }
+float CConfig::ComputeCertaintyFraction(float score) const
+{
+	const float minFractionAtThreshold = 0.2f;
+	float half = mMaxAcceptableScore / 2.0f;
+	float oneAndHalf = mMaxAcceptableScore * 1.5f;
+
+	if (score <= mMaxAcceptableScore)
+	{
+		// Pass side: 1.0 at/below half the threshold, shrinking to the floor right at the threshold
+		if (score <= half)
+			return 1.0f;
+		float t = (score - half) / (mMaxAcceptableScore - half);
+		return 1.0f - t * (1.0f - minFractionAtThreshold);
+	}
+	// Fail side: mirror image - floor right above the threshold, growing to 1.0 by 1.5x it
+	if (score >= oneAndHalf)
+		return 1.0f;
+	float t = (score - mMaxAcceptableScore) / (oneAndHalf - mMaxAcceptableScore);
+	return minFractionAtThreshold + t * (1.0f - minFractionAtThreshold);
+}
 float CConfig::GetScorerWeight(EScoreType type) const
 {
 	int i = (int)type;
@@ -119,6 +139,7 @@ void CConfig::SaveToFile()
 	dumpFile.Write("n_off_center_rings", mnOffCenterRings);
 	dumpFile.Write("min_pixels_in_mask", mnMinPixelsInMask);
 	dumpFile.Write("score_type", (int)mScoreType);
+	dumpFile.Write("max_acceptable_score", mMaxAcceptableScore);
 	dumpFile.Write("version", msVersion.c_str());
 	dumpFile.Write("log_root", msLogRoot.c_str());
 	dumpFile.Write("log_image_ring_details", mbLogImageRingDetails);
@@ -167,6 +188,7 @@ void CConfig::ReadFromFile()
 	int iScoreType = (int)mScoreType;
 	if (pRoot->GetValue("score_type", iScoreType))
 		mScoreType = (EScoreType)iScoreType;
+	pRoot->GetValue("max_acceptable_score", mMaxAcceptableScore);
 
 	pRoot->GetValue("version", msVersion);
 	pRoot->GetValue("log_root", msLogRoot);

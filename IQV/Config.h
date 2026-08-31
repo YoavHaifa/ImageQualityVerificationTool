@@ -46,6 +46,20 @@ public:
 
 	EScoreType mScoreType = EScoreType::MinMax;
 
+	// Global pass/fail cutoff on the displayed score, regardless of which scorer is active.
+	// A score above this is a "Failure", at or below it is a "Pass".
+	float mMaxAcceptableScore = 10.0f;
+
+	bool IsPass(float score) const { return score <= mMaxAcceptableScore; }
+
+	// How strongly the given score supports its own pass/fail verdict, as a 0..1 fill fraction
+	// of just that one color (see CIQVDlg::PaintPassFailIndicator - pass shows only green, fail
+	// shows only red, no mixing). Symmetric around the threshold: right at it (from either side)
+	// certainty is at its lowest (0.2, never all the way to 0 - a bare verdict still shows some
+	// color) and grows to 1.0 by half the threshold below it (a clean pass) or 1.5x the
+	// threshold above it (a clean fail).
+	float ComputeCertaintyFraction(float score) const;
+
 	// Not read from/written to ReconTest.State.xml - a hardcoded build-time constant. Bump this
 	// whenever ScoreAllImages_<Name>.csv's column layout changes (see CScorerBase::LogAllImages/
 	// LoadSavedResults). Written into each case's CaseInfo.yaml as csv_version when scored;

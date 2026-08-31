@@ -255,7 +255,33 @@ void CIQVDlg::OnPaint()
 	else
 	{
 		CDialog::OnPaint();
+		PaintPassFailIndicator();
 	}
+}
+void CIQVDlg::PaintPassFailIndicator()
+{
+	CRect rect(420, 60, 475, 78); // dialog units - converted to pixels below
+	MapDialogRect(&rect);
+
+	CDC* pDC = GetDC();
+	if (!pDC)
+		return;
+
+	pDC->FillSolidRect(rect, RGB(230, 230, 230)); // blank until a real score has been shown
+
+	if (mbHasScore)
+	{
+		COLORREF color = mbScorePass ? RGB(0, 180, 0) : RGB(200, 0, 0);
+		int filledWidth = (int)(mScoreCertaintyFraction * rect.Width() + 0.5f);
+		pDC->FillSolidRect(rect.left, rect.top, filledWidth, rect.Height(), color);
+
+		pDC->SetBkMode(TRANSPARENT);
+		pDC->SetTextColor(RGB(0, 0, 0));
+		pDC->DrawText(mbScorePass ? "Passed" : "Failed", rect, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+	}
+	pDC->Draw3dRect(rect, RGB(0, 0, 0), RGB(0, 0, 0));
+
+	ReleaseDC(pDC);
 }
 LRESULT CIQVDlg::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -820,6 +846,11 @@ void CIQVDlg::DisplayScore()
 		pLabel->ShowWindow(bShowSource ? SW_SHOW : SW_HIDE);
 	if (bShowSource)
 		SetParameter(IDC_EDIT_SOURCE_SCORER, ScoreTypeName(score.meSourceType));
+
+	mbHasScore = true;
+	mbScorePass = gConfig.IsPass(score.mScore);
+	mScoreCertaintyFraction = gConfig.ComputeCertaintyFraction(score.mScore);
+	Invalidate(FALSE);
 }
 void CIQVDlg::OnBnClickedOk()
 {

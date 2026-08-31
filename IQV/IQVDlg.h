@@ -79,6 +79,16 @@ public:
 
 	void DisplayCircle(CDataCoordinates& center, float radius);
 
+	// Pass/fail indicator state for the currently displayed score - see
+	// CConfig::IsPass()/ComputeCertaintyFraction(). mbHasScore is false until DisplayScore() has
+	// actually shown a real score at least once (e.g. before any case is loaded), in which case
+	// the indicator paints blank rather than a stale/default verdict. Updated in DisplayScore(),
+	// painted in OnPaint().
+	bool mbHasScore = false;
+	bool mbScorePass = true;
+	float mScoreCertaintyFraction = 0.0f;
+	void PaintPassFailIndicator();
+
 	// Displays pVolume (wide-images or CT-per-radius) in the viewer - normally shared live via
 	// DisplayShared(), but if gConfig.mbAvoidSharedMemory is on (work-around for a machine where
 	// shared memory shows blank), has ImageR open sDumpFileName (already dumped to disk by
