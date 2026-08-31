@@ -15,6 +15,7 @@ CConfig::CConfig()
 }
 void CConfig::Init()
 {
+	ComputeConfigDir();
 	ReadFromFile();
 	CMyWindows::VerifyDirectory(msLogRoot.c_str());
 	CMyWindows::VerifyDirectory("d:\\MyLog");
@@ -26,11 +27,30 @@ void CConfig::Init()
 	}
 	LoadScorerWeights();
 }
+void CConfig::ComputeConfigDir()
+{
+	CString sAppPath(CMyWindows::GetApplicationPath());
+
+	// Strip a trailing separator so the last path component can be found reliably
+	while (sAppPath.GetLength() > 0 && (sAppPath.Right(1) == "\\" || sAppPath.Right(1) == "/"))
+		sAppPath = sAppPath.Left(sAppPath.GetLength() - 1);
+
+	msConfigDir = (LPCTSTR)sAppPath;
+
+	int iSep = sAppPath.ReverseFind('\\');
+	CString sLastDir = (iSep >= 0) ? sAppPath.Mid(iSep + 1) : sAppPath;
+	if (iSep >= 0 && sLastDir.CompareNoCase("Debug") == 0)
+	{
+		CString sReleaseDir(sAppPath.Left(iSep) + "\\Release");
+		if (CMyWindows::IsDirectory(sReleaseDir))
+			msConfigDir = (LPCTSTR)sReleaseDir;
+	}
+}
 void CConfig::LoadScorerWeights()
 {
 	mvScorerWeights.assign((int)EScoreType::N_SCORE_TYPES, 1.0f);
 
-	string sfName(CMyWindows::GetApplicationPath() + "\\ScorerWeights.csv");
+	string sfName(msConfigDir + "\\ScorerWeights.csv");
 	if (!CFileName::Exist(sfName.c_str()))
 	{
 		FILE* pfOut = nullptr;
@@ -84,7 +104,7 @@ void CConfig::SetCurrentCase(const char* zCaseName, int iCaseIndex)
 }
 void CConfig::SaveToFile()
 {
-	CXMLDump dumpFile(CMyWindows::GetApplicationPath() + "\\ReconTest.State.xml", "def");
+	CXMLDump dumpFile((msConfigDir + "\\ReconTest.State.xml").c_str(), "def");
 
 	dumpFile.Write("min_ct_threshold", mMinThreshold - CT_BIAS);
 	dumpFile.Write("max_ct_threshold", mMaxThreshold - CT_BIAS);
@@ -114,7 +134,7 @@ void CConfig::SaveToFile()
 }
 void CConfig::ReadFromFile()
 {
-	string sfName(CMyWindows::GetApplicationPath() + "\\ReconTest.State.xml");
+	string sfName(msConfigDir + "\\ReconTest.State.xml");
 	if (!CFileName::Exist(sfName.c_str()))
 		return;
 

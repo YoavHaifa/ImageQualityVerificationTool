@@ -116,6 +116,14 @@ public:
 	// sharing the live memory-mapped volume.
 	bool mbAvoidSharedMemory = false;
 
+	// Where ReconTest.State.xml and ScorerWeights.csv live - computed once in Init(), before
+	// ReadFromFile()/LoadScorerWeights() need it. Not read from/written to file itself.
+	// Normally the running exe's own directory, EXCEPT: if that directory is named "Debug" and
+	// has a sibling "Release" directory, the Release one is used instead - so a Debug build run
+	// during development shares the same config/weights as the Release build, rather than each
+	// drifting its own separate copy.
+	std::string msConfigDir;
+
 	void SetCurrentCase(const char* zCaseName, int iCaseIndex = 0);
 
 	void SaveToFile();
@@ -132,6 +140,7 @@ public:
 	float GetScorerWeight(EScoreType type) const;
 
 private:
+	void ComputeConfigDir();
 	void LoadScorerWeights();
 
 	std::vector<float> mvScorerWeights;
