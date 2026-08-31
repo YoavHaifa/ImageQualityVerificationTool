@@ -89,6 +89,10 @@ public:
 	float mScoreCertaintyFraction = 0.0f;
 	void PaintPassFailIndicator();
 
+	// Shows/hides the "leaf between cases" row (only meaningful in batch review) - hidden by
+	// default (OnInitDialog), shown once DisplayBatchCase() first runs.
+	void ShowBatchCaseControls(bool bShow);
+
 	// Displays pVolume (wide-images or CT-per-radius) in the viewer - normally shared live via
 	// DisplayShared(), but if gConfig.mbAvoidSharedMemory is on (work-around for a machine where
 	// shared memory shows blank), has ImageR open sDumpFileName (already dumped to disk by

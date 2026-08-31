@@ -43,7 +43,7 @@ MENU IDR_MENU1
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     PUSHBUTTON      "Shared Memory Display",IDC_BUTTON_SHARED,7,7,110,14,NOT WS_VISIBLE
-    LTEXT           "Leaf Between Cases:",IDC_STATIC,7,9,90,8
+    LTEXT           "Leaf Between Cases:",IDC_STATIC_LEAF_CASES,7,9,90,8
     PUSHBUTTON      "Previous Case",IDC_BUTTON_PREV_CASE,100,7,65,14
     PUSHBUTTON      "Worst Case",IDC_BUTTON_WORST_CASE,173,7,65,14
     PUSHBUTTON      "Next Case",IDC_BUTTON_NEXT_CASE,246,7,65,14

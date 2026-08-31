@@ -196,6 +196,10 @@ BOOL CIQVDlg::OnInitDialog()
 	// TODO: Add extra initialization here
 	//DisplayPos();
 
+	// Only meaningful once leafing between cases (i.e. in batch review) is possible -
+	// DisplayBatchCase() shows them again once that starts
+	ShowBatchCaseControls(false);
+
 	if (!gConfig.mbDeveloperMode)
 	{
 		CMenu* pMenu = GetMenu();
@@ -282,6 +286,15 @@ void CIQVDlg::PaintPassFailIndicator()
 	pDC->Draw3dRect(rect, RGB(0, 0, 0), RGB(0, 0, 0));
 
 	ReleaseDC(pDC);
+}
+void CIQVDlg::ShowBatchCaseControls(bool bShow)
+{
+	int nCmdShow = bShow ? SW_SHOW : SW_HIDE;
+	static const int aids[] = { IDC_STATIC_LEAF_CASES, IDC_BUTTON_PREV_CASE, IDC_BUTTON_WORST_CASE,
+		IDC_BUTTON_NEXT_CASE, IDC_STATIC_CASE_INDEX };
+	for (int id : aids)
+		if (CWnd* pWnd = GetDlgItem(id))
+			pWnd->ShowWindow(nCmdShow);
 }
 LRESULT CIQVDlg::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -663,6 +676,8 @@ void CIQVDlg::OnBnClickedButtonPrevCase()
 }
 void CIQVDlg::DisplayBatchCase()
 {
+	ShowBatchCaseControls(true);
+
 	CIQVManager* pManager = mpBatchReviewer->GetManager();
 	mpImages = pManager->GetImages();
 	mpRingsScorer = pManager->GetRingsScorer();
