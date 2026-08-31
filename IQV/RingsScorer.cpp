@@ -8,6 +8,7 @@
 #include "Config.h"
 #include "IQVDlg.h"
 #include "..\..\yUtils\MyWindows.h"
+#include "..\..\yUtils\YamlParser.h"
 #include <string>
 #include <format>
 
@@ -91,6 +92,13 @@ int CRingsScorer::LoadFromSavedResults(const char* zCaseDir)
 	miLast = mpImages->GetLast();
 	mStep = mpImages->GetStep();
 	mnImages = mpImages->GetNFiles();
+
+	// mDataRangeScoreFactor isn't recomputed on replay (that needs the full per-image histogram) -
+	// read back what the original live run actually used and logged
+	CYamlParser parser;
+	string sYamlName(string(zCaseDir) + "\\CaseInfo.yaml");
+	if (parser.Parse(sYamlName.c_str()))
+		parser.GetRoot()->GetValue("data_range_score_factor", mDataRangeScoreFactor);
 
 	// Every scorer's own LoadSavedResults() already handles a missing CSV gracefully (returns
 	// false, leaves it unscored) - no need to pre-filter by name. Iterating in registration

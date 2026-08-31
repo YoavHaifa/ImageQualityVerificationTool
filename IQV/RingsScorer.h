@@ -28,6 +28,11 @@ public:
 	// Jump to the max peak of the newly active score type (peaks for all types are already computed)
 	void OnActiveScoreTypeChanged();
 
+	// The uniform per-image scale applied on top of each scorer's own weight, derived from this
+	// case's pixel-value histogram main area (see ScoreAllImages()) - read back from CaseInfo.yaml
+	// on replay, since redoing the histogram would need rescoring. 1.0 if never computed/read.
+	float GetDataRangeScoreFactor() const { return mDataRangeScoreFactor; }
+
 private:
 	static constexpr int N_SCORE_TYPES = (int)EScoreType::N_SCORE_TYPES;
 

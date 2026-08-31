@@ -38,6 +38,7 @@
 #define IDC_STATIC_SOURCE_SCORER        1026
 #define IDC_EDIT_SOURCE_SCORER          1027
 #define IDC_STATIC_LEAF_CASES           1028
+#define IDC_STATIC_SCORE_DETAIL         1029
 #define ID_FILE_OPEN32771               32771
 #define ID_FILE_EXIT                    32772
 #define ID_FILE_OPENCOLORER             32788
@@ -54,7 +55,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        131
 #define _APS_NEXT_COMMAND_VALUE         32797
-#define _APS_NEXT_CONTROL_VALUE         1029
+#define _APS_NEXT_CONTROL_VALUE         1030
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
