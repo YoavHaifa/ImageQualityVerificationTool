@@ -531,11 +531,8 @@ void CIQVDlg::OnFileOpen32771()
 				if (LoadViewerWithImages(sTargetFile))
 				{
 					mImages.AddTail(mpImages);
-					mpImageRIF->DisplayShared(mpImages->GetSharedWideVolume());
-					// Only ever populated by live scoring (not Case/Batch Review), so still
-					// check for null even with the feature on
-					if (mpImages->GetSharedCtPerRadiusVolume())
-						mpImageRIF->DisplayShared(mpImages->GetSharedCtPerRadiusVolume());
+					DisplayVolume(mpImages->GetSharedWideVolume(), mpImages->GetWideVolumeDumpName());
+					DisplayVolume(mpImages->GetSharedCtPerRadiusVolume(), mpImages->GetCtPerRadiusDumpName());
 					OnCurrentSelectedByScorer(miPos);
 				}
 			}
@@ -601,11 +598,8 @@ void CIQVDlg::OnFileOpencasescoring()
 	if (LoadViewerWithImages(sTargetFile))
 	{
 		mImages.AddTail(mpImages);
-		mpImageRIF->DisplayShared(mpImages->GetSharedWideVolume());
-		// Only ever populated by live scoring (not Case/Batch Review), so check for null
-		// even with the feature on
-		if (mpImages->GetSharedCtPerRadiusVolume())
-			mpImageRIF->DisplayShared(mpImages->GetSharedCtPerRadiusVolume());
+		DisplayVolume(mpImages->GetSharedWideVolume(), mpImages->GetWideVolumeDumpName());
+		DisplayVolume(mpImages->GetSharedCtPerRadiusVolume(), mpImages->GetCtPerRadiusDumpName());
 		OnCurrentSelectedByScorer(miPos);
 	}
 }
@@ -667,11 +661,8 @@ void CIQVDlg::DisplayBatchCase()
 	if (!LoadViewerWithImages(sTargetFile))
 		return;
 
-	mpImageRIF->DisplayShared(mpImages->GetSharedWideVolume());
-	// Only ever populated by live scoring (not Case/Batch Review), so check for null even
-	// with the feature on
-	if (mpImages->GetSharedCtPerRadiusVolume())
-		mpImageRIF->DisplayShared(mpImages->GetSharedCtPerRadiusVolume());
+	DisplayVolume(mpImages->GetSharedWideVolume(), mpImages->GetWideVolumeDumpName());
+	DisplayVolume(mpImages->GetSharedCtPerRadiusVolume(), mpImages->GetCtPerRadiusDumpName());
 	OnCurrentSelectedByScorer(miPos);
 }
 void CIQVDlg::OnTestFinddicomsets()
@@ -789,6 +780,21 @@ void CIQVDlg::DisplayCircle(CDataCoordinates& center, float radius)
 	pCircle->mbReportClientOnActivation = true;
 	mpImageRIF->SetCurrentDR(0);
 	mpImageRIF->DisplayGraphic(pCircle);
+}
+void CIQVDlg::DisplayVolume(CTSharedImage<short>* pVolume, const CString& sDumpFileName)
+{
+	if (!pVolume)
+		return;
+
+	if (gConfig.mbAvoidSharedMemory)
+	{
+		if (!sDumpFileName.IsEmpty())
+			mpImageRIF->FileOpen((LPCTSTR)sDumpFileName);
+		else
+			gfLog.Printf("<CIQVDlg::DisplayVolume> No dump file available for %s", (LPCTSTR)pVolume->Name());
+	}
+	else
+		mpImageRIF->DisplayShared(pVolume);
 }
 void CIQVDlg::OnCurrentSelectedByScorer(int iPos)
 {

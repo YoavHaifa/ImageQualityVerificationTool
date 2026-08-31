@@ -57,6 +57,11 @@ int CRingsScorer::ScoreAllImages()
 		}
 	}
 
+	// Unconditional, purely so the volume is always available for offline debugging (and, if
+	// gConfig.mbAvoidSharedMemory is on, for the viewer to display from instead of live shared
+	// memory) - the wide volume dumps itself the same way, right after ComputeWideImages() computes it
+	mpImages->DumpCtPerRadiusVolume();
+
 	mpImageScorer->OnAllImagesScored();
 
 	// Normalize scores against the case's own pixel-value spread, so scores become comparable

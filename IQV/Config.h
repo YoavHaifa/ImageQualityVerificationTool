@@ -109,6 +109,13 @@ public:
 	// during live scoring (not Case/Batch Review, which doesn't recompute per-ring means).
 	bool mbDisplayCtPerRadius = true;
 
+	// Work-around for a machine (Gilad's) where the wide/CT-per-radius shared-memory volumes
+	// display as all-zero in ImageR even though the computed data itself is correct on disk -
+	// root cause not yet found. When on, CIQVDlg::DisplayVolume() dumps each volume to a file
+	// (see CMyImage::Dump/umsLastSavedImageName) and has ImageR open that file instead of
+	// sharing the live memory-mapped volume.
+	bool mbAvoidSharedMemory = false;
+
 	void SetCurrentCase(const char* zCaseName, int iCaseIndex = 0);
 
 	void SaveToFile();

@@ -33,11 +33,28 @@ public:
 	// the underlying image isn't ready yet (see CArchivesImages::CreateSharedVolume).
 	bool EnsureCtPerRadiusVolume();
 
+	// Full-volume dump files (CMyImage::Dump, under CMyImage::GetDumpDir() - d:\MyLog\Images by
+	// default), written unconditionally once each volume is fully computed, purely so they're
+	// always available for offline debugging. Also lets the viewer display from the file instead
+	// of the live shared volume when gConfig.mbAvoidSharedMemory is on (see CIQVDlg::DisplayVolume) -
+	// empty if the dump hasn't happened yet or failed (e.g. the dump directory doesn't exist).
+	CString GetWideVolumeDumpName() const { return msWideDumpName; }
+	CString GetCtPerRadiusDumpName() const { return msCtPerRadiusDumpName; }
+
+	// Dumps the CT-per-radius volume to disk - unlike the wide volume (dumped once, internally,
+	// right after ComputeWideImages() finishes computing it), this is filled incrementally one
+	// image at a time by the scorer, so the caller must call this once scoring all images is done
+	// (see CRingsScorer::ScoreAllImages). No-op if the volume was never populated.
+	void DumpCtPerRadiusVolume();
+
 private:
 	bool ComputeWideImages();
 
 	CTSharedImage<short>* mpWideVolume = nullptr;
 	CTSharedImage<short>* mpCtPerRadiusVolume = nullptr;
+
+	CString msWideDumpName;
+	CString msCtPerRadiusDumpName;
 
 	int mnPixelsInImage = 1;
 

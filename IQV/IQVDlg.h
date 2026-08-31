@@ -78,6 +78,13 @@ public:
 	int mMyViewerOffsetY;
 
 	void DisplayCircle(CDataCoordinates& center, float radius);
+
+	// Displays pVolume (wide-images or CT-per-radius) in the viewer - normally shared live via
+	// DisplayShared(), but if gConfig.mbAvoidSharedMemory is on (work-around for a machine where
+	// shared memory shows blank), has ImageR open sDumpFileName (already dumped to disk by
+	// CArinetaImages, unconditionally, once the volume was fully computed) instead.
+	// No-op if pVolume is null (CT-per-radius isn't always populated).
+	void DisplayVolume(CTSharedImage<short>* pVolume, const CString& sDumpFileName);
 	afx_msg void OnBnClickedOk();
 	afx_msg void OnBnClickedCancel();
 	afx_msg void OnBnClickedButtonMax();

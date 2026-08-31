@@ -3,6 +3,7 @@
 #include "Config.h"
 #include "..\..\yUtils\MyDicom.h"
 #include "..\..\yUtils\MyWindows.h"
+#include "..\..\ImageRLib\MyImage.h"
 #include <string>
 #include <format>
 #include <algorithm>
@@ -109,6 +110,13 @@ bool CArinetaImages::EnsureCtPerRadiusVolume()
 	if (mpCtPerRadiusVolume)
 		return true;
 	return CreateSharedVolume("CtPerRadius", mpCtPerRadiusVolume);
+}
+void CArinetaImages::DumpCtPerRadiusVolume()
+{
+	if (!mpCtPerRadiusVolume)
+		return;
+	if (mpCtPerRadiusVolume->Dump())
+		msCtPerRadiusDumpName = CMyImage::umsLastSavedImageName;
 }
 bool CArinetaImages::ComputeWideImages()
 {
@@ -233,7 +241,8 @@ bool CArinetaImages::ComputeWideImages()
 		memcpy(pTarget, pPrevTarget, mnPixelsInImage * sizeof(short));
 	}
 
-	mpWideVolume->Dump();
+	if (mpWideVolume->Dump())
+		msWideDumpName = CMyImage::umsLastSavedImageName;
 
 	string s(format("All {} wide images computed", GetNFiles()));
 	gConfig.PrintStatus(s.c_str());

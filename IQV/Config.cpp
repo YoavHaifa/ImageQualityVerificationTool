@@ -108,6 +108,7 @@ void CConfig::SaveToFile()
 	dumpFile.Write("download_default_source", msDownloadDefaultSource.c_str());
 	dumpFile.Write("developer_mode", mbDeveloperMode);
 	dumpFile.Write("display_ct_per_radius", mbDisplayCtPerRadius);
+	dumpFile.Write("avoid_shared_memory", mbAvoidSharedMemory);
 
 	dumpFile.Write("debug", mDebug);
 }
@@ -156,6 +157,7 @@ void CConfig::ReadFromFile()
 	pRoot->GetValue("download_default_source", msDownloadDefaultSource);
 	pRoot->GetValue("developer_mode", mbDeveloperMode);
 	pRoot->GetValue("display_ct_per_radius", mbDisplayCtPerRadius);
+	pRoot->GetValue("avoid_shared_memory", mbAvoidSharedMemory);
 
 	pRoot->GetValue("debug", mDebug);
 
