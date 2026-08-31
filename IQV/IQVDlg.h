@@ -63,6 +63,25 @@ public:
 	afx_msg void OnUtilsDownloaddata();
 	afx_msg void OnFileExit();
 
+	// True (after showing why) if a case/batch is already open (mpImageRIF set) - the caller
+	// should abort rather than reassign mpImages/mpRingsScorer/mpCaseReviewer/mpBatchReviewer out
+	// from under the still-open viewer. Previously these callers silently did nothing instead.
+	bool WarnIfAlreadyDisplaying();
+
+	// Tears down whatever case/batch is currently open (viewer, manager, reviewers, the extra-
+	// series image list) so a caller can start fresh - same cleanup the destructor does, minus
+	// mpSharedVolume/mpColors (unrelated to case viewing). No-op if nothing is open.
+	void CloseCurrentViewer();
+	afx_msg void OnLabelSaveAllAsPassed();
+	afx_msg void OnLabelSaveAllAsFailed();
+	afx_msg void OnLabelSaveSectionAsPassed();
+	afx_msg void OnLabelSaveSectionAsFailed();
+
+	// Copies the current case's DICOM files, as-is, to gConfig.msTrainingSetRoot\[Pass|Fail]\
+	// <case-relative dir> - either the whole case (bWholeCase) or just gConfig.mSavedSectionLength
+	// images centered on the one currently displayed, clipped to the case's own image range.
+	void SaveLabeledData(bool bPass, bool bWholeCase);
+
 	bool mbDisplayReadyImages;
 	class CArinetaImages* mpImages;
 	class CRingsScorer* mpRingsScorer;

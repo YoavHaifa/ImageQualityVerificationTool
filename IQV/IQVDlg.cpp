@@ -19,6 +19,7 @@
 #include "..\..\yUtils\MyFileDialog.h"
 #include "..\..\yUtils\MyFolderDialog.h"
 #include "..\..\yUtils\FilesList.h"
+#include "..\..\yUtils\FileName.h"
 
 #include "..\..\ImageRLib\ImageRIF.h"
 #include "..\..\ImageRLib\DataRoi.h"
@@ -92,26 +93,11 @@ CIQVDlg::CIQVDlg(CWnd* pParent /*=NULL*/)
 CIQVDlg::~CIQVDlg(void)
 {
 	gfLog.Log("<CIQVDlg::~CIQVDlg>");
-	if (mpIQVManager)
-		delete mpIQVManager;
-	if (mpCaseReviewer)
-		delete mpCaseReviewer;
-	if (mpBatchReviewer)
-		delete mpBatchReviewer;
-	if (mpImageRIF)
-		delete mpImageRIF;
+	CloseCurrentViewer();
 	if (mpSharedVolume)
 		delete mpSharedVolume;
 	if (mpColors)
 		delete mpColors;
-
-	while (!mImages.IsEmpty())
-	{
-		CArchivesImages* pImages = mImages.GetTail();
-		mImages.RemoveTail();
-		if (pImages != mpImages) // mpImages is owned and deleted by mpIQVManager/mpCaseReviewer/mpBatchReviewer
-			delete pImages;
-	}
 }
 void CIQVDlg::DoDataExchange(CDataExchange* pDX)
 {
@@ -133,6 +119,10 @@ BEGIN_MESSAGE_MAP(CIQVDlg, CDialog)
 	ON_COMMAND(ID_TEST_FINDDICOMSETS, &CIQVDlg::OnTestFinddicomsets)
 	ON_COMMAND(ID_UTILS_DOWNLOADDATA, &CIQVDlg::OnUtilsDownloaddata)
 	ON_COMMAND(ID_FILE_EXIT, &CIQVDlg::OnFileExit)
+	ON_COMMAND(ID_LABEL_SAVEALLASPASSED, &CIQVDlg::OnLabelSaveAllAsPassed)
+	ON_COMMAND(ID_LABEL_SAVEALLASFAILED, &CIQVDlg::OnLabelSaveAllAsFailed)
+	ON_COMMAND(ID_LABEL_SAVESECTIONASPASSED, &CIQVDlg::OnLabelSaveSectionAsPassed)
+	ON_COMMAND(ID_LABEL_SAVESECTIONASFAILED, &CIQVDlg::OnLabelSaveSectionAsFailed)
 	ON_BN_CLICKED(IDC_BUTTON_ADD_COLORS, &CIQVDlg::OnBnClickedButtonAddColors)
 	ON_BN_CLICKED(IDC_OK, &CIQVDlg::OnBnClickedOk)
 	ON_BN_CLICKED(IDC_CANCEL, &CIQVDlg::OnBnClickedCancel)
@@ -210,6 +200,24 @@ BOOL CIQVDlg::OnInitDialog()
 				CString sLabel;
 				pMenu->GetMenuString(i, sLabel, MF_BYPOSITION);
 				if (sLabel != "File" && sLabel != "Utils")
+					pMenu->RemoveMenu(i, MF_BYPOSITION);
+			}
+			DrawMenuBar();
+		}
+	}
+
+	// Separate from developer mode - collecting labeled data is its own on/off switch, meant for
+	// internal use for now regardless of whether other developer-only menus are shown
+	if (!gConfig.mbCollectDataForTraining)
+	{
+		CMenu* pMenu = GetMenu();
+		if (pMenu)
+		{
+			for (int i = pMenu->GetMenuItemCount() - 1; i >= 0; i--)
+			{
+				CString sLabel;
+				pMenu->GetMenuString(i, sLabel, MF_BYPOSITION);
+				if (sLabel == "Label")
 					pMenu->RemoveMenu(i, MF_BYPOSITION);
 			}
 			DrawMenuBar();
@@ -540,6 +548,47 @@ void CIQVDlg::OnBnClickedButtonUpPos()
 		}
 	}
 }
+bool CIQVDlg::WarnIfAlreadyDisplaying()
+{
+	if (!mpImageRIF)
+		return false;
+
+	CMyWindows::MessBox("A case or batch is already open. Restart the app to open a different one.", "IQV");
+	return true;
+}
+void CIQVDlg::CloseCurrentViewer()
+{
+	if (mpIQVManager)
+	{
+		delete mpIQVManager;
+		mpIQVManager = nullptr;
+	}
+	if (mpCaseReviewer)
+	{
+		delete mpCaseReviewer;
+		mpCaseReviewer = nullptr;
+	}
+	if (mpBatchReviewer)
+	{
+		delete mpBatchReviewer;
+		mpBatchReviewer = nullptr;
+	}
+	if (mpImageRIF)
+	{
+		delete mpImageRIF;
+		mpImageRIF = nullptr;
+	}
+
+	while (!mImages.IsEmpty())
+	{
+		CArchivesImages* pImages = mImages.GetTail();
+		mImages.RemoveTail();
+		if (pImages != mpImages) // mpImages is owned and deleted by mpIQVManager/mpCaseReviewer/mpBatchReviewer
+			delete pImages;
+	}
+	mpImages = nullptr;
+	mpRingsScorer = nullptr;
+}
 void CIQVDlg::OnFileOpen32771()
 {
 	CMyFileDialog dlg(CMyFileDialog::FD_OPEN,"Open Dicom Images for Display","d:\\Cirs_Images");
@@ -552,36 +601,35 @@ void CIQVDlg::OnFileOpen32771()
 		}
 		else
 		{
-			if (!mpImageRIF)
+			// Repeating "Open Dicom" used to add the new set as an extra series alongside
+			// whatever was already showing - now it closes that and starts fresh instead
+			CloseCurrentViewer();
+
+			// Score first (headless - no viewer needed for this), so we know which image
+			// is actually worth looking at before ever opening the viewer
+			mpIQVManager = new CIQVManager();
+			if (!mpIQVManager->LoadAndScore(sImageName))
 			{
-				// Score first (headless - no viewer needed for this), so we know which image
-				// is actually worth looking at before ever opening the viewer
-				mpIQVManager = new CIQVManager();
-				mpIQVManager->LoadAndScore(sImageName);
-
-				mpImages = mpIQVManager->GetImages();
-				mpRingsScorer = mpIQVManager->GetRingsScorer();
-				miPos = mpIQVManager->GetScoredPosition();
-
-				// Open the viewer directly on the target (worst-score) image - its one-time
-				// window/level auto-fit is keyed off whichever image is displayed first, and
-				// an arbitrary early image (e.g. the first) is often too sparse to fit well
-				CString sTargetFile = mpImages->GetName(miPos);
-				if (LoadViewerWithImages(sTargetFile))
-				{
-					mImages.AddTail(mpImages);
-					DisplayVolume(mpImages->GetSharedWideVolume(), mpImages->GetWideVolumeDumpName());
-					DisplayVolume(mpImages->GetSharedCtPerRadiusVolume(), mpImages->GetCtPerRadiusDumpName());
-					OnCurrentSelectedByScorer(miPos);
-				}
+				CMyWindows::MessBox("Failed to load and score this case - see the log for details.", "Open Dicom");
+				delete mpIQVManager;
+				mpIQVManager = nullptr;
+				return;
 			}
-			else // Add Extra Images' series
+
+			mpImages = mpIQVManager->GetImages();
+			mpRingsScorer = mpIQVManager->GetRingsScorer();
+			miPos = mpIQVManager->GetScoredPosition();
+
+			// Open the viewer directly on the target (worst-score) image - its one-time
+			// window/level auto-fit is keyed off whichever image is displayed first, and
+			// an arbitrary early image (e.g. the first) is often too sparse to fit well
+			CString sTargetFile = mpImages->GetName(miPos);
+			if (LoadViewerWithImages(sTargetFile))
 			{
-				if (mImages.GetSize() == 1)
-					mpImageRIF->SetNColumns(2); // Do it once
-				CArchivesImages* pNewImages = new CArchivesImages(sImageName);
-				mImages.AddTail(pNewImages);
-				mpImageRIF->FileOpen(sImageName);
+				mImages.AddTail(mpImages);
+				DisplayVolume(mpImages->GetSharedWideVolume(), mpImages->GetWideVolumeDumpName());
+				DisplayVolume(mpImages->GetSharedCtPerRadiusVolume(), mpImages->GetCtPerRadiusDumpName());
+				OnCurrentSelectedByScorer(miPos);
 			}
 		}
 	}
@@ -591,6 +639,10 @@ void CIQVDlg::OnFileBatchscoring()
 	CMyFolderDialog dlg("Select Root Directory for Batch Scoring");
 	if (!dlg.DoModal())
 		return;
+
+	// Close whatever's currently displayed up front, rather than letting "Review Results" below
+	// silently do nothing later because a viewer was still open
+	CloseCurrentViewer();
 
 	CBatchScorer batchScorer;
 	int nScored = batchScorer.RunOnDirTree(dlg.msFolderName);
@@ -602,7 +654,7 @@ void CIQVDlg::OnFileBatchscoring()
 	// Offer to jump straight into reviewing what was just scored - the results are already on
 	// disk at batchScorer.GetLogDir(), so no need to ask the user to pick it again.
 	CBatchCompleteDlg completeDlg(sMsg, this);
-	if (completeDlg.DoModal() != IDOK || mpImageRIF)
+	if (completeDlg.DoModal() != IDOK)
 		return;
 
 	mpBatchReviewer = new CBatchReviewer();
@@ -613,7 +665,7 @@ void CIQVDlg::OnFileBatchscoring()
 }
 void CIQVDlg::OnFileOpencasescoring()
 {
-	if (mpImageRIF)
+	if (WarnIfAlreadyDisplaying())
 		return;
 
 	mpCaseReviewer = new CCaseReviewer();
@@ -644,7 +696,7 @@ void CIQVDlg::OnFileOpencasescoring()
 }
 void CIQVDlg::OnFileOpenbatchscoring()
 {
-	if (mpImageRIF)
+	if (WarnIfAlreadyDisplaying())
 		return;
 
 	mpBatchReviewer = new CBatchReviewer();
@@ -737,6 +789,83 @@ void CIQVDlg::OnUtilsDownloaddata()
 	sMsg.Format("Copied %d image set(s) (under \"%s\" directories) from:\n%s\n\nTo:\n%s",
 		nCopied, gConfig.msDownloadDirNameFilter.c_str(), (LPCTSTR)dlg.msFolderName, gConfig.msDataRoot.c_str());
 	CMyWindows::MessBox(sMsg, "Download Data");
+}
+void CIQVDlg::OnLabelSaveAllAsPassed()
+{
+	SaveLabeledData(true, true);
+}
+void CIQVDlg::OnLabelSaveAllAsFailed()
+{
+	SaveLabeledData(false, true);
+}
+void CIQVDlg::OnLabelSaveSectionAsPassed()
+{
+	SaveLabeledData(true, false);
+}
+void CIQVDlg::OnLabelSaveSectionAsFailed()
+{
+	SaveLabeledData(false, false);
+}
+void CIQVDlg::SaveLabeledData(bool bPass, bool bWholeCase)
+{
+	if (!mpImages)
+	{
+		CMyWindows::MessBox("No case is currently loaded.", "Label");
+		return;
+	}
+
+	CString sLabelRoot(gConfig.msTrainingSetRoot.c_str());
+	sLabelRoot += bPass ? "\\Pass" : "\\Fail";
+
+	// Multiple sections from the same case would otherwise all land in the same directory,
+	// each save overwriting/mixing with the last - suffix the case name with the actual image
+	// range so each section save gets its own directory
+	CString sRelativeDir(gConfig.GetCaseRelativeLogDir().c_str());
+	int iFrom = 0, iTo = 0;
+	if (!bWholeCase)
+	{
+		int iFirst = mpImages->GetFirst();
+		int iLast = mpImages->GetLast();
+		int half = gConfig.mSavedSectionLength / 2;
+		iFrom = max(iFirst, miPos - half);
+		iTo = min(iLast, miPos + half);
+
+		CString sSuffix;
+		sSuffix.Format("_%d_%d", iFrom, iTo);
+		sRelativeDir += sSuffix;
+	}
+
+	CString sDestDir;
+	if (!CMyWindows::VerifyDirectoryPath(sLabelRoot, sRelativeDir, sDestDir))
+	{
+		CMyWindows::MessBox("Failed to create the label destination directory.", "Label");
+		return;
+	}
+
+	int nCopied = 0;
+	if (bWholeCase)
+	{
+		CString sSourceDir(mpImages->GetPath());
+		while (!sSourceDir.IsEmpty() && (sSourceDir.Right(1) == "\\" || sSourceDir.Right(1) == "/"))
+			sSourceDir = sSourceDir.Left(sSourceDir.GetLength() - 1);
+		nCopied = CMyWindows::CopyDiretoryTree(sSourceDir, sDestDir);
+	}
+	else
+	{
+		for (int i = iFrom; i <= iTo; i++)
+		{
+			CString sSourceFile(mpImages->GetName(i));
+			if (sSourceFile.IsEmpty())
+				continue;
+			CString sDestFile(sDestDir + "\\" + CFileName::GetLastInPath(sSourceFile));
+			if (CMyWindows::MyCopyFile(sSourceFile, sDestFile))
+				nCopied++;
+		}
+	}
+
+	CString sMsg;
+	sMsg.Format("Saved %d file(s) as %s to: %s", nCopied, bPass ? "Passed" : "Failed", (LPCTSTR)sDestDir);
+	gConfig.PrintStatus((LPCTSTR)sMsg);
 }
 void CIQVDlg::OnFileExit()
 {

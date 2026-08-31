@@ -71,7 +71,7 @@ public:
 
 	// Bump this when a change is expected to affect scoring results. Used e.g. to name
 	// baseline result snapshots ("<msLogRoot>_<msVersion>") for regression comparison.
-	std::string msVersion = "0.8.1";
+	std::string msVersion = "0.8.4";
 
 	std::string msLogRoot = "d:\\IQV_Log";
 	std::string msCaseLogDir; // <msLogRoot>\[<batch root name>\]<current case name>[_<miCaseIndex>], set by SetCurrentCase
@@ -111,6 +111,27 @@ public:
 
 	// Network location offered as the default starting point for "Utils > Download Data"
 	std::string msDownloadDefaultSource = "\\\\192.168.110.219\\Production";
+
+	// Shows the "Label" menu (File>Label - save the current case/section as pass/fail training
+	// data), for collecting labeled data to tune the app with. Off for real end users eventually,
+	// on by default for now since only internal people label data at this point.
+	bool mbCollectDataForTraining = true;
+
+	// Root under which labeled DICOM sets are copied verbatim (as-is, no reprocessing) - one
+	// sub-tree "Pass", one "Fail", each holding one directory per labeled save, named the same
+	// relative way as under msLogRoot (see GetCaseRelativeLogDir) so multiple source roots
+	// reusing the same case name don't collide.
+	std::string msTrainingSetRoot = "d:\\IQV_Data\\TrainingSet";
+
+	// Number of images copied by "Save Section" - centered on the currently displayed image,
+	// clipped to the case's own first/last image
+	int mSavedSectionLength = 21;
+
+	// msCaseLogDir with the msLogRoot prefix stripped off - i.e. [<msBatchRootDir>\]<case name>
+	// [_<index>]. Reused to mirror the same case-identifying relative structure under
+	// msTrainingSetRoot (see the Label feature) - computed fresh each time since msCaseLogDir
+	// only exists after SetCurrentCase(), rather than kept as its own field.
+	std::string GetCaseRelativeLogDir() const;
 
 	// Shows developer-only menu sections (Process/Set/Get/Test); real users only need File/Help.
 	// Defaults to on so this doesn't change what's visible on a dev machine until explicitly turned off.
@@ -156,6 +177,12 @@ public:
 private:
 	void ComputeConfigDir();
 	void LoadScorerWeights();
+
+	// msTrainingSetRoot can be nested more than one level deep (default d:\IQV_Data\TrainingSet)
+	// under directories that may not exist yet - CreateDirectory (and so CMyWindows::
+	// VerifyDirectory) only ever creates one level, so this walks up from the drive root instead
+	// of assuming the parent already exists (same technique CDataDownloader already relies on).
+	void VerifyTrainingSetRoot();
 
 	std::vector<float> mvScorerWeights;
 };

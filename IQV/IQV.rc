@@ -171,6 +171,13 @@ BEGIN
     BEGIN
         MENUITEM "Download Data",               ID_UTILS_DOWNLOADDATA
     END
+    POPUP "Label"
+    BEGIN
+        MENUITEM "Save All Case As Passed",     ID_LABEL_SAVEALLASPASSED
+        MENUITEM "Save All Case As Failed",     ID_LABEL_SAVEALLASFAILED
+        MENUITEM "Save Section As Passed",      ID_LABEL_SAVESECTIONASPASSED
+        MENUITEM "Save Section As Failed",      ID_LABEL_SAVESECTIONASFAILED
+    END
 END
 
 

@@ -20,12 +20,26 @@ void CConfig::Init()
 	CMyWindows::VerifyDirectory(msLogRoot.c_str());
 	CMyWindows::VerifyDirectory("d:\\MyLog");
 	CMyWindows::VerifyDirectory("d:\\MyLog\\Images");
+	VerifyTrainingSetRoot();
 	if (mDebug)
 	{
 		gfLog.Init("IQV_App");
 		gfLog.Log("<CConfig::Init()> version", msVersion);
 	}
 	LoadScorerWeights();
+}
+void CConfig::VerifyTrainingSetRoot()
+{
+	if (msTrainingSetRoot.size() < 3 || msTrainingSetRoot[1] != ':')
+	{
+		CMyWindows::VerifyDirectory(msTrainingSetRoot.c_str()); // not a drive-letter path - best effort
+		return;
+	}
+
+	CString sDriveRoot(msTrainingSetRoot.substr(0, 3).c_str()); // e.g. "d:\"
+	CString sRest(msTrainingSetRoot.substr(3).c_str());
+	CString sOutPath;
+	CMyWindows::VerifyDirectoryPath(sDriveRoot, sRest, sOutPath);
 }
 void CConfig::ComputeConfigDir()
 {
@@ -150,6 +164,9 @@ void CConfig::SaveToFile()
 	dumpFile.Write("developer_mode", mbDeveloperMode);
 	dumpFile.Write("display_ct_per_radius", mbDisplayCtPerRadius);
 	dumpFile.Write("avoid_shared_memory", mbAvoidSharedMemory);
+	dumpFile.Write("collect_data_for_training", mbCollectDataForTraining);
+	dumpFile.Write("training_set_root", msTrainingSetRoot.c_str());
+	dumpFile.Write("saved_section_length", mSavedSectionLength);
 
 	dumpFile.Write("debug", mDebug);
 }
@@ -200,9 +217,23 @@ void CConfig::ReadFromFile()
 	pRoot->GetValue("developer_mode", mbDeveloperMode);
 	pRoot->GetValue("display_ct_per_radius", mbDisplayCtPerRadius);
 	pRoot->GetValue("avoid_shared_memory", mbAvoidSharedMemory);
+	pRoot->GetValue("collect_data_for_training", mbCollectDataForTraining);
+	pRoot->GetValue("training_set_root", msTrainingSetRoot);
+	pRoot->GetValue("saved_section_length", mSavedSectionLength);
 
 	pRoot->GetValue("debug", mDebug);
 
+}
+string CConfig::GetCaseRelativeLogDir() const
+{
+	if (msCaseLogDir.size() > msLogRoot.size() && msCaseLogDir.compare(0, msLogRoot.size(), msLogRoot) == 0)
+	{
+		string sRelative(msCaseLogDir.substr(msLogRoot.size()));
+		while (!sRelative.empty() && (sRelative.front() == '\\' || sRelative.front() == '/'))
+			sRelative.erase(0, 1);
+		return sRelative;
+	}
+	return msCaseLogDir; // shouldn't normally happen - msCaseLogDir is always built from msLogRoot
 }
 void CConfig::PrintStatus(const char* zStatus)
 {
