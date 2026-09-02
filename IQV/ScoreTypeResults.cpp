@@ -11,7 +11,15 @@ void CScoreTypeResults::AddScore(const CImageScore& score, int iImage)
 	{
 		mMaxScore = score.mScore;
 		miImageWithMaxScore = iImage;
+		miPushOrderOfMaxScore = (int)mvScores.size() - 1;
 	}
+}
+const CImageScore* CScoreTypeResults::FindByOriginalImage(int iOriginal) const
+{
+	for (const CImageScore& score : mvScores)
+		if (score.miOriginalImage == iOriginal)
+			return &score;
+	return nullptr;
 }
 void CScoreTypeResults::OnAllImagesScored()
 {

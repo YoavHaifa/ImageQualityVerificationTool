@@ -3,6 +3,7 @@
 #include "BatchScorer.h"
 #include "IQVManager.h"
 #include "RingsScorer.h"
+#include "ImageScore.h"
 #include "Config.h"
 #include "..\..\yUtils\FilesList.h"
 #include "..\..\yUtils\MyWindows.h"
@@ -66,6 +67,13 @@ void COptimizer::RunOnLabelDir(const char* zLabelDir, const char* zLabel)
 	// a same-named case under both Pass and Fail can't collide in the log tree, and case names
 	// come out relative to the label directory (the label itself is already its own report column).
 	string sBatchRoot(format("Optimize_{}", zLabel));
+
+	// Wipe this run's own result sub-tree first - the training set (and which cases are in it)
+	// can change between runs, so a stale case folder left over from an earlier run must not
+	// linger and be mistaken for a current result.
+	string sBatchLogDir(gConfig.msLogRoot + "\\" + sBatchRoot);
+	CMyWindows::DeleteDirWithFiles(sBatchLogDir.c_str());
+
 	gConfig.msBatchRootDir = sBatchRoot;
 	gConfig.msBatchScanRootPath = zLabelDir;
 
@@ -76,14 +84,14 @@ void COptimizer::RunOnLabelDir(const char* zLabelDir, const char* zLabel)
 	{
 		iCase++;
 		string sStatus(format("Scoring training data ({}): case {}/{}", zLabel, iCase, nTotal));
-		gConfig.PrintStatus(sStatus.c_str());
+		CBatchScorer::MyPrintStatus(sStatus.c_str());
 
 		CString* psfName = list.GetNext(pos);
 
 		CIQVManager manager;
 		if (!SafeLoadAndScore(&manager, *psfName, iCase))
 		{
-			gConfig.PrintStatus("Case data could not be loaded - skipped without saving");
+			CBatchScorer::MyPrintStatus("Case data could not be loaded - skipped without saving");
 			continue;
 		}
 
@@ -99,9 +107,18 @@ void COptimizer::RunOnLabelDir(const char* zLabelDir, const char* zLabel)
 			? sRelative.Mid(sPrefix.GetLength())
 			: sRelative;
 
-		result.score = manager.GetRingsScorer()->GetWorstScore(gConfig.mScoreType);
+		CRingsScorer* pRingsScorer = manager.GetRingsScorer();
+		const CImageScore& winner = pRingsScorer->GetScoreAtMax(gConfig.mScoreType);
+		result.score = winner.mScore;
 		result.bScoredPass = gConfig.IsPass(result.score);
 		result.gap = result.score - gConfig.mMaxAcceptableScore;
+
+		// AllMax stamps meSourceType with whichever sibling actually produced its winning score;
+		// every other scorer leaves it at N_SCORE_TYPES, meaning it's its own (only) source.
+		EScoreType eCriticalScorer = (winner.meSourceType != EScoreType::N_SCORE_TYPES)
+			? winner.meSourceType : gConfig.mScoreType;
+		result.sCriticalScorer = ScoreTypeName(eCriticalScorer);
+		result.criticalRawScore = pRingsScorer->GetRawScoreAt(eCriticalScorer, winner.miOriginalImage);
 
 		bool bTrueLabelPass = (result.sLabel == "Pass");
 		if (bTrueLabelPass)
@@ -125,10 +142,11 @@ void COptimizer::WriteReport()
 	if (!pf)
 		return;
 
-	fprintf(pf, "label, case, score, verdict, gap, assessment\n");
+	fprintf(pf, "label, case, critical scorer, critical raw score, score, verdict, gap, assessment\n");
 	for (const SCaseResult& r : mvResults)
-		fprintf(pf, "%s, %s, %.2f, %s, %.2f, %s\n",
-			(LPCTSTR)r.sLabel, (LPCTSTR)r.sCaseName, r.score,
-			r.bScoredPass ? "Pass" : "Fail", r.gap, (LPCTSTR)r.sAssessment);
+		fprintf(pf, "%s, %s, %s, %.2f, %.2f, %s, %.2f, %s\n",
+			(LPCTSTR)r.sLabel, (LPCTSTR)r.sCaseName,
+			(LPCTSTR)r.sCriticalScorer, r.criticalRawScore,
+			r.score, r.bScoredPass ? "Pass" : "Fail", r.gap, (LPCTSTR)r.sAssessment);
 	fclose(pf);
 }

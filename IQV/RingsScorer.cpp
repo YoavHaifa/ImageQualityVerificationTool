@@ -212,6 +212,14 @@ float CRingsScorer::GetWorstScore(EScoreType eScoreType) const
 {
 	return mpImageScorer->GetWorstScore(eScoreType);
 }
+const CImageScore& CRingsScorer::GetScoreAtMax(EScoreType eScoreType) const
+{
+	return mpImageScorer->GetScoreAtMax(eScoreType);
+}
+float CRingsScorer::GetRawScoreAt(EScoreType eScoreType, int iOriginalImage) const
+{
+	return mpImageScorer->GetRawScoreAt(eScoreType, iOriginalImage);
+}
 void CRingsScorer::OnActiveScoreTypeChanged()
 {
 	if (!mbScoresComputed)

@@ -100,6 +100,15 @@ float CImageRingsScorer::GetWorstScore(EScoreType eScoreType) const
 {
 	return GetScorer(eScoreType)->mResults.mMaxScore;
 }
+const CImageScore& CImageRingsScorer::GetScoreAtMax(EScoreType eScoreType) const
+{
+	return GetScorer(eScoreType)->mResults.GetScoreAtMax();
+}
+float CImageRingsScorer::GetRawScoreAt(EScoreType eScoreType, int iOriginalImage) const
+{
+	const CImageScore* pScore = GetScorer(eScoreType)->mResults.FindByOriginalImage(iOriginalImage);
+	return pScore ? pScore->mRawScore : 0.0f;
+}
 void CImageRingsScorer::CreateScorers()
 {
 	// The one place that knows the concrete scorer types - everything else operates on them generically

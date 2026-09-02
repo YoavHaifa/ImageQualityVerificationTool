@@ -26,9 +26,10 @@ public:
 	// Static/public so other case-scanning callers (e.g. COptimizer) can reuse it too.
 	static void ScreenNonImageSets(class CFilesList& list);
 
-private:
-	// Reports zText both to the GUI's batch status line and to the console
+	// Reports zText both to the GUI's batch status line and to the console. Static/public so
+	// other case-scanning callers (e.g. COptimizer) can reuse it too.
 	static void MyPrintStatus(const char* zText);
 
+private:
 	CString msLogDir;
 };

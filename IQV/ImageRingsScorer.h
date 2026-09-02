@@ -57,6 +57,17 @@ public:
 	// scored so far - same value CaseInfo.yaml logs as scorers > <name> > worst_score.
 	float GetWorstScore(EScoreType eScoreType) const;
 
+	// The full recorded score of the case's worst image under the given score type - unlike
+	// GetWorstScore(), also carries the ring, source scorer (meaningful for AllMax), and which
+	// original image it came from. See CScoreTypeResults::GetScoreAtMax().
+	const CImageScore& GetScoreAtMax(EScoreType eScoreType) const;
+
+	// The given scorer's own raw score for the given *original* image number, or 0 if that
+	// scorer never scored that image. Used to find a source scorer's true (unweighted,
+	// unscaled) raw score for whichever image produced another scorer's (e.g. AllMax's) max -
+	// see COptimizer.
+	float GetRawScoreAt(EScoreType eScoreType, int iOriginalImage) const;
+
 	// Generic access to the scorers, so callers (e.g. per-scorer logging) don't need
 	// to know the concrete set of score types
 	int GetNScorers() const { return (int)mvScorers.size(); }

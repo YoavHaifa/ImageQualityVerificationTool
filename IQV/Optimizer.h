@@ -30,6 +30,13 @@ private:
 		bool bScoredPass = false;
 		float gap = 0; // score - gConfig.mMaxAcceptableScore (negative on the Pass side)
 		CString sAssessment; // Correct Pass / Correct Fail / False Positive / False Negative
+
+		// Which scorer actually produced `score` - the active type itself when it isn't AllMax
+		// (no ambiguity there), or AllMax's source scorer when it is. In real use the active type
+		// is expected to always be AllMax (no single scorer alone catches every artifact type) -
+		// these two columns are what tuning a single scorer's weight/threshold actually needs.
+		CString sCriticalScorer;
+		float criticalRawScore = 0; // that scorer's own true (unweighted, unscaled) raw score
 	};
 
 	// Scores every case found under zLabelDir (e.g. <root>\Pass), appending one row to mvResults

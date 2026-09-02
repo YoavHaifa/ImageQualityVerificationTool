@@ -42,6 +42,10 @@ public:
 	// This case's single worst score under the given score type - see CImageRingsScorer::GetWorstScore
 	float GetWorstScore(EScoreType eScoreType) const;
 
+	// See CImageRingsScorer::GetScoreAtMax / GetRawScoreAt
+	const class CImageScore& GetScoreAtMax(EScoreType eScoreType) const;
+	float GetRawScoreAt(EScoreType eScoreType, int iOriginalImage) const;
+
 private:
 	static constexpr int N_SCORE_TYPES = (int)EScoreType::N_SCORE_TYPES;
 
