@@ -44,6 +44,14 @@ public:
 	// trusted - e.g. wide images sharing a mask with the very first slice, which has little data
 	int mnMinPixelsInMask = 1000;
 
+	// Some of Arineta's scanners have lesser-quality off-center detectors - data out there
+	// shouldn't be reported as a ring artifact. When on, CImageRingsScorer::CollectRingsInfo()
+	// simply never enters any pixel whose ring index is above mLowResolutionDistanceFromCenterPixels
+	// into that ring's statistics - same as a ring with too few valid pixels, it ends up IGNORE_RING
+	// and every scorer already skips those. The displayed image itself is not masked.
+	bool mbIgnoreLowResolutionArea = true;
+	int mLowResolutionDistanceFromCenterPixels = 256;
+
 	EScoreType mScoreType = EScoreType::MinMax;
 
 	// Global pass/fail cutoff on the displayed score, regardless of which scorer is active.
