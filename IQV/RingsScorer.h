@@ -39,6 +39,9 @@ public:
 	// on replay, since redoing the histogram would need rescoring. 1.0 if never computed/read.
 	float GetDataRangeScoreFactor() const { return mDataRangeScoreFactor; }
 
+	// This case's single worst score under the given score type - see CImageRingsScorer::GetWorstScore
+	float GetWorstScore(EScoreType eScoreType) const;
+
 private:
 	static constexpr int N_SCORE_TYPES = (int)EScoreType::N_SCORE_TYPES;
 

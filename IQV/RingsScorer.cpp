@@ -208,6 +208,10 @@ void CRingsScorer::LogCaseInfo()
 	}
 	fclose(pfLog);
 }
+float CRingsScorer::GetWorstScore(EScoreType eScoreType) const
+{
+	return mpImageScorer->GetWorstScore(eScoreType);
+}
 void CRingsScorer::OnActiveScoreTypeChanged()
 {
 	if (!mbScoresComputed)

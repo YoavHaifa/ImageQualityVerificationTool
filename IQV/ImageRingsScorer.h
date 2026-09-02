@@ -53,6 +53,10 @@ public:
 	// The image index holding the given peak severity order under the currently active score type, or -1 if not found
 	int FindImageIndexOfPeak(int iWantedPeak) const;
 
+	// This case's single worst (highest) score under the given score type, across every image
+	// scored so far - same value CaseInfo.yaml logs as scorers > <name> > worst_score.
+	float GetWorstScore(EScoreType eScoreType) const;
+
 	// Generic access to the scorers, so callers (e.g. per-scorer logging) don't need
 	// to know the concrete set of score types
 	int GetNScorers() const { return (int)mvScorers.size(); }

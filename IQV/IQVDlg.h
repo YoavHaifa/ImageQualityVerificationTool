@@ -50,11 +50,9 @@ public:
 	int mnImageRows;
 	int mnImageLines;
 	int mnImageCols;
-	void GetPos1(void);
 	afx_msg void OnBnClickedButtonAddRoi();
 	int miPos;
 	int miPos2d;
-	afx_msg void OnBnClickedButtonUpPos();
 	afx_msg void OnFileOpen32771();
 	afx_msg void OnFileBatchscoring();
 	afx_msg void OnFileOpencasescoring();
@@ -76,6 +74,7 @@ public:
 	afx_msg void OnLabelSaveAllAsFailed();
 	afx_msg void OnLabelSaveSectionAsPassed();
 	afx_msg void OnLabelSaveSectionAsFailed();
+	afx_msg void OnOptimizeScoretrainingdata();
 
 	// Copies the current case's DICOM files, as-is, to gConfig.msTrainingSetRoot\[Pass|Fail]\
 	// <case-relative dir> - either the whole case (bWholeCase) or just gConfig.mSavedSectionLength

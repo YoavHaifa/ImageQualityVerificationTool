@@ -17,7 +17,6 @@
 #define IDC_BUTTON_ADD_ROI              1005
 #define IDC_BUTTON_MAX                  1006
 #define IDC_BUTTON_ADD_ROI2             1007
-#define IDC_BUTTON_UP_POS               1008
 #define IDC_STATIC_STATUS               1009
 #define IDC_BUTTON_ADD_COLORS           1010
 #define IDC_BUTTON_PREV                 1011
@@ -52,13 +51,14 @@
 #define ID_LABEL_SAVEALLASFAILED        32798
 #define ID_LABEL_SAVESECTIONASPASSED    32799
 #define ID_LABEL_SAVESECTIONASFAILED    32800
+#define ID_OPTIMIZE_SCORETRAININGDATA   32801
 
 // Next default values for new objects
 //
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        131
-#define _APS_NEXT_COMMAND_VALUE         32801
+#define _APS_NEXT_COMMAND_VALUE         32802
 #define _APS_NEXT_CONTROL_VALUE         1030
 #define _APS_NEXT_SYMED_VALUE           101
 #endif

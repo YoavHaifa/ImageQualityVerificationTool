@@ -21,13 +21,14 @@ public:
 	// lets a caller jump straight into Batch Review on the results just produced.
 	const CString& GetLogDir(void) const { return msLogDir; }
 
+	// Drops sets whose sample file isn't actually a CT image (e.g. a DICOM report file that
+	// happens to match the naming pattern) - assumes a set's files are either all images or none.
+	// Static/public so other case-scanning callers (e.g. COptimizer) can reuse it too.
+	static void ScreenNonImageSets(class CFilesList& list);
+
 private:
 	// Reports zText both to the GUI's batch status line and to the console
-	void MyPrintStatus(const char* zText);
-
-	// Drops sets whose sample file isn't actually a CT image (e.g. a DICOM report file that
-	// happens to match the naming pattern) - assumes a set's files are either all images or none
-	void ScreenNonImageSets(class CFilesList& list);
+	static void MyPrintStatus(const char* zText);
 
 	CString msLogDir;
 };

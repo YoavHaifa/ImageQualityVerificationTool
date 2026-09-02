@@ -2,6 +2,7 @@
 //
 
 #include "stdafx.h"
+#include <shellapi.h>
 #include "IQV.h"
 #include "IQVDlg.h"
 #include "ArinetaImages.h"
@@ -10,6 +11,7 @@
 #include "BatchScorer.h"
 #include "BatchCompleteDlg.h"
 #include "DataDownloader.h"
+#include "Optimizer.h"
 #include "CaseReviewer.h"
 #include "BatchReviewer.h"
 #include "ImageScore.h"
@@ -111,7 +113,6 @@ BEGIN_MESSAGE_MAP(CIQVDlg, CDialog)
 	//}}AFX_MSG_MAP
 	ON_BN_CLICKED(IDC_BUTTON_SHARED, &CIQVDlg::OnBnClickedButtonShared)
 	ON_BN_CLICKED(IDC_BUTTON_ADD_ROI, &CIQVDlg::OnBnClickedButtonAddRoi)
-	ON_BN_CLICKED(IDC_BUTTON_UP_POS, &CIQVDlg::OnBnClickedButtonUpPos)
 	ON_COMMAND(ID_FILE_OPEN32771, &CIQVDlg::OnFileOpen32771)
 	ON_COMMAND(ID_FILE_BATCHSCORING, &CIQVDlg::OnFileBatchscoring)
 	ON_COMMAND(ID_FILE_OPENCASESCORING, &CIQVDlg::OnFileOpencasescoring)
@@ -123,6 +124,7 @@ BEGIN_MESSAGE_MAP(CIQVDlg, CDialog)
 	ON_COMMAND(ID_LABEL_SAVEALLASFAILED, &CIQVDlg::OnLabelSaveAllAsFailed)
 	ON_COMMAND(ID_LABEL_SAVESECTIONASPASSED, &CIQVDlg::OnLabelSaveSectionAsPassed)
 	ON_COMMAND(ID_LABEL_SAVESECTIONASFAILED, &CIQVDlg::OnLabelSaveSectionAsFailed)
+	ON_COMMAND(ID_OPTIMIZE_SCORETRAININGDATA, &CIQVDlg::OnOptimizeScoretrainingdata)
 	ON_BN_CLICKED(IDC_BUTTON_ADD_COLORS, &CIQVDlg::OnBnClickedButtonAddColors)
 	ON_BN_CLICKED(IDC_OK, &CIQVDlg::OnBnClickedOk)
 	ON_BN_CLICKED(IDC_CANCEL, &CIQVDlg::OnBnClickedCancel)
@@ -385,9 +387,8 @@ LRESULT CIQVDlg::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
 }
 void CIQVDlg::OnOK()
 {
-	static int i = 0;
-	i++;
-	OnBnClickedButtonUpPos();
+	// Deliberately does nothing (and deliberately doesn't call CDialog::OnOK()) - this dialog
+	// stays open on Enter/OK rather than closing, unlike Cancel (which does exit the app).
 }
 // The system calls this function to obtain the cursor to display while the user drags
 //  the minimized window.
@@ -506,48 +507,6 @@ void CIQVDlg::OnBnClickedButtonAddRoi()
 //		pWnd->SetWindowText(zBuf);
 //	}
 //}
-void CIQVDlg::GetPos1(void)
-{
-	CWnd *pWnd = GetDlgItem(IDC_EDIT_POS1);
-	if (pWnd)
-	{
-		CString sText;
-		pWnd->GetWindowText(sText);
-		miPos = atoi(sText);
-		if (!mbDisplayReadyImages)
-		{
-			miPos--;
-			CMyMath::Clip(0, miPos, mnImagesInRow - 1);
-		}
-	}
-	else
-		miPos = 0;
-}
-void CIQVDlg::OnBnClickedButtonUpPos()
-{
-	GetPos1();
-	CWnd *pWnd = GetDlgItem(IDC_EDIT_POS2);
-	if (pWnd)
-	{
-		CString sText;
-		pWnd->GetWindowText(sText);
-		miPos2d = atoi(sText) - 1;
-		CMyMath::Clip(0, miPos2d, mnImageRows-1);
-		if (mpImageRIF)
-		{
-			if (mpSharedVolume)
-			{
-				mpImageRIF->SetPosition2d(mpSharedVolume->Name(), 
-					miPos2d, miPos);
-			}
-			else if (mpImages)
-			{
-				mpImageRIF->SetPosition(mpImages->GetPatternName(), miPos);
-			}
-			gfLog.Printf("<OnBnClickedButtonUpPos> (%3d %3d)\n", miPos, miPos2d);
-		}
-	}
-}
 bool CIQVDlg::WarnIfAlreadyDisplaying()
 {
 	if (!mpImageRIF)
@@ -809,6 +768,19 @@ void CIQVDlg::OnLabelSaveSectionAsPassed()
 void CIQVDlg::OnLabelSaveSectionAsFailed()
 {
 	SaveLabeledData(false, false);
+}
+void CIQVDlg::OnOptimizeScoretrainingdata()
+{
+	CloseCurrentViewer();
+
+	COptimizer optimizer;
+	int nScored = optimizer.RunOnTrainingSet(gConfig.msTrainingSetRoot.c_str());
+
+	CString sMsg;
+	sMsg.Format("Scored %d labeled case(s) under:\n%s\n\nReport written to:\n%s\n\nOpen it now?",
+		nScored, gConfig.msTrainingSetRoot.c_str(), (LPCTSTR)optimizer.GetReportName());
+	if (MessageBox(sMsg, "Score Training Data", MB_YESNO | MB_ICONQUESTION) == IDYES)
+		ShellExecute(NULL, "open", optimizer.GetReportName(), NULL, NULL, SW_SHOWNORMAL);
 }
 void CIQVDlg::SaveLabeledData(bool bPass, bool bWholeCase)
 {

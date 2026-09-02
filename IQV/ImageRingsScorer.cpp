@@ -96,6 +96,10 @@ int CImageRingsScorer::FindImageIndexOfPeak(int iWantedPeak) const
 {
 	return GetScorer(gConfig.mScoreType)->mResults.FindImageIndexOfPeak(iWantedPeak);
 }
+float CImageRingsScorer::GetWorstScore(EScoreType eScoreType) const
+{
+	return GetScorer(eScoreType)->mResults.mMaxScore;
+}
 void CImageRingsScorer::CreateScorers()
 {
 	// The one place that knows the concrete scorer types - everything else operates on them generically
