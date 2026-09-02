@@ -14,7 +14,7 @@ public:
 	// of its siblings' mResults - which by then already reflect ScorerWeights.csv as it is now
 	// (see CRingsScorer::LoadFromSavedResults, which loads scorers in registration order so
 	// every sibling is loaded before this runs)
-	bool LoadSavedResults(const char* zCaseDir) override;
+	bool LoadSavedResults(const char* zCaseDir, float dataRangeFactor) override;
 
 protected:
 	void ComputeScore() override;

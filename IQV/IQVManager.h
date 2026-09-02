@@ -27,6 +27,11 @@ public:
 	class CRingsScorer* GetRingsScorer(void) { return mpRingsScorer; }
 	int GetScoredPosition(void) { return miScoredPosition; }
 
+	// The specific reason LoadAndScore()'s scoring pass aborted, if that's why it failed (see
+	// CRingsScorer::GetLastAbortReason) - empty if it failed some other way (e.g. LoadImages()
+	// itself), or didn't fail at all.
+	CString GetLastAbortReason(void) const;
+
 	std::string GetSetInfo(void);
 
 private:

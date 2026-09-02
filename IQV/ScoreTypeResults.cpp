@@ -20,11 +20,10 @@ void CScoreTypeResults::OnAllImagesScored()
 }
 void CScoreTypeResults::ScaleScores(float factor)
 {
+	// mRawScore is deliberately left untouched - it stays the real, physical raw score
+	// (e.g. tent amplitude) regardless of this case's data range factor
 	for (CImageScore& score : mvScores)
-	{
 		score.mScore *= factor;
-		score.mRawScore *= factor;
-	}
 	mMaxScore *= factor;
 }
 void CScoreTypeResults::FindPeaks()

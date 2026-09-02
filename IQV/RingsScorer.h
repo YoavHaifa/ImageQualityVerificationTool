@@ -28,6 +28,12 @@ public:
 	// Jump to the max peak of the newly active score type (peaks for all types are already computed)
 	void OnActiveScoreTypeChanged();
 
+	// Set only when ScoreAllImages() aborts because a message box fired for the image just
+	// scored (see ScoreAllImages()) - the exact text of that box, captured at the moment of
+	// the abort. Empty if scoring never aborted this way (includes a clean run, and the other
+	// failure mode where LoadImages() itself failed before scoring ever started).
+	const CString& GetLastAbortReason() const { return msLastAbortReason; }
+
 	// The uniform per-image scale applied on top of each scorer's own weight, derived from this
 	// case's pixel-value histogram main area (see ScoreAllImages()) - read back from CaseInfo.yaml
 	// on replay, since redoing the histogram would need rescoring. 1.0 if never computed/read.
@@ -39,6 +45,11 @@ private:
 	void Log();
 	void LogPerScorer();
 	void LogCaseInfo();
+
+	// The uniform per-image scale derived from the case's pixel-value histogram main area width -
+	// factored out so both a live scoring pass and replay (from the saved width, see
+	// LoadFromSavedResults) apply the exact same formula, and changing it here changes both.
+	static float ComputeDataRangeScoreFactor(int width);
 
 	bool LookForPeak(int iWantedPeak);
 
@@ -57,6 +68,8 @@ private:
 	float mDataRangeScoreFactor = 1.0f;
 
 	bool mbScoresComputed = false;
+
+	CString msLastAbortReason;
 
 	class CArinetaImages* mpImages = nullptr;
 	class CRadiusImage* mpRadiusImage = nullptr;

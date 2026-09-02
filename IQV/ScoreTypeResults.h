@@ -16,9 +16,9 @@ public:
 	// Call once, after all images have been scored and added, to find peaks and rank them by severity
 	void OnAllImagesScored();
 
-	// Multiplies every recorded score - both raw and weighted - and mMaxScore by factor in
-	// place - a uniform positive scale doesn't change peak order, only the numbers shown/
-	// compared across cases. Applied equally to both fields to keep weighted == raw * weight.
+	// Multiplies every recorded (weighted) score and mMaxScore by factor in place - a uniform
+	// positive scale doesn't change peak order, only the numbers shown/compared across cases.
+	// mRawScore is untouched - it stays the real, physical raw score.
 	void ScaleScores(float factor);
 
 	// Returns the image index holding the given peak severity order, or -1 if not found

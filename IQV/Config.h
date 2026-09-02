@@ -73,7 +73,7 @@ public:
 	// LoadSavedResults). Written into each case's CaseInfo.yaml as csv_version when scored;
 	// CIQVManager::LoadFromSavedResults refuses to replay a case whose csv_version doesn't match,
 	// since its CSVs would be parsed under the wrong column layout otherwise.
-	int mCsvVersion = 1;
+	int mCsvVersion = 2;
 
 	int mDebug = 0xff;
 

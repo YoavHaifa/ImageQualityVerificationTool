@@ -40,6 +40,13 @@ int CRingsScorer::ScoreAllImages()
 	mStep = mpImages->GetStep();
 	mnImages = mpImages->GetNFiles();
 
+	// Drain any stale count left over from an earlier, unrelated action (e.g. a refused
+	// "load old results" attempt just before this run) - GetMessBoxCount() is a sticky global
+	// counter, so without this a leftover box from before this run started would otherwise be
+	// mistaken below for a real per-image failure in *this* run.
+	CMyWindows::GetMessBoxCount(nullptr);
+	msLastAbortReason.Empty();
+
 	for (int iImage = miFirst; iImage <= miLast; iImage += mStep)
 	{
 		mpImages->SetCurrent(iImage);
@@ -47,9 +54,13 @@ int CRingsScorer::ScoreAllImages()
 
 		// A message box just fired for this image (e.g. ImageRLib's "GetData NULL" on
 		// undecodable data) - abort the rest of this case rather than plow through more
-		// images we already know can't be decoded
-		if (CMyWindows::GetMessBoxCount(nullptr) > 0)
+		// images we already know can't be decoded. Capture its exact text so the caller can
+		// report the real reason instead of a generic failure message.
+		if (CMyWindows::GetMessBoxCount(&msLastAbortReason) > 0)
+		{
+			gfLog.Printf("<CRingsScorer::ScoreAllImages> Aborting at image %d: %s", iImage, (LPCTSTR)msLastAbortReason);
 			return -1;
+		}
 
 		if (iImage % 10 == 0)
 		{
@@ -69,8 +80,7 @@ int CRingsScorer::ScoreAllImages()
 	// across cases: a narrower main area means a more sharply-defined water phantom, so the same
 	// raw ring deviation is more significant than in a case with a wide, blurry main area
 	miMainAreaWidth = mpImageScorer->GetHistogramMainArea(gConfig.mHistogramCutPercent).Width();
-	float widthF = (float)miMainAreaWidth;
-	mDataRangeScoreFactor = 1000.0f / (widthF * widthF);
+	mDataRangeScoreFactor = ComputeDataRangeScoreFactor(miMainAreaWidth);
 	mpImageScorer->ScaleScores(mDataRangeScoreFactor);
 
 	mpImageScorer->LogHistogram();
@@ -86,6 +96,11 @@ int CRingsScorer::ScoreAllImages()
 
 	return mpImageScorer->GetImageWithMaxScore();
 }
+float CRingsScorer::ComputeDataRangeScoreFactor(int width)
+{
+	float widthF = (float)width;
+	return 1000.0f / (widthF * widthF);
+}
 int CRingsScorer::LoadFromSavedResults(const char* zCaseDir)
 {
 	miFirst = mpImages->GetFirst();
@@ -93,12 +108,18 @@ int CRingsScorer::LoadFromSavedResults(const char* zCaseDir)
 	mStep = mpImages->GetStep();
 	mnImages = mpImages->GetNFiles();
 
-	// mDataRangeScoreFactor isn't recomputed on replay (that needs the full per-image histogram) -
-	// read back what the original live run actually used and logged
+	// The main area width itself (not the full per-image histogram) is read back and re-run
+	// through ComputeDataRangeScoreFactor() as it is *now* - rather than trusting the persisted
+	// data_range_score_factor verbatim - so a later change to that formula takes effect on
+	// replay of old cases too, without rescoring.
 	CYamlParser parser;
 	string sYamlName(string(zCaseDir) + "\\CaseInfo.yaml");
 	if (parser.Parse(sYamlName.c_str()))
-		parser.GetRoot()->GetValue("data_range_score_factor", mDataRangeScoreFactor);
+	{
+		if (CYamlLine* pMainArea = parser.GetRoot()->GetFirst("main_area"))
+			pMainArea->GetValue("width", miMainAreaWidth);
+		mDataRangeScoreFactor = ComputeDataRangeScoreFactor(miMainAreaWidth);
+	}
 
 	// Every scorer's own LoadSavedResults() already handles a missing CSV gracefully (returns
 	// false, leaves it unscored) - no need to pre-filter by name. Iterating in registration
@@ -108,7 +129,7 @@ int CRingsScorer::LoadFromSavedResults(const char* zCaseDir)
 	// results; and since its override doesn't read a CSV at all, this also lets it compute
 	// itself for a case scored before AllMax existed, not just ones that already had it.
 	for (int iScorer = 0; iScorer < mpImageScorer->GetNScorers(); iScorer++)
-		mpImageScorer->GetScorerByIndex(iScorer)->LoadSavedResults(zCaseDir);
+		mpImageScorer->GetScorerByIndex(iScorer)->LoadSavedResults(zCaseDir, mDataRangeScoreFactor);
 
 	// Peaks weren't read back from the CSVs - recompute them from the replayed scores,
 	// same as a live run does once every image has been scored

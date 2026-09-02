@@ -133,6 +133,10 @@ bool CIQVManager::LoadFromSavedResults(const char* zCaseDir)
 
 	return true;
 }
+CString CIQVManager::GetLastAbortReason(void) const
+{
+	return mpRingsScorer ? mpRingsScorer->GetLastAbortReason() : CString();
+}
 bool CIQVManager::CheckCsvVersion(const char* zCaseDir)
 {
 	CYamlParser parser;
@@ -144,8 +148,10 @@ bool CIQVManager::CheckCsvVersion(const char* zCaseDir)
 	parser.GetRoot()->GetValue("csv_version", csvVersion);
 	if (csvVersion != gConfig.mCsvVersion)
 	{
-		gConfig.PrintStatus(format("Case's CSV format (v{}) does not match this build (v{}) - rescore to review it",
-			csvVersion, gConfig.mCsvVersion).c_str());
+		string sMsg(format("Case's saved results (v{}) do not match this build (v{}) - rescore to review it.",
+			csvVersion, gConfig.mCsvVersion));
+		gConfig.PrintStatus(sMsg.c_str());
+		CMyWindows::MessBox(sMsg.c_str(), "Open Case Scoring");
 		return false;
 	}
 	return true;

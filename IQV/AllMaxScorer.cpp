@@ -30,8 +30,10 @@ void CAllMaxScorer::ComputeScore()
 		mScore.meSourceType = eSource; // FindMaxScorePerCurrentImage() only touches mScore/miRing
 	}
 }
-bool CAllMaxScorer::LoadSavedResults(const char* zCaseDir)
+bool CAllMaxScorer::LoadSavedResults(const char* zCaseDir, float /*dataRangeFactor*/)
 {
+	// Not needed here - built from siblings' mResults, which (loaded before this, in
+	// registration order) already reflect both their own weight and this case's data range factor
 	int nImages = 0;
 	for (const auto& pSibling : *mpAllScorers)
 		if (pSibling.get() != this)

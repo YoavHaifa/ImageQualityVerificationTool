@@ -59,7 +59,7 @@ void CScorerBase::LogAllImages(int iFirst, int iStep) const
 	}
 	fclose(pfLog);
 }
-bool CScorerBase::LoadSavedResults(const char* zCaseDir)
+bool CScorerBase::LoadSavedResults(const char* zCaseDir, float dataRangeFactor)
 {
 	string sfName(format("{}\\ScoreAllImages_{}.csv", zCaseDir, Name()));
 
@@ -77,15 +77,16 @@ bool CScorerBase::LoadSavedResults(const char* zCaseDir)
 		float rawScore, oldWeightedScore;
 		if (sscanf_s(zLine, "%d, %f, %f, %d", &iOriginal, &rawScore, &oldWeightedScore, &iRing) == 4)
 		{
-			// Re-weight from the saved raw score with mWeight as it is *now*, rather than trust
-			// the saved weighted column - lets a changed ScorerWeights.csv take effect on replay
+			// Re-weight from the saved raw score with mWeight and dataRangeFactor as they are
+			// *now*, rather than trust the saved weighted column - lets a changed
+			// ScorerWeights.csv (or a changed data range correction) take effect on replay
 			// without rescoring. AddScore's iImage becomes mResults.miImageWithMaxScore verbatim
 			// if this is the best score so far, and a live scoring pass always stores the
 			// *original* DICOM slice number there (see CImageRingsScorer::Score) - not a 0-based
 			// index - so this must match, even though mvScores itself is still indexed by push order.
 			CImageScore score;
 			score.mRawScore = rawScore;
-			score.mScore = rawScore * mWeight;
+			score.mScore = rawScore * mWeight * dataRangeFactor;
 			score.miRing = iRing;
 			mResults.AddScore(score, iOriginal);
 		}

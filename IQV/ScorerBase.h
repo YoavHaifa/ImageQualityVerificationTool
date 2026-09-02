@@ -43,11 +43,15 @@ public:
 
 	// Reverse of LogAllImages: replays this scorer's score/ring data from
 	// <zCaseDir>\ScoreAllImages_<Name>.csv into mResults, in place of an actual scoring pass.
+	// The saved raw_score column is the real, physical raw score (see CScorerBase::Score) -
+	// dataRangeFactor (this case's own, read back from CaseInfo.yaml) and mWeight (as it is
+	// now, possibly changed since this case was scored) are re-applied here to rebuild the
+	// weighted score, same two constants Score() would've multiplied in live.
 	// Peak/peak_order columns aren't read back - OnAllImagesScored() recomputes them
 	// identically from the replayed scores. Returns false if the CSV can't be opened.
 	// Virtual: CAllMaxScorer overrides this to recompute itself from its siblings' (by then
 	// already-loaded, possibly newly-reweighted) mResults instead of reading its own CSV.
-	virtual bool LoadSavedResults(const char* zCaseDir);
+	virtual bool LoadSavedResults(const char* zCaseDir, float dataRangeFactor);
 
 	CImageScore mScore;
 	std::vector<float> mvRingScore; // score at every candidate ring this scorer considered, 0 elsewhere

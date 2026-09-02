@@ -610,7 +610,11 @@ void CIQVDlg::OnFileOpen32771()
 			mpIQVManager = new CIQVManager();
 			if (!mpIQVManager->LoadAndScore(sImageName))
 			{
-				CMyWindows::MessBox("Failed to load and score this case - see the log for details.", "Open Dicom");
+				CString sReason = mpIQVManager->GetLastAbortReason();
+				CString sMsg = !sReason.IsEmpty()
+					? CString("Failed to load and score this case: ") + sReason
+					: CString("Failed to load and score this case - see the log for details.");
+				CMyWindows::MessBox(sMsg, "Open Dicom");
 				delete mpIQVManager;
 				mpIQVManager = nullptr;
 				return;
@@ -993,16 +997,13 @@ void CIQVDlg::DisplayScore()
 
 	// Explains how the displayed score was computed - the scorer that actually produced it
 	// (AllMax's source when active, otherwise the active scorer itself), its real raw score
-	// (before either the data range factor or the weight are applied), its weight, and this
-	// case's data-range scale factor. score.mRawScore itself is only pre-weight - it already
-	// has the data range factor baked in (see CScoreTypeResults::ScaleScores), so divide that
-	// back out here to get the true pre-scaling value.
+	// (a physical property, e.g. tent amplitude - untouched by weight or data range factor,
+	// see CScoreTypeResults::ScaleScores), its weight, and this case's data-range scale factor.
 	EScoreType eDetailType = (score.meSourceType != EScoreType::N_SCORE_TYPES) ? score.meSourceType : gConfig.mScoreType;
 	float dataRangeFactor = mpRingsScorer->GetDataRangeScoreFactor();
-	float realRawScore = (dataRangeFactor != 0) ? score.mRawScore / dataRangeFactor : score.mRawScore;
 	CString sDetail;
 	sDetail.Format("Score computed from %s: raw score %.2f, data range factor %.4f, weight %.2f",
-		ScoreTypeName(eDetailType), realRawScore, dataRangeFactor, gConfig.GetScorerWeight(eDetailType));
+		ScoreTypeName(eDetailType), score.mRawScore, dataRangeFactor, gConfig.GetScorerWeight(eDetailType));
 	SetDlgItemText(IDC_STATIC_SCORE_DETAIL, sDetail);
 
 	mbHasScore = true;
