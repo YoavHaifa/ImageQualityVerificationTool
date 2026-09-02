@@ -182,6 +182,18 @@ public:
 	// reflects it without rescoring.
 	float GetScorerWeight(EScoreType type) const;
 
+	// Where ScorerWeights.csv lives (msConfigDir\ScorerWeights.csv) - exposed so a caller (e.g.
+	// COptimizer) can back the file up before overwriting it.
+	std::string GetScorerWeightsFileName() const { return msConfigDir + "\\ScorerWeights.csv"; }
+
+	// Overwrites one scorer's in-memory weight immediately - unlike a hand-edited ScorerWeights.csv,
+	// this takes effect on the very next CScorerBase constructed (e.g. the next LoadAndScore() call),
+	// no restart needed. Doesn't touch disk by itself - call SaveScorerWeights() too to persist it.
+	void SetScorerWeight(EScoreType type, float weight);
+
+	// Rewrites ScorerWeights.csv from the current in-memory weights - e.g. after SetScorerWeight().
+	void SaveScorerWeights() const;
+
 private:
 	void ComputeConfigDir();
 	void LoadScorerWeights();

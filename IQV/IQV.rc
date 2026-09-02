@@ -180,6 +180,7 @@ BEGIN
     POPUP "Optimize"
     BEGIN
         MENUITEM "Score Training Data",         ID_OPTIMIZE_SCORETRAININGDATA
+        MENUITEM "Optimize Scorer Weights",     ID_OPTIMIZE_SCOREWEIGHTS
     END
 END
 

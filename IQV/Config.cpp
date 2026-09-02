@@ -64,18 +64,10 @@ void CConfig::LoadScorerWeights()
 {
 	mvScorerWeights.assign((int)EScoreType::N_SCORE_TYPES, 1.0f);
 
-	string sfName(msConfigDir + "\\ScorerWeights.csv");
+	string sfName = GetScorerWeightsFileName();
 	if (!CFileName::Exist(sfName.c_str()))
 	{
-		FILE* pfOut = nullptr;
-		fopen_s(&pfOut, sfName.c_str(), "w");
-		if (pfOut)
-		{
-			fprintf(pfOut, "code, name, weight\n");
-			for (int i = 0; i < (int)EScoreType::N_SCORE_TYPES; i++)
-				fprintf(pfOut, "%d, %s, %.2f\n", i, ScoreTypeName((EScoreType)i), mvScorerWeights[i]);
-			fclose(pfOut);
-		}
+		SaveScorerWeights();
 		return;
 	}
 
@@ -96,6 +88,25 @@ void CConfig::LoadScorerWeights()
 			mvScorerWeights[iCode] = weight;
 	}
 	fclose(pf);
+}
+void CConfig::SaveScorerWeights() const
+{
+	string sfName = GetScorerWeightsFileName();
+	FILE* pfOut = nullptr;
+	fopen_s(&pfOut, sfName.c_str(), "w");
+	if (!pfOut)
+		return;
+
+	fprintf(pfOut, "code, name, weight\n");
+	for (int i = 0; i < (int)mvScorerWeights.size(); i++)
+		fprintf(pfOut, "%d, %s, %.2f\n", i, ScoreTypeName((EScoreType)i), mvScorerWeights[i]);
+	fclose(pfOut);
+}
+void CConfig::SetScorerWeight(EScoreType type, float weight)
+{
+	int i = (int)type;
+	if (i >= 0 && i < (int)mvScorerWeights.size())
+		mvScorerWeights[i] = weight;
 }
 float CConfig::ComputeCertaintyFraction(float score) const
 {

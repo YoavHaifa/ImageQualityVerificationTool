@@ -10,8 +10,19 @@
 #include <string>
 #include <format>
 #include <cstdio>
+#include <cfloat>
 
 using namespace std;
+
+// "<dir>\Name.csv" + "_before_optimize" -> "<dir>\Name_before_optimize.csv" (appended at the end
+// if there's no extension to insert before).
+static CString InsertBeforeExtension(const CString& sPath, const char* zSuffix)
+{
+	int iDot = sPath.ReverseFind('.');
+	if (iDot < 0)
+		return sPath + zSuffix;
+	return sPath.Left(iDot) + zSuffix + sPath.Mid(iDot);
+}
 
 // Some cases in the wild (e.g. an unexpected/corrupt DICOM layout) crash deep inside the
 // decode/imaging pipeline rather than failing cleanly - deliberately no local C++ objects here
@@ -120,6 +131,12 @@ void COptimizer::RunOnLabelDir(const char* zLabelDir, const char* zLabel)
 		result.sCriticalScorer = ScoreTypeName(eCriticalScorer);
 		result.criticalRawScore = pRingsScorer->GetRawScoreAt(eCriticalScorer, winner.miOriginalImage);
 
+		// Every individual scorer's own final score for this case - cheap (already computed),
+		// and lets OptimizeWeights() compute new weights later without rescoring.
+		result.vScorerScores.assign((int)EScoreType::N_SCORE_TYPES, 0.0f);
+		for (int iType = 0; iType < (int)EScoreType::N_SCORE_TYPES; iType++)
+			result.vScorerScores[iType] = pRingsScorer->GetWorstScore((EScoreType)iType);
+
 		bool bTrueLabelPass = (result.sLabel == "Pass");
 		if (bTrueLabelPass)
 			result.sAssessment = result.bScoredPass ? "Correct Pass" : "False Positive";
@@ -148,5 +165,137 @@ void COptimizer::WriteReport()
 			(LPCTSTR)r.sLabel, (LPCTSTR)r.sCaseName,
 			(LPCTSTR)r.sCriticalScorer, r.criticalRawScore,
 			r.score, r.bScoredPass ? "Pass" : "Fail", r.gap, (LPCTSTR)r.sAssessment);
+	fclose(pf);
+}
+int COptimizer::OptimizeWeights(const char* zRootDir)
+{
+	// Pass 1: score everything with today's weights - both the "before" baseline and the source
+	// data new weights are computed from (no need to rescore for that - see vScorerScores).
+	RunOnTrainingSet(zRootDir);
+
+	// Preserve the before-pass results and weights before either gets overwritten below.
+	CString sBeforeReport(InsertBeforeExtension(msReportName, "_before_optimize"));
+	CopyFile(msReportName, sBeforeReport, FALSE);
+
+	CString sWeightsFile(gConfig.GetScorerWeightsFileName().c_str());
+	CString sWeightsBackup(InsertBeforeExtension(sWeightsFile, "_before_optimize"));
+	CopyFile(sWeightsFile, sWeightsBackup, FALSE);
+
+	vector<SWeightResult> weightResults;
+	ComputeAndApplyNewWeights(weightResults);
+	WriteWeightsReport(weightResults);
+
+	// Pass 2: rescore everything with the new weights now active, so the report reflects them.
+	return RunOnTrainingSet(zRootDir);
+}
+void COptimizer::ComputeAndApplyNewWeights(vector<SWeightResult>& results)
+{
+	for (int iType = 0; iType < (int)EScoreType::N_SCORE_TYPES; iType++)
+	{
+		EScoreType type = (EScoreType)iType;
+		if (type == EScoreType::AllMax)
+			continue; // AllMax's own weight is fixed at 1.0, built from siblings - not tunable
+
+		SWeightResult wr;
+		wr.sScorer = ScoreTypeName(type);
+		wr.oldWeight = gConfig.GetScorerWeight(type);
+		wr.newWeight = wr.oldWeight;
+
+		float passMax = -FLT_MAX;
+		bool bAnyPass = false;
+		float failMinOverall = FLT_MAX;
+		bool bAnyFail = false;
+		for (const SCaseResult& r : mvResults)
+		{
+			float score = r.vScorerScores[iType];
+			if (r.sLabel == "Pass")
+			{
+				if (!bAnyPass || score > passMax)
+					passMax = score;
+				bAnyPass = true;
+			}
+			else
+			{
+				if (!bAnyFail || score < failMinOverall)
+					failMinOverall = score;
+				bAnyFail = true;
+			}
+		}
+
+		if (!bAnyPass || !bAnyFail)
+		{
+			wr.bHasData = false;
+			results.push_back(wr);
+			continue;
+		}
+		wr.passMax = passMax;
+
+		float failMinAbove = FLT_MAX;
+		bool bFoundAbove = false;
+		for (const SCaseResult& r : mvResults)
+		{
+			if (r.sLabel != "Fail")
+				continue;
+			float score = r.vScorerScores[iType];
+			if (score > passMax && score < failMinAbove)
+			{
+				failMinAbove = score;
+				bFoundAbove = true;
+			}
+		}
+
+		float target;
+		if (bFoundAbove)
+		{
+			wr.bSeparated = true;
+			wr.failTarget = failMinAbove;
+			target = (passMax + failMinAbove) / 2.0f;
+		}
+		else
+		{
+			// No Fail case scores above even the worst Pass case - every Fail case this scorer
+			// could catch would also mean failing that Pass case, and a false positive is never
+			// acceptable (see the normal case above). So instead of catching anything, lower the
+			// weight just enough that even the worst Pass case (the overall max here, since no
+			// Fail scored higher) stays at/below threshold - this scorer flags nothing as Fail
+			// rather than risk a false positive.
+			wr.bSeparated = false;
+			wr.failTarget = failMinOverall; // logged for visibility only - not the target used below
+			target = passMax;
+		}
+
+		if (target > 0.0001f)
+			wr.newWeight = wr.oldWeight * (gConfig.mMaxAcceptableScore / target);
+
+		gConfig.SetScorerWeight(type, wr.newWeight);
+		results.push_back(wr);
+	}
+
+	gConfig.SaveScorerWeights();
+}
+void COptimizer::WriteWeightsReport(const vector<SWeightResult>& results)
+{
+	string sfName(format("{}\\WeightOptimization.csv", gConfig.msLogRoot));
+	msWeightsReportName = sfName.c_str();
+
+	FILE* pf = nullptr;
+	fopen_s(&pf, sfName.c_str(), "w");
+	if (!pf)
+		return;
+
+	fprintf(pf, "scorer, old weight, new weight, pass max, fail target, separated, note\n");
+	for (const SWeightResult& wr : results)
+	{
+		if (!wr.bHasData)
+		{
+			fprintf(pf, "%s, %.2f, %.2f, , , , no data - unchanged\n",
+				(LPCTSTR)wr.sScorer, wr.oldWeight, wr.newWeight);
+			continue;
+		}
+		fprintf(pf, "%s, %.2f, %.2f, %.2f, %.2f, %s, %s\n",
+			(LPCTSTR)wr.sScorer, wr.oldWeight, wr.newWeight, wr.passMax, wr.failTarget,
+			wr.bSeparated ? "yes" : "no",
+			wr.bSeparated ? "" : "no separation - weight lowered so nothing fails");
+	}
 	fclose(pf);
 }

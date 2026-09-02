@@ -125,6 +125,7 @@ BEGIN_MESSAGE_MAP(CIQVDlg, CDialog)
 	ON_COMMAND(ID_LABEL_SAVESECTIONASPASSED, &CIQVDlg::OnLabelSaveSectionAsPassed)
 	ON_COMMAND(ID_LABEL_SAVESECTIONASFAILED, &CIQVDlg::OnLabelSaveSectionAsFailed)
 	ON_COMMAND(ID_OPTIMIZE_SCORETRAININGDATA, &CIQVDlg::OnOptimizeScoretrainingdata)
+	ON_COMMAND(ID_OPTIMIZE_SCOREWEIGHTS, &CIQVDlg::OnOptimizeScoreweights)
 	ON_BN_CLICKED(IDC_BUTTON_ADD_COLORS, &CIQVDlg::OnBnClickedButtonAddColors)
 	ON_BN_CLICKED(IDC_OK, &CIQVDlg::OnBnClickedOk)
 	ON_BN_CLICKED(IDC_CANCEL, &CIQVDlg::OnBnClickedCancel)
@@ -781,6 +782,21 @@ void CIQVDlg::OnOptimizeScoretrainingdata()
 		nScored, gConfig.msTrainingSetRoot.c_str(), (LPCTSTR)optimizer.GetReportName());
 	if (MessageBox(sMsg, "Score Training Data", MB_YESNO | MB_ICONQUESTION) == IDYES)
 		ShellExecute(NULL, "open", optimizer.GetReportName(), NULL, NULL, SW_SHOWNORMAL);
+}
+void CIQVDlg::OnOptimizeScoreweights()
+{
+	CloseCurrentViewer();
+
+	COptimizer optimizer;
+	int nScored = optimizer.OptimizeWeights(gConfig.msTrainingSetRoot.c_str());
+
+	CString sMsg;
+	sMsg.Format("Optimized scorer weights from %d labeled case(s) under:\n%s\n\n"
+		"Weight report:\n%s\n\nNew results report:\n%s\n\nOpen the weight report now?",
+		nScored, gConfig.msTrainingSetRoot.c_str(),
+		(LPCTSTR)optimizer.GetWeightsReportName(), (LPCTSTR)optimizer.GetReportName());
+	if (MessageBox(sMsg, "Optimize Scorer Weights", MB_YESNO | MB_ICONQUESTION) == IDYES)
+		ShellExecute(NULL, "open", optimizer.GetWeightsReportName(), NULL, NULL, SW_SHOWNORMAL);
 }
 void CIQVDlg::SaveLabeledData(bool bPass, bool bWholeCase)
 {

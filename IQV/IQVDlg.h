@@ -75,6 +75,7 @@ public:
 	afx_msg void OnLabelSaveSectionAsPassed();
 	afx_msg void OnLabelSaveSectionAsFailed();
 	afx_msg void OnOptimizeScoretrainingdata();
+	afx_msg void OnOptimizeScoreweights();
 
 	// Copies the current case's DICOM files, as-is, to gConfig.msTrainingSetRoot\[Pass|Fail]\
 	// <case-relative dir> - either the whole case (bWholeCase) or just gConfig.mSavedSectionLength
