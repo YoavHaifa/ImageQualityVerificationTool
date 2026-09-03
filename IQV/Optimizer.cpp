@@ -7,6 +7,7 @@
 #include "Config.h"
 #include "..\..\yUtils\FilesList.h"
 #include "..\..\yUtils\MyWindows.h"
+#include "..\..\yUtils\FileName.h"
 #include <string>
 #include <format>
 #include <cstdio>
@@ -49,6 +50,9 @@ int COptimizer::RunOnTrainingSet(const char* zRootDir)
 {
 	mvResults.clear();
 
+	msReportDir = (gConfig.msLogRoot + "\\TrainingSetReport").c_str();
+	CMyWindows::VerifyDirectory(msReportDir);
+
 	CString sRoot(zRootDir);
 	while (!sRoot.IsEmpty() && (sRoot.Right(1) == "\\" || sRoot.Right(1) == "/"))
 		sRoot = sRoot.Left(sRoot.GetLength() - 1);
@@ -56,7 +60,7 @@ int COptimizer::RunOnTrainingSet(const char* zRootDir)
 	RunOnLabelDir(sRoot + "\\Pass", "Pass");
 	RunOnLabelDir(sRoot + "\\Fail", "Fail");
 
-	WriteReport();
+	WriteReports();
 
 	return (int)mvResults.size();
 }
@@ -119,29 +123,34 @@ void COptimizer::RunOnLabelDir(const char* zLabelDir, const char* zLabel)
 			: sRelative;
 
 		CRingsScorer* pRingsScorer = manager.GetRingsScorer();
-		const CImageScore& winner = pRingsScorer->GetScoreAtMax(gConfig.mScoreType);
-		result.score = winner.mScore;
-		result.bScoredPass = gConfig.IsPass(result.score);
-		result.gap = result.score - gConfig.mMaxAcceptableScore;
-
-		// AllMax stamps meSourceType with whichever sibling actually produced its winning score;
-		// every other scorer leaves it at N_SCORE_TYPES, meaning it's its own (only) source.
-		EScoreType eCriticalScorer = (winner.meSourceType != EScoreType::N_SCORE_TYPES)
-			? winner.meSourceType : gConfig.mScoreType;
-		result.sCriticalScorer = ScoreTypeName(eCriticalScorer);
-		result.criticalRawScore = pRingsScorer->GetRawScoreAt(eCriticalScorer, winner.miOriginalImage);
-
-		// Every individual scorer's own final score for this case - cheap (already computed),
-		// and lets OptimizeWeights() compute new weights later without rescoring.
-		result.vScorerScores.assign((int)EScoreType::N_SCORE_TYPES, 0.0f);
-		for (int iType = 0; iType < (int)EScoreType::N_SCORE_TYPES; iType++)
-			result.vScorerScores[iType] = pRingsScorer->GetWorstScore((EScoreType)iType);
+		result.mainAreaWidth = pRingsScorer->GetMainAreaWidth();
 
 		bool bTrueLabelPass = (result.sLabel == "Pass");
-		if (bTrueLabelPass)
-			result.sAssessment = result.bScoredPass ? "Correct Pass" : "False Positive";
-		else
-			result.sAssessment = result.bScoredPass ? "False Negative" : "Correct Fail";
+		result.vPerType.assign((int)EScoreType::N_SCORE_TYPES, SPerTypeResult());
+		for (int iType = 0; iType < (int)EScoreType::N_SCORE_TYPES; iType++)
+		{
+			EScoreType type = (EScoreType)iType;
+			const CImageScore& winner = pRingsScorer->GetScoreAtMax(type);
+			SPerTypeResult& pt = result.vPerType[iType];
+
+			pt.score = winner.mScore;
+			pt.bScoredPass = gConfig.IsPass(pt.score);
+			pt.gap = pt.score - gConfig.mMaxAcceptableScore;
+			pt.ring = winner.miRing;
+			pt.originalImage = winner.miOriginalImage;
+
+			// AllMax stamps meSourceType with whichever sibling actually produced its winning
+			// score; every other scorer leaves it at N_SCORE_TYPES, meaning it's its own source.
+			EScoreType eCriticalScorer = (winner.meSourceType != EScoreType::N_SCORE_TYPES)
+				? winner.meSourceType : type;
+			pt.sCriticalScorer = ScoreTypeName(eCriticalScorer);
+			pt.criticalRawScore = pRingsScorer->GetRawScoreAt(eCriticalScorer, winner.miOriginalImage);
+
+			if (bTrueLabelPass)
+				pt.sAssessment = pt.bScoredPass ? "Correct Pass" : "False Positive";
+			else
+				pt.sAssessment = pt.bScoredPass ? "False Negative" : "Correct Fail";
+		}
 
 		mvResults.push_back(result);
 	}
@@ -149,43 +158,61 @@ void COptimizer::RunOnLabelDir(const char* zLabelDir, const char* zLabel)
 	gConfig.msBatchRootDir.clear();
 	gConfig.msBatchScanRootPath.clear();
 }
-void COptimizer::WriteReport()
+void COptimizer::WriteReports()
 {
-	string sfName(format("{}\\TrainingSetReport_{}.csv", gConfig.msLogRoot, ScoreTypeName(gConfig.mScoreType)));
-	msReportName = sfName.c_str();
+	for (int iType = 0; iType < (int)EScoreType::N_SCORE_TYPES; iType++)
+	{
+		EScoreType type = (EScoreType)iType;
+		string sfName(format("{}\\TrainingSetReport_{}.csv", (LPCTSTR)msReportDir, ScoreTypeName(type)));
 
-	FILE* pf = nullptr;
-	fopen_s(&pf, sfName.c_str(), "w");
-	if (!pf)
-		return;
+		FILE* pf = nullptr;
+		fopen_s(&pf, sfName.c_str(), "w");
+		if (!pf)
+		{
+			// Most likely cause: this exact file is still open in Excel from an earlier "Open it
+			// now?" - silently skipping would leave a stale report on disk with no indication
+			// the fresh results were never written.
+			CMyWindows::MessBox(format("Failed to write {} - is it open in Excel or another program? "
+				"Results for this scorer were NOT updated - the file on disk is stale.", sfName).c_str(),
+				"Score Training Data");
+			continue;
+		}
 
-	fprintf(pf, "label, case, critical scorer, critical raw score, score, verdict, gap, assessment\n");
-	for (const SCaseResult& r : mvResults)
-		fprintf(pf, "%s, %s, %s, %.2f, %.2f, %s, %.2f, %s\n",
-			(LPCTSTR)r.sLabel, (LPCTSTR)r.sCaseName,
-			(LPCTSTR)r.sCriticalScorer, r.criticalRawScore,
-			r.score, r.bScoredPass ? "Pass" : "Fail", r.gap, (LPCTSTR)r.sAssessment);
-	fclose(pf);
+		fprintf(pf, "label, case, main area width, image, ring, critical scorer, critical raw score, score, verdict, gap, assessment\n");
+		for (const SCaseResult& r : mvResults)
+		{
+			const SPerTypeResult& pt = r.vPerType[iType];
+			fprintf(pf, "%s, %s, %d, %d, %d, %s, %.6f, %.6f, %s, %.6f, %s\n",
+				(LPCTSTR)r.sLabel, (LPCTSTR)r.sCaseName, r.mainAreaWidth,
+				pt.originalImage, pt.ring, (LPCTSTR)pt.sCriticalScorer, pt.criticalRawScore,
+				pt.score, pt.bScoredPass ? "Pass" : "Fail", pt.gap, (LPCTSTR)pt.sAssessment);
+		}
+		fclose(pf);
+	}
 }
 int COptimizer::OptimizeWeights(const char* zRootDir)
 {
 	// Pass 1: score everything with today's weights - both the "before" baseline and the source
-	// data new weights are computed from (no need to rescore for that - see vScorerScores).
+	// data new weights are computed from (no need to rescore for that - see SCaseResult::vPerType).
 	RunOnTrainingSet(zRootDir);
 
-	// Preserve the before-pass results and weights before either gets overwritten below.
-	CString sBeforeReport(InsertBeforeExtension(msReportName, "_before_optimize"));
-	CopyFile(msReportName, sBeforeReport, FALSE);
+	// Preserve the before-pass reports and weights before either gets overwritten below.
+	for (int iType = 0; iType < (int)EScoreType::N_SCORE_TYPES; iType++)
+	{
+		CString sReport(format("{}\\TrainingSetReport_{}.csv", (LPCTSTR)msReportDir, ScoreTypeName((EScoreType)iType)).c_str());
+		CopyFile(sReport, InsertBeforeExtension(sReport, "_before_optimize"), FALSE);
+	}
 
 	CString sWeightsFile(gConfig.GetScorerWeightsFileName().c_str());
-	CString sWeightsBackup(InsertBeforeExtension(sWeightsFile, "_before_optimize"));
+	CString sWeightsBackup(msReportDir + "\\" + CFileName::GetLastInPath(sWeightsFile));
+	sWeightsBackup = InsertBeforeExtension(sWeightsBackup, "_before_optimize");
 	CopyFile(sWeightsFile, sWeightsBackup, FALSE);
 
 	vector<SWeightResult> weightResults;
 	ComputeAndApplyNewWeights(weightResults);
 	WriteWeightsReport(weightResults);
 
-	// Pass 2: rescore everything with the new weights now active, so the report reflects them.
+	// Pass 2: rescore everything with the new weights now active, so the reports reflect them.
 	return RunOnTrainingSet(zRootDir);
 }
 void COptimizer::ComputeAndApplyNewWeights(vector<SWeightResult>& results)
@@ -207,7 +234,7 @@ void COptimizer::ComputeAndApplyNewWeights(vector<SWeightResult>& results)
 		bool bAnyFail = false;
 		for (const SCaseResult& r : mvResults)
 		{
-			float score = r.vScorerScores[iType];
+			float score = r.vPerType[iType].score;
 			if (r.sLabel == "Pass")
 			{
 				if (!bAnyPass || score > passMax)
@@ -236,7 +263,7 @@ void COptimizer::ComputeAndApplyNewWeights(vector<SWeightResult>& results)
 		{
 			if (r.sLabel != "Fail")
 				continue;
-			float score = r.vScorerScores[iType];
+			float score = r.vPerType[iType].score;
 			if (score > passMax && score < failMinAbove)
 			{
 				failMinAbove = score;
@@ -275,24 +302,28 @@ void COptimizer::ComputeAndApplyNewWeights(vector<SWeightResult>& results)
 }
 void COptimizer::WriteWeightsReport(const vector<SWeightResult>& results)
 {
-	string sfName(format("{}\\WeightOptimization.csv", gConfig.msLogRoot));
+	string sfName(format("{}\\WeightOptimization.csv", (LPCTSTR)msReportDir));
 	msWeightsReportName = sfName.c_str();
 
 	FILE* pf = nullptr;
 	fopen_s(&pf, sfName.c_str(), "w");
 	if (!pf)
+	{
+		CMyWindows::MessBox(format("Failed to write {} - is it open in Excel or another program?",
+			sfName).c_str(), "Optimize Scorer Weights");
 		return;
+	}
 
 	fprintf(pf, "scorer, old weight, new weight, pass max, fail target, separated, note\n");
 	for (const SWeightResult& wr : results)
 	{
 		if (!wr.bHasData)
 		{
-			fprintf(pf, "%s, %.2f, %.2f, , , , no data - unchanged\n",
+			fprintf(pf, "%s, %.6f, %.6f, , , , no data - unchanged\n",
 				(LPCTSTR)wr.sScorer, wr.oldWeight, wr.newWeight);
 			continue;
 		}
-		fprintf(pf, "%s, %.2f, %.2f, %.2f, %.2f, %s, %s\n",
+		fprintf(pf, "%s, %.6f, %.6f, %.6f, %.6f, %s, %s\n",
 			(LPCTSTR)wr.sScorer, wr.oldWeight, wr.newWeight, wr.passMax, wr.failTarget,
 			wr.bSeparated ? "yes" : "no",
 			wr.bSeparated ? "" : "no separation - weight lowered so nothing fails");

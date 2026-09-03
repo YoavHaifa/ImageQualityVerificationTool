@@ -55,7 +55,7 @@ void CScorerBase::LogAllImages(int iFirst, int iStep) const
 	{
 		int iOriginal = iFirst + iImage * iStep;
 		const CImageScore& score = mResults[iImage];
-		fprintf(pfLog, "%d, %.2f, %.2f, %d, %s, %d\n", iOriginal, score.mRawScore, score.mScore, score.miRing, score.mbPeak ? "Peak" : "-", score.miPeak);
+		fprintf(pfLog, "%d, %.6f, %.6f, %d, %s, %d\n", iOriginal, score.mRawScore, score.mScore, score.miRing, score.mbPeak ? "Peak" : "-", score.miPeak);
 	}
 	fclose(pfLog);
 }

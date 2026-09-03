@@ -243,7 +243,7 @@ void CImageRingsScorer::Log()
 		const std::vector<float>& vScore = pScorer->mvRingScore;
 		fprintf(pf, "i, n check, n summed, sum, avg, diff, min, max, score\n");
 		for (int iLog = 0; iLog < mnRings; iLog++)
-			fprintf(pf, "%d, %d, %d, %.2f, %.2f, %.2f, %d, %d, %.2f\n",
+			fprintf(pf, "%d, %d, %d, %.6f, %.6f, %.6f, %d, %d, %.6f\n",
 				iLog, mvRingsInfo[iLog].mnPixelsInRaster,
 				mvRingsInfo[iLog].mnPixelsInRange,
 				mvRingsInfo[iLog].mSum,

@@ -3,9 +3,9 @@
 #include <vector>
 
 // Scores every labeled case under gConfig.msTrainingSetRoot (see the Label feature, File > Label)
-// and reports, per case, how the current scoring configuration's verdict compares to the
-// human-assigned label - lets scoring parameters be tuned by looking at false positives/negatives
-// directly instead of guessing from a handful of cases.
+// and reports, per case and per scorer, how the current scoring configuration's verdict compares
+// to the human-assigned label - lets scoring parameters be tuned by looking at false positives/
+// negatives directly instead of guessing from a handful of cases.
 class COptimizer
 {
 public:
@@ -13,19 +13,20 @@ public:
 	~COptimizer();
 
 	// zRootDir must directly contain "Pass" and "Fail" sub-directories, each holding one or more
-	// labeled DICOM sets (however deeply nested under them). Scores every one found, under the
-	// currently active scoring configuration, and writes one summary report row per case to
-	// <gConfig.msLogRoot>\TrainingSetReport_<active score type>.csv. Returns the number of cases
-	// scored (both labels combined).
+	// labeled DICOM sets (however deeply nested under them). Scores every one found, under every
+	// scorer type (not just whichever is currently active), and writes one report per type to
+	// <gConfig.msLogRoot>\TrainingSetReport\TrainingSetReport_<type>.csv. Returns the number of
+	// cases scored (both labels combined).
 	int RunOnTrainingSet(const char* zRootDir);
 
-	// This run's own report file, valid after RunOnTrainingSet() - lets a caller offer to open it.
-	const CString& GetReportName(void) const { return msReportName; }
+	// The directory all of this class's reports are written into, valid after RunOnTrainingSet() -
+	// lets a caller offer to open it.
+	const CString& GetReportDir(void) const { return msReportDir; }
 
 	// Optimizes every individual scorer's weight (not AllMax's own - it's fixed at 1.0, built
 	// from siblings) from a single scoring pass over zRootDir, then rescores everything again
-	// with the new weights so the resulting report reflects them. See the .cpp for the algorithm.
-	// Backs up both ScorerWeights.csv and the "before" results report (each as
+	// with the new weights so the resulting reports reflect them. See the .cpp for the algorithm.
+	// Backs up both ScorerWeights.csv and the "before" results reports (each as
 	// "..._before_optimize...") so old vs new can be compared. Returns the number of cases scored
 	// in the final (new-weights) pass.
 	int OptimizeWeights(const char* zRootDir);
@@ -35,26 +36,32 @@ public:
 	const CString& GetWeightsReportName(void) const { return msWeightsReportName; }
 
 private:
-	struct SCaseResult
+	// This case's outcome under one particular scorer type - see RunOnLabelDir
+	struct SPerTypeResult
 	{
-		CString sLabel; // "Pass" or "Fail", from which sub-directory the case was found under
-		CString sCaseName;
 		float score = 0;
 		bool bScoredPass = false;
 		float gap = 0; // score - gConfig.mMaxAcceptableScore (negative on the Pass side)
 		CString sAssessment; // Correct Pass / Correct Fail / False Positive / False Negative
+		int ring = -1; // the ring that produced `score`
+		int originalImage = -1; // the DICOM slice that produced `score`
 
-		// Which scorer actually produced `score` - the active type itself when it isn't AllMax
-		// (no ambiguity there), or AllMax's source scorer when it is. In real use the active type
-		// is expected to always be AllMax (no single scorer alone catches every artifact type) -
-		// these two columns are what tuning a single scorer's weight/threshold actually needs.
+		// Which scorer actually produced `score` - this type itself, except for AllMax, where
+		// it's whichever sibling actually won (AllMax isn't an independent measurement).
 		CString sCriticalScorer;
 		float criticalRawScore = 0; // that scorer's own true (unweighted, unscaled) raw score
+	};
 
-		// This case's own final (weighted, data-range-scaled) score under every individual
-		// scorer type, indexed by (int)EScoreType - not just the critical one above. Populated
-		// alongside the rest so OptimizeWeights() can compute new weights without rescoring.
-		std::vector<float> vScorerScores;
+	struct SCaseResult
+	{
+		CString sLabel; // "Pass" or "Fail", from which sub-directory the case was found under
+		CString sCaseName;
+		int mainAreaWidth = 0; // this case's own pixel-histogram main area width (same for every type)
+
+		// This case's outcome under every scorer type, indexed by (int)EScoreType - lets one
+		// scoring pass produce every type's report, and OptimizeWeights() compute new weights,
+		// without rescoring.
+		std::vector<SPerTypeResult> vPerType;
 	};
 
 	// One scorer's weight-optimization outcome - see ComputeAndApplyNewWeights()
@@ -73,7 +80,8 @@ private:
 	// per case actually scored. No-op (not an error) if zLabelDir doesn't exist.
 	void RunOnLabelDir(const char* zLabelDir, const char* zLabel);
 
-	void WriteReport();
+	// Writes one CSV per scorer type into msReportDir (created if needed).
+	void WriteReports();
 
 	// For each individual scorer type: finds the highest Pass score and the lowest Fail score
 	// above it, targets the midpoint between them (so gConfig.mMaxAcceptableScore lands exactly
@@ -90,6 +98,6 @@ private:
 	void WriteWeightsReport(const std::vector<SWeightResult>& results);
 
 	std::vector<SCaseResult> mvResults;
-	CString msReportName;
+	CString msReportDir; // <gConfig.msLogRoot>\TrainingSetReport - every report of this class's lives here
 	CString msWeightsReportName;
 };

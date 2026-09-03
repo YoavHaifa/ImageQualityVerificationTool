@@ -778,10 +778,10 @@ void CIQVDlg::OnOptimizeScoretrainingdata()
 	int nScored = optimizer.RunOnTrainingSet(gConfig.msTrainingSetRoot.c_str());
 
 	CString sMsg;
-	sMsg.Format("Scored %d labeled case(s) under:\n%s\n\nReport written to:\n%s\n\nOpen it now?",
-		nScored, gConfig.msTrainingSetRoot.c_str(), (LPCTSTR)optimizer.GetReportName());
+	sMsg.Format("Scored %d labeled case(s) under:\n%s\n\nOne report per scorer written to:\n%s\n\nOpen that folder now?",
+		nScored, gConfig.msTrainingSetRoot.c_str(), (LPCTSTR)optimizer.GetReportDir());
 	if (MessageBox(sMsg, "Score Training Data", MB_YESNO | MB_ICONQUESTION) == IDYES)
-		ShellExecute(NULL, "open", optimizer.GetReportName(), NULL, NULL, SW_SHOWNORMAL);
+		ShellExecute(NULL, "open", optimizer.GetReportDir(), NULL, NULL, SW_SHOWNORMAL);
 }
 void CIQVDlg::OnOptimizeScoreweights()
 {
@@ -792,11 +792,10 @@ void CIQVDlg::OnOptimizeScoreweights()
 
 	CString sMsg;
 	sMsg.Format("Optimized scorer weights from %d labeled case(s) under:\n%s\n\n"
-		"Weight report:\n%s\n\nNew results report:\n%s\n\nOpen the weight report now?",
-		nScored, gConfig.msTrainingSetRoot.c_str(),
-		(LPCTSTR)optimizer.GetWeightsReportName(), (LPCTSTR)optimizer.GetReportName());
+		"Reports (weight report and one per scorer) written to:\n%s\n\nOpen that folder now?",
+		nScored, gConfig.msTrainingSetRoot.c_str(), (LPCTSTR)optimizer.GetReportDir());
 	if (MessageBox(sMsg, "Optimize Scorer Weights", MB_YESNO | MB_ICONQUESTION) == IDYES)
-		ShellExecute(NULL, "open", optimizer.GetWeightsReportName(), NULL, NULL, SW_SHOWNORMAL);
+		ShellExecute(NULL, "open", optimizer.GetReportDir(), NULL, NULL, SW_SHOWNORMAL);
 }
 void CIQVDlg::SaveLabeledData(bool bPass, bool bWholeCase)
 {

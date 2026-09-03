@@ -163,7 +163,7 @@ void CRingsScorer::Log()
 		for (int iType = 0; iType < N_SCORE_TYPES; iType++)
 		{
 			const CImageScore& score = mpImageScorer->GetScore((EScoreType)iType, iImage);
-			fprintf(pfLog, ", %.2f, %d, %s, %d", score.mScore, score.miRing, score.mbPeak ? "Peak" : "-", score.miPeak);
+			fprintf(pfLog, ", %.6f, %d, %s, %d", score.mScore, score.miRing, score.mbPeak ? "Peak" : "-", score.miPeak);
 		}
 		fprintf(pfLog, "\n");
 	}

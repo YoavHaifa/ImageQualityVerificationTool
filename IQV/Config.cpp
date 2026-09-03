@@ -99,7 +99,7 @@ void CConfig::SaveScorerWeights() const
 
 	fprintf(pfOut, "code, name, weight\n");
 	for (int i = 0; i < (int)mvScorerWeights.size(); i++)
-		fprintf(pfOut, "%d, %s, %.2f\n", i, ScoreTypeName((EScoreType)i), mvScorerWeights[i]);
+		fprintf(pfOut, "%d, %s, %.6f\n", i, ScoreTypeName((EScoreType)i), mvScorerWeights[i]);
 	fclose(pfOut);
 }
 void CConfig::SetScorerWeight(EScoreType type, float weight)

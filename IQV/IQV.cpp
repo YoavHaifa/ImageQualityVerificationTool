@@ -5,6 +5,7 @@
 #include "IQV.h"
 #include "IQVDlg.h"
 #include "BatchScorer.h"
+#include "Optimizer.h"
 #include "Config.h"
 #include "..\..\yUtils\MyWindows.h"
 #include <cstdio>
@@ -72,6 +73,27 @@ BOOL CIQVApp::InitInstance()
 
 	if (bBatchMode)
 	{
+		// Dev-only debug commands (not documented for end users): run the same Optimize menu
+		// operations headlessly, against gConfig.msTrainingSetRoot, so their behavior can be
+		// inspected from a console/debugger without going through the GUI.
+		CString sArg1(__argv[1]);
+		if (sArg1.CompareNoCase("-score-training-data") == 0)
+		{
+			COptimizer optimizer;
+			int nScored = optimizer.RunOnTrainingSet(gConfig.msTrainingSetRoot.c_str());
+			printf("Scored %d labeled case(s). Reports written to: %s\n",
+				nScored, (LPCTSTR)optimizer.GetReportDir());
+			return FALSE;
+		}
+		if (sArg1.CompareNoCase("-optimize-weights") == 0)
+		{
+			COptimizer optimizer;
+			int nScored = optimizer.OptimizeWeights(gConfig.msTrainingSetRoot.c_str());
+			printf("Optimized scorer weights from %d labeled case(s). Reports written to: %s\n",
+				nScored, (LPCTSTR)optimizer.GetReportDir());
+			return FALSE;
+		}
+
 		// Batch mode: score every DICOM set found under __argv[1], headless (no dialog)
 		if (!CMyWindows::IsDirectory(__argv[1]))
 		{

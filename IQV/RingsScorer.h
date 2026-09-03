@@ -39,6 +39,10 @@ public:
 	// on replay, since redoing the histogram would need rescoring. 1.0 if never computed/read.
 	float GetDataRangeScoreFactor() const { return mDataRangeScoreFactor; }
 
+	// The case's own pixel-value histogram main area width (see ScoreAllImages()) - same value
+	// CaseInfo.yaml logs as main_area.width. 0 if never computed/read.
+	int GetMainAreaWidth() const { return miMainAreaWidth; }
+
 	// This case's single worst score under the given score type - see CImageRingsScorer::GetWorstScore
 	float GetWorstScore(EScoreType eScoreType) const;
 
