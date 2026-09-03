@@ -149,8 +149,16 @@ public:
 	// scored image, instead of the raw pixel value - a visual "what this would look like if
 	// perfectly radially symmetric" reference, for spotting ring artifacts (illegal/eroded
 	// pixels get a constant 10 below the image's lowest ring mean, to stand out). Only populated
-	// during live scoring (not Case/Batch Review, which doesn't recompute per-ring means).
+	// during live scoring (not Case/Batch Review, which doesn't recompute per-ring means) - see
+	// mbDisplayCtPerRadiusInReview for that.
 	bool mbDisplayCtPerRadius = true;
+
+	// Reconstructs (an approximation of) the same 3rd viewer column during Case/Batch Review too,
+	// from the compact per-case ring-mean profile every scored case now saves (one row per image,
+	// one column per ring - see CArinetaImages::EnsureRingMeanProfile/LoadCtPerRadiusVolumeFromProfile).
+	// Unlike live scoring's version, this has no mask - illegal pixels aren't marked, since the
+	// mask itself isn't part of the saved compact form.
+	bool mbDisplayCtPerRadiusInReview = true;
 
 	// Work-around for a machine (Gilad's) where the wide/CT-per-radius shared-memory volumes
 	// display as all-zero in ImageR even though the computed data itself is correct on disk -

@@ -47,6 +47,8 @@ int CRingsScorer::ScoreAllImages()
 	CMyWindows::GetMessBoxCount(nullptr);
 	msLastAbortReason.Empty();
 
+	mpImageScorer->PrepareRingMeanProfile(mnImages);
+
 	for (int iImage = miFirst; iImage <= miLast; iImage += mStep)
 	{
 		mpImages->SetCurrent(iImage);
@@ -73,6 +75,7 @@ int CRingsScorer::ScoreAllImages()
 	// gConfig.mbAvoidSharedMemory is on, for the viewer to display from instead of live shared
 	// memory) - the wide volume dumps itself the same way, right after ComputeWideImages() computes it
 	mpImages->DumpCtPerRadiusVolume();
+	mpImages->DumpRingMeanProfile();
 
 	mpImageScorer->OnAllImagesScored();
 
@@ -119,6 +122,19 @@ int CRingsScorer::LoadFromSavedResults(const char* zCaseDir)
 		if (CYamlLine* pMainArea = parser.GetRoot()->GetFirst("main_area"))
 			pMainArea->GetValue("width", miMainAreaWidth);
 		mDataRangeScoreFactor = ComputeDataRangeScoreFactor(miMainAreaWidth);
+
+		// Reconstruct (an approximation of) the CT-per-radius 3rd viewer column from the compact
+		// per-image ring-mean profile saved when this case was originally scored - replay never
+		// recomputes per-ring means itself, so this is the only way Review can show it at all.
+		if (gConfig.mbDisplayCtPerRadiusInReview)
+		{
+			int nRings = 0;
+			CString sProfileFile;
+			parser.GetRoot()->GetValue("n_rings", nRings);
+			parser.GetRoot()->GetValue("ring_mean_profile_file", sProfileFile);
+			if (nRings > 0 && !sProfileFile.IsEmpty())
+				mpImages->LoadCtPerRadiusVolumeFromProfile(sProfileFile, mnImages, nRings, *mpRadiusImage);
+		}
 	}
 
 	// Every scorer's own LoadSavedResults() already handles a missing CSV gracefully (returns
@@ -168,6 +184,8 @@ void CRingsScorer::Log()
 		fprintf(pfLog, "\n");
 	}
 	fclose(pfLog);
+
+	gfLog.Printf("<CRingsScorer::Log> Saved %s", sfName.c_str());
 }
 void CRingsScorer::LogPerScorer()
 {
@@ -177,6 +195,9 @@ void CRingsScorer::LogPerScorer()
 	// displayed without rescoring.
 	for (int iScorer = 0; iScorer < mpImageScorer->GetNScorers(); iScorer++)
 		mpImageScorer->GetScorerByIndex(iScorer)->LogAllImages(miFirst, mStep);
+
+	gfLog.Printf("<CRingsScorer::LogPerScorer> Saved %d ScoreAllImages_<scorer>.csv file(s) under %s",
+		mpImageScorer->GetNScorers(), gConfig.msCaseLogDir.c_str());
 }
 void CRingsScorer::LogCaseInfo()
 {
@@ -191,6 +212,8 @@ void CRingsScorer::LogCaseInfo()
 	fprintf(pfLog, "csv_version: %d\n", gConfig.mCsvVersion);
 	fprintf(pfLog, "case_path: %s\n", (LPCTSTR)mpImages->GetPath());
 	fprintf(pfLog, "n_images: %d\n", mnImages);
+	fprintf(pfLog, "n_rings: %d\n", mpImageScorer->GetNRings());
+	fprintf(pfLog, "ring_mean_profile_file: %s\n", (LPCTSTR)mpImages->GetRingMeanProfileDumpName());
 
 	STRange<int> histogramMainArea = mpImageScorer->GetHistogramMainArea(gConfig.mHistogramCutPercent);
 	fprintf(pfLog, "main_area:\n");
@@ -207,6 +230,8 @@ void CRingsScorer::LogCaseInfo()
 		fprintf(pfLog, "    worst_score: %.2f\n", pScorer->mResults.mMaxScore);
 	}
 	fclose(pfLog);
+
+	gfLog.Printf("<CRingsScorer::LogCaseInfo> Saved %s", sfName.c_str());
 }
 float CRingsScorer::GetWorstScore(EScoreType eScoreType) const
 {

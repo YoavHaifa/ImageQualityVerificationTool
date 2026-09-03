@@ -146,6 +146,8 @@ void CConfig::SetCurrentCase(const char* zCaseName, int iCaseIndex)
 	if (iCaseIndex > 0)
 		msCaseLogDir += "_" + std::to_string(iCaseIndex);
 	CMyWindows::VerifyDirectory(msCaseLogDir.c_str());
+
+	gfLog.Printf("<CConfig::SetCurrentCase> Case directory: %s", msCaseLogDir.c_str());
 }
 void CConfig::SaveToFile()
 {
@@ -176,6 +178,7 @@ void CConfig::SaveToFile()
 	dumpFile.Write("download_default_source", msDownloadDefaultSource.c_str());
 	dumpFile.Write("developer_mode", mbDeveloperMode);
 	dumpFile.Write("display_ct_per_radius", mbDisplayCtPerRadius);
+	dumpFile.Write("display_ct_per_radius_in_review", mbDisplayCtPerRadiusInReview);
 	dumpFile.Write("avoid_shared_memory", mbAvoidSharedMemory);
 	dumpFile.Write("collect_data_for_training", mbCollectDataForTraining);
 	dumpFile.Write("training_set_root", msTrainingSetRoot.c_str());
@@ -231,6 +234,7 @@ void CConfig::ReadFromFile()
 	pRoot->GetValue("download_default_source", msDownloadDefaultSource);
 	pRoot->GetValue("developer_mode", mbDeveloperMode);
 	pRoot->GetValue("display_ct_per_radius", mbDisplayCtPerRadius);
+	pRoot->GetValue("display_ct_per_radius_in_review", mbDisplayCtPerRadiusInReview);
 	pRoot->GetValue("avoid_shared_memory", mbAvoidSharedMemory);
 	pRoot->GetValue("collect_data_for_training", mbCollectDataForTraining);
 	pRoot->GetValue("training_set_root", msTrainingSetRoot);

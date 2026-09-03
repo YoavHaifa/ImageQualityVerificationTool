@@ -42,6 +42,7 @@ const CImageScore& CImageRingsScorer::Score(int iImage)
 
 	if (gConfig.mbDisplayCtPerRadius)
 		FillCtPerRadiusImage();
+	mpImages->RecordRingMeanProfileRow(miRingMeanProfileRow++, mvRingMean);
 
 	bool bEnoughData = mnPixelsWithinThreshold >= gConfig.mnMinPixelsInMask;
 	for (auto& pScorer : mvScorers)
@@ -79,6 +80,8 @@ void CImageRingsScorer::LogHistogram()
 	for (int i = 0; i < mHistogram.mLen; i++)
 		fprintf(pf, "%d, %d\n", (int)(mHistogram.mBase + i * mHistogram.mDelta), mHistogram.mpCounters[i]);
 	fclose(pf);
+
+	gfLog.Printf("<CImageRingsScorer::LogHistogram> Saved %s", sfName.c_str());
 }
 const CImageScore& CImageRingsScorer::GetCurrentScore(int iImage) const
 {
@@ -99,6 +102,11 @@ int CImageRingsScorer::FindImageIndexOfPeak(int iWantedPeak) const
 float CImageRingsScorer::GetWorstScore(EScoreType eScoreType) const
 {
 	return GetScorer(eScoreType)->mResults.mMaxScore;
+}
+void CImageRingsScorer::PrepareRingMeanProfile(int nTotalImages)
+{
+	miRingMeanProfileRow = 0;
+	mpImages->EnsureRingMeanProfile(nTotalImages, mnRings);
 }
 const CImageScore& CImageRingsScorer::GetScoreAtMax(EScoreType eScoreType) const
 {

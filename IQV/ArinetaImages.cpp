@@ -1,8 +1,10 @@
 #include "stdafx.h"
 #include "ArinetaImages.h"
+#include "RadiusImage.h"
 #include "Config.h"
 #include "..\..\yUtils\MyDicom.h"
 #include "..\..\yUtils\MyWindows.h"
+#include "..\..\yUtils\FileName.h"
 #include "..\..\ImageRLib\MyImage.h"
 #include <string>
 #include <format>
@@ -116,7 +118,81 @@ void CArinetaImages::DumpCtPerRadiusVolume()
 	if (!mpCtPerRadiusVolume)
 		return;
 	if (mpCtPerRadiusVolume->Dump())
+	{
 		msCtPerRadiusDumpName = CMyImage::umsLastSavedImageName;
+		gfLog.Printf("<CArinetaImages::DumpCtPerRadiusVolume> Saved %s", (LPCTSTR)msCtPerRadiusDumpName);
+	}
+}
+bool CArinetaImages::EnsureRingMeanProfile(int nTotalImages, int nRings)
+{
+	if (mpRingMeanProfile)
+		return true;
+	mpRingMeanProfile = new CTSharedImage<short>("RingMeanProfile", nTotalImages, nRings + 1);
+	return true;
+}
+void CArinetaImages::RecordRingMeanProfileRow(int iRow, const vector<float>& vRingMean)
+{
+	if (!mpRingMeanProfile)
+		return;
+	short* pRow = mpRingMeanProfile->GetLine(iRow);
+	if (!pRow)
+		return;
+	for (int iRing = 0; iRing < (int)vRingMean.size(); iRing++)
+		pRow[iRing] = (short)vRingMean[iRing];
+}
+void CArinetaImages::DumpRingMeanProfile()
+{
+	if (!mpRingMeanProfile)
+		return;
+
+	// Unlike the full volumes (dumped to the shared debug dump dir, only ever reloaded within
+	// the same run), this needs a stable path a later Review session can find - dump it into
+	// this case's own log directory instead.
+	string sPrefix(gConfig.msCaseLogDir + "\\RingMeanProfile");
+	if (mpRingMeanProfile->Dump(sPrefix.c_str()))
+	{
+		msRingMeanProfileDumpName = CMyImage::umsLastSavedImageName;
+		gfLog.Printf("<CArinetaImages::DumpRingMeanProfile> Saved %s", (LPCTSTR)msRingMeanProfileDumpName);
+	}
+}
+bool CArinetaImages::LoadCtPerRadiusVolumeFromProfile(const char* zProfileFile, int nImages, int nRings, CRadiusImage& radiusImage)
+{
+	if (!zProfileFile || !CFileName::Exist(zProfileFile))
+		return false;
+
+	CTSharedImage<short>* pProfile = new CTSharedImage<short>("RingMeanProfileReload", nImages, nRings + 1);
+	bool bLoaded = pProfile->ReadFromFile(zProfileFile);
+	if (!bLoaded || !EnsureCtPerRadiusVolume())
+	{
+		delete pProfile;
+		return false;
+	}
+
+	int nToCheck = radiusImage.mnPixels;
+	float* pRadiusRaster = radiusImage.GetData();
+
+	int iFirst = GetFirst();
+	int iLast = GetLast();
+	int iStep = GetStep();
+	int iRow = 0;
+	for (int iImage = iFirst; iImage <= iLast; iImage += iStep, iRow++)
+	{
+		short* pTarget = mpCtPerRadiusVolume->GetImageStart(iImage);
+		short* pRowData = pProfile->GetLine(iRow);
+		if (!pTarget || !pRowData)
+			continue;
+
+		for (int i = 0; i < nToCheck; i++)
+		{
+			int iRadius = (int)pRadiusRaster[i];
+			if (iRadius > nRings)
+				iRadius = nRings;
+			pTarget[i] = pRowData[iRadius];
+		}
+	}
+
+	delete pProfile;
+	return true;
 }
 bool CArinetaImages::ComputeWideImages()
 {

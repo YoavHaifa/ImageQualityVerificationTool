@@ -73,6 +73,15 @@ public:
 	int GetNScorers() const { return (int)mvScorers.size(); }
 	class CScorerBase* GetScorerByIndex(int iScorer) const { return mvScorers[iScorer].get(); }
 
+	// Number of rings in this case (mvRingMean has mnRings+1 entries, one per ring 0..mnRings).
+	int GetNRings() const { return mnRings; }
+
+	// Must be called once, before scoring the case's first image, so mpImages' compact
+	// ring-mean-profile raster (see CArinetaImages::EnsureRingMeanProfile) is sized correctly up
+	// front - every Score() call after this records its own row into it, regardless of
+	// gConfig.mbDisplayCtPerRadius (this is cheap, and Review's use of it is a separate toggle).
+	void PrepareRingMeanProfile(int nTotalImages);
+
 	//float mScore = 0;
 	//int miRingOfScore = -1;
 
@@ -111,5 +120,7 @@ private:
 	std::vector<float> mvRingMean;
 	std::vector<CRingInfo> mvRingsInfo;
 	std::vector<std::unique_ptr<CScorerBase>> mvScorers;
+
+	int miRingMeanProfileRow = 0; // next row to record into mpImages' compact ring-mean profile
 };
 

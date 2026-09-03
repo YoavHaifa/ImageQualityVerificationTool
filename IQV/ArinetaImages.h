@@ -1,6 +1,7 @@
 #pragma once
 #include "..\..\ImageRLib\ArchivesImages.h"
 #include "..\..\ImageRLib\DataCoordinates.h"
+#include <vector>
 
 class CArinetaImages : public CArchivesImages
 {
@@ -47,14 +48,41 @@ public:
 	// (see CRingsScorer::ScoreAllImages). No-op if the volume was never populated.
 	void DumpCtPerRadiusVolume();
 
+	// Compact per-case summary of the same information FillCtPerRadiusImage() paints into the
+	// full per-pixel volume above: one row per image (in scoring order), one column per ring,
+	// holding just that image's per-ring mean CT value (mvRingMean) - no mask, no per-pixel
+	// expansion. Cheap enough to save for every case, so Case/Batch Review (which never
+	// recomputes per-ring means) can still reconstruct an approximate CT-per-radius display -
+	// see LoadCtPerRadiusVolumeFromProfile(). Lazily created; nRings+1 columns wide.
+	bool EnsureRingMeanProfile(int nTotalImages, int nRings);
+
+	// Records image iRow's (0-based, in scoring order) ring-mean profile - see EnsureRingMeanProfile.
+	void RecordRingMeanProfileRow(int iRow, const std::vector<float>& vRingMean);
+
+	// Dumps the compact ring-mean profile to disk, into this case's own log directory (unlike
+	// the full volumes above, which dump to the shared debug dump dir - this one needs a stable,
+	// predictable path so a later Review session can find and reload it). No-op if never populated.
+	void DumpRingMeanProfile();
+	CString GetRingMeanProfileDumpName() const { return msRingMeanProfileDumpName; }
+
+	// Review mode: loads a case's saved compact ring-mean profile (see DumpRingMeanProfile) back
+	// from zProfileFile, and expands it into a full CT-per-radius volume (one page per image,
+	// same shape as the wide volume) via radiusImage's per-pixel ring map - the same visual live
+	// scoring shows, minus the mask (illegal pixels aren't marked - not stored in the compact
+	// form). Populates GetSharedCtPerRadiusVolume() on success. Returns false (no-op) if
+	// zProfileFile can't be found or read.
+	bool LoadCtPerRadiusVolumeFromProfile(const char* zProfileFile, int nImages, int nRings, class CRadiusImage& radiusImage);
+
 private:
 	bool ComputeWideImages();
 
 	CTSharedImage<short>* mpWideVolume = nullptr;
 	CTSharedImage<short>* mpCtPerRadiusVolume = nullptr;
+	CTSharedImage<short>* mpRingMeanProfile = nullptr;
 
 	CString msWideDumpName;
 	CString msCtPerRadiusDumpName;
+	CString msRingMeanProfileDumpName;
 
 	int mnPixelsInImage = 1;
 

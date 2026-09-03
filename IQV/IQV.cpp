@@ -6,6 +6,9 @@
 #include "IQVDlg.h"
 #include "BatchScorer.h"
 #include "Optimizer.h"
+#include "IQVManager.h"
+#include "ArinetaImages.h"
+#include "..\..\ImageRLib\TSharedImage.h"
 #include "Config.h"
 #include "..\..\yUtils\MyWindows.h"
 #include <cstdio>
@@ -91,6 +94,58 @@ BOOL CIQVApp::InitInstance()
 			int nScored = optimizer.OptimizeWeights(gConfig.msTrainingSetRoot.c_str());
 			printf("Optimized scorer weights from %d labeled case(s). Reports written to: %s\n",
 				nScored, (LPCTSTR)optimizer.GetReportDir());
+			return FALSE;
+		}
+		if (sArg1.CompareNoCase("-review-case") == 0)
+		{
+			// Exercises the Case Review replay path (CIQVManager::LoadFromSavedResults) headlessly,
+			// so the CT-per-radius-in-review reconstruction can be verified without the GUI.
+			// Also writes to d:\MyLog\ReviewCaseDebug.txt, since console output isn't reliably
+			// visible when this is launched from some shells.
+			FILE* pfOut = nullptr;
+			fopen_s(&pfOut, "d:\\MyLog\\ReviewCaseDebug.txt", "w");
+			auto report = [pfOut](const char* zMsg) { if (pfOut) fprintf(pfOut, "%s\n", zMsg); printf("%s\n", zMsg); };
+
+			if (__argc < 3)
+			{
+				report("Error: -review-case needs a case log directory as the next argument");
+				if (pfOut) fclose(pfOut);
+				return FALSE;
+			}
+			CIQVManager manager;
+			if (!manager.LoadFromSavedResults(__argv[2]))
+			{
+				char zBuf[512];
+				sprintf_s(zBuf, "Failed to load saved results from \"%s\"", __argv[2]);
+				report(zBuf);
+				if (pfOut) fclose(pfOut);
+				return FALSE;
+			}
+			CTSharedImage<short>* pVol = manager.GetImages()->GetSharedCtPerRadiusVolume();
+			if (!pVol)
+			{
+				report("CT-per-radius volume NOT reconstructed (null)");
+				if (pfOut) fclose(pfOut);
+				return FALSE;
+			}
+			short* pFirstPage = pVol->GetImageStart(manager.GetImages()->GetFirst());
+			if (!pFirstPage)
+			{
+				report("CT-per-radius volume reconstructed, but first page is null");
+				if (pfOut) fclose(pfOut);
+				return FALSE;
+			}
+			short minV = pFirstPage[0], maxV = pFirstPage[0];
+			int nPixels = manager.GetImages()->GetNLines() * manager.GetImages()->GetNCols();
+			for (int i = 0; i < nPixels; i++)
+			{
+				if (pFirstPage[i] < minV) minV = pFirstPage[i];
+				if (pFirstPage[i] > maxV) maxV = pFirstPage[i];
+			}
+			char zBuf[256];
+			sprintf_s(zBuf, "CT-per-radius volume reconstructed OK. First page pixel range: [%d, %d]", minV, maxV);
+			report(zBuf);
+			if (pfOut) fclose(pfOut);
 			return FALSE;
 		}
 
