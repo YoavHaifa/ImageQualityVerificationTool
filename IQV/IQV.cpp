@@ -79,7 +79,24 @@ BOOL CIQVApp::InitInstance()
 		// Dev-only debug commands (not documented for end users): run the same Optimize menu
 		// operations headlessly, against gConfig.msTrainingSetRoot, so their behavior can be
 		// inspected from a console/debugger without going through the GUI.
-		CString sArg1(__argv[1]);
+		int iArg = 1;
+
+		// Optional leading "-quiet": message boxes still get logged (see CMyWindows::MessBox2File)
+		// but don't pop a real dialog that would block waiting for someone to press OK - legitimate
+		// here since these command-line operations are genuinely unattended (see
+		// feedback_error_visibility_and_logging memory); the interactive GUI flow is untouched.
+		if (CString(__argv[iArg]).CompareNoCase("-quiet") == 0)
+		{
+			CMyWindows::DisableMessBox();
+			iArg++;
+		}
+		if (iArg >= __argc)
+		{
+			printf("Error: no command given after -quiet\n");
+			return FALSE;
+		}
+
+		CString sArg1(__argv[iArg]);
 		if (sArg1.CompareNoCase("-score-training-data") == 0)
 		{
 			COptimizer optimizer;
@@ -106,17 +123,17 @@ BOOL CIQVApp::InitInstance()
 			fopen_s(&pfOut, "d:\\MyLog\\ReviewCaseDebug.txt", "w");
 			auto report = [pfOut](const char* zMsg) { if (pfOut) fprintf(pfOut, "%s\n", zMsg); printf("%s\n", zMsg); };
 
-			if (__argc < 3)
+			if (iArg + 1 >= __argc)
 			{
 				report("Error: -review-case needs a case log directory as the next argument");
 				if (pfOut) fclose(pfOut);
 				return FALSE;
 			}
 			CIQVManager manager;
-			if (!manager.LoadFromSavedResults(__argv[2]))
+			if (!manager.LoadFromSavedResults(__argv[iArg + 1]))
 			{
 				char zBuf[512];
-				sprintf_s(zBuf, "Failed to load saved results from \"%s\"", __argv[2]);
+				sprintf_s(zBuf, "Failed to load saved results from \"%s\"", __argv[iArg + 1]);
 				report(zBuf);
 				if (pfOut) fclose(pfOut);
 				return FALSE;
@@ -149,15 +166,15 @@ BOOL CIQVApp::InitInstance()
 			return FALSE;
 		}
 
-		// Batch mode: score every DICOM set found under __argv[1], headless (no dialog)
-		if (!CMyWindows::IsDirectory(__argv[1]))
+		// Batch mode: score every DICOM set found under __argv[iArg], headless (no dialog)
+		if (!CMyWindows::IsDirectory(__argv[iArg]))
 		{
-			printf("Error: \"%s\" is not a directory\n", __argv[1]);
+			printf("Error: \"%s\" is not a directory\n", __argv[iArg]);
 			return FALSE;
 		}
 
 		CBatchScorer batchScorer;
-		batchScorer.RunOnDirTree(__argv[1]);
+		batchScorer.RunOnDirTree(__argv[iArg]);
 		return FALSE;
 	}
 

@@ -57,20 +57,62 @@ int COptimizer::RunOnTrainingSet(const char* zRootDir)
 	while (!sRoot.IsEmpty() && (sRoot.Right(1) == "\\" || sRoot.Right(1) == "/"))
 		sRoot = sRoot.Left(sRoot.GetLength() - 1);
 
-	RunOnLabelDir(sRoot + "\\Pass", "Pass");
-	RunOnLabelDir(sRoot + "\\Fail", "Fail");
+	CFilesList subDirs;
+	CMyWindows::ListSubDirsInDir(sRoot, subDirs);
+
+	POSITION pos = subDirs.GetHeadPosition();
+	while (pos)
+	{
+		CString* psSubDir = subDirs.GetNext(pos);
+		CString sSubDirName(CFileName::GetLastInPath(*psSubDir));
+
+		CString sLabel = DetermineLabel(sSubDirName);
+		if (sLabel.IsEmpty())
+		{
+			// A name starting with "fail" that still doesn't match one of the three recognized
+			// fail_ prefixes is almost certainly a naming mistake (a typo, or a leftover
+			// pre-relabeling directory) rather than something genuinely unrelated - flag it with
+			// a MessBox so it actually gets noticed and fixed, instead of just silently skipped.
+			if (sSubDirName.Left(4).CompareNoCase("fail") == 0)
+			{
+				CMyWindows::MessBox(format("Training-set sub-directory \"{}\" starts with \"fail\" but isn't "
+					"fail_center, fail_ring, or fail_both - please check/correct its name.",
+					(LPCTSTR)sSubDirName).c_str(), "Score Training Data");
+			}
+			else
+			{
+				CBatchScorer::MyPrintStatus(format("Skipping \"{}\" - name doesn't start with pass/fail_center/fail_ring/fail_both",
+					(LPCTSTR)sSubDirName).c_str());
+			}
+			continue;
+		}
+
+		RunOnLabelDir(*psSubDir, sLabel, sSubDirName);
+	}
 
 	WriteReports();
 
 	return (int)mvResults.size();
 }
-void COptimizer::RunOnLabelDir(const char* zLabelDir, const char* zLabel)
+CString COptimizer::DetermineLabel(const CString& sSubDirName)
 {
-	if (!CMyWindows::IsDirectory(zLabelDir))
+	if (sSubDirName.Left(4).CompareNoCase("pass") == 0)
+		return "Pass";
+	if (sSubDirName.Left(11).CompareNoCase("fail_center") == 0)
+		return "Fail_Center";
+	if (sSubDirName.Left(9).CompareNoCase("fail_ring") == 0)
+		return "Fail_Ring";
+	if (sSubDirName.Left(9).CompareNoCase("fail_both") == 0)
+		return "Fail_Both";
+	return CString();
+}
+void COptimizer::RunOnLabelDir(const char* zSubDir, const char* zLabel, const CString& sSubDirName)
+{
+	if (!CMyWindows::IsDirectory(zSubDir))
 		return;
 
 	CFilesList list;
-	int nFound = CMyWindows::ListSampleFilesInDirTree(zLabelDir, gConfig.msDicomFilePattern.c_str(), list);
+	int nFound = CMyWindows::ListSampleFilesInDirTree(zSubDir, gConfig.msDicomFilePattern.c_str(), list);
 	if (nFound < 1)
 		return;
 
@@ -78,10 +120,11 @@ void COptimizer::RunOnLabelDir(const char* zLabelDir, const char* zLabel)
 	if (list.N() < 1)
 		return;
 
-	// Same nesting convention as CBatchScorer::RunOnDirTree - separate batch root per label, so
-	// a same-named case under both Pass and Fail can't collide in the log tree, and case names
-	// come out relative to the label directory (the label itself is already its own report column).
-	string sBatchRoot(format("Optimize_{}", zLabel));
+	// Same nesting convention as CBatchScorer::RunOnDirTree - separate batch root per source
+	// sub-directory (not per label - several sub-directories can share the same label), so a
+	// same-named case under two different sub-directories can't collide in the log tree, and case
+	// names come out relative to the sub-directory itself (the label is already its own report column).
+	string sBatchRoot(format("Optimize_{}", (LPCTSTR)sSubDirName));
 
 	// Wipe this run's own result sub-tree first - the training set (and which cases are in it)
 	// can change between runs, so a stale case folder left over from an earlier run must not
@@ -90,7 +133,7 @@ void COptimizer::RunOnLabelDir(const char* zLabelDir, const char* zLabel)
 	CMyWindows::DeleteDirWithFiles(sBatchLogDir.c_str());
 
 	gConfig.msBatchRootDir = sBatchRoot;
-	gConfig.msBatchScanRootPath = zLabelDir;
+	gConfig.msBatchScanRootPath = zSubDir;
 
 	int nTotal = list.N();
 	int iCase = 0;

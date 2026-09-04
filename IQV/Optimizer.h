@@ -12,11 +12,14 @@ public:
 	COptimizer();
 	~COptimizer();
 
-	// zRootDir must directly contain "Pass" and "Fail" sub-directories, each holding one or more
-	// labeled DICOM sets (however deeply nested under them). Scores every one found, under every
-	// scorer type (not just whichever is currently active), and writes one report per type to
+	// zRootDir may directly contain any number of sub-directories, each holding one or more
+	// labeled DICOM sets (however deeply nested under them) - every one is scored, with its label
+	// determined by its own name's prefix (case-insensitive): "pass", "fail_center", "fail_ring",
+	// or "fail_both" (see DetermineLabel()) - a sub-directory whose name doesn't start with any of
+	// these is skipped (reported via status). Scores every case found under every scorer type
+	// (not just whichever is currently active), and writes one report per type to
 	// <gConfig.msLogRoot>\TrainingSetReport\TrainingSetReport_<type>.csv. Returns the number of
-	// cases scored (both labels combined).
+	// cases scored (every label combined).
 	int RunOnTrainingSet(const char* zRootDir);
 
 	// The directory all of this class's reports are written into, valid after RunOnTrainingSet() -
@@ -54,7 +57,7 @@ private:
 
 	struct SCaseResult
 	{
-		CString sLabel; // "Pass" or "Fail", from which sub-directory the case was found under
+		CString sLabel; // "Pass", "Fail_Center", "Fail_Ring", or "Fail_Both" - see DetermineLabel()
 		CString sCaseName;
 		int mainAreaWidth = 0; // this case's own pixel-histogram main area width (same for every type)
 
@@ -76,9 +79,18 @@ private:
 		bool bHasData = true; // false if either cohort was empty for this scorer - weight left unchanged
 	};
 
-	// Scores every case found under zLabelDir (e.g. <root>\Pass), appending one row to mvResults
-	// per case actually scored. No-op (not an error) if zLabelDir doesn't exist.
-	void RunOnLabelDir(const char* zLabelDir, const char* zLabel);
+	// Determines a training-set sub-directory's label from its own name's prefix
+	// (case-insensitive): "pass" -> "Pass", "fail_center" -> "Fail_Center", "fail_ring" ->
+	// "Fail_Ring", "fail_both" -> "Fail_Both". Returns an empty string if the name doesn't start
+	// with any of these - callers should skip such a directory rather than guess.
+	static CString DetermineLabel(const CString& sSubDirName);
+
+	// Scores every case found under zSubDir (e.g. <root>\fail_ring_2), appending one row to
+	// mvResults per case actually scored, tagged with the given zLabel. sSubDirName (the
+	// directory's own name, e.g. "fail_ring_2") - not zLabel - names this run's own log
+	// sub-tree, so two different sub-directories sharing the same label never collide.
+	// No-op (not an error) if zSubDir doesn't exist.
+	void RunOnLabelDir(const char* zSubDir, const char* zLabel, const CString& sSubDirName);
 
 	// Writes one CSV per scorer type into msReportDir (created if needed).
 	void WriteReports();
