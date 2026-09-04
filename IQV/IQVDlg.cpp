@@ -12,6 +12,7 @@
 #include "BatchCompleteDlg.h"
 #include "DataDownloader.h"
 #include "Optimizer.h"
+#include "TrainingPlotDlg.h"
 #include "CaseReviewer.h"
 #include "BatchReviewer.h"
 #include "ImageScore.h"
@@ -126,6 +127,7 @@ BEGIN_MESSAGE_MAP(CIQVDlg, CDialog)
 	ON_COMMAND(ID_LABEL_SAVESECTIONASFAILED, &CIQVDlg::OnLabelSaveSectionAsFailed)
 	ON_COMMAND(ID_OPTIMIZE_SCORETRAININGDATA, &CIQVDlg::OnOptimizeScoretrainingdata)
 	ON_COMMAND(ID_OPTIMIZE_SCOREWEIGHTS, &CIQVDlg::OnOptimizeScoreweights)
+	ON_COMMAND(ID_OPTIMIZE_SHOWPLOT, &CIQVDlg::OnOptimizeShowplot)
 	ON_BN_CLICKED(IDC_BUTTON_ADD_COLORS, &CIQVDlg::OnBnClickedButtonAddColors)
 	ON_BN_CLICKED(IDC_OK, &CIQVDlg::OnBnClickedOk)
 	ON_BN_CLICKED(IDC_CANCEL, &CIQVDlg::OnBnClickedCancel)
@@ -796,6 +798,11 @@ void CIQVDlg::OnOptimizeScoreweights()
 		nScored, gConfig.msTrainingSetRoot.c_str(), (LPCTSTR)optimizer.GetReportDir());
 	if (MessageBox(sMsg, "Optimize Scorer Weights", MB_YESNO | MB_ICONQUESTION) == IDYES)
 		ShellExecute(NULL, "open", optimizer.GetReportDir(), NULL, NULL, SW_SHOWNORMAL);
+}
+void CIQVDlg::OnOptimizeShowplot()
+{
+	CTrainingPlotDlg dlg(this);
+	dlg.DoModal();
 }
 void CIQVDlg::SaveLabeledData(bool bPass, bool bWholeCase)
 {

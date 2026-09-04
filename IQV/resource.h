@@ -7,6 +7,7 @@
 #define IDS_ABOUTBOX                    101
 #define IDD_IQV_DIALOG                  102
 #define IDD_BATCH_COMPLETE              130
+#define IDD_TRAINING_PLOT               131
 #define IDR_MAINFRAME                   128
 #define IDR_MENU1                       129
 #define IDC_BUTTON_SHARED               1000
@@ -38,6 +39,9 @@
 #define IDC_EDIT_SOURCE_SCORER          1027
 #define IDC_STATIC_LEAF_CASES           1028
 #define IDC_STATIC_SCORE_DETAIL         1029
+#define IDC_COMBO_PLOT_TYPE             1030
+#define IDC_STATIC_PLOT_LEGEND          1031
+#define IDC_STATIC_PLOT_SELECTED        1032
 #define ID_FILE_OPEN32771               32771
 #define ID_FILE_EXIT                    32772
 #define ID_FILE_OPENCOLORER             32788
@@ -53,14 +57,15 @@
 #define ID_LABEL_SAVESECTIONASFAILED    32800
 #define ID_OPTIMIZE_SCORETRAININGDATA   32801
 #define ID_OPTIMIZE_SCOREWEIGHTS        32802
+#define ID_OPTIMIZE_SHOWPLOT            32803
 
 // Next default values for new objects
 //
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        131
-#define _APS_NEXT_COMMAND_VALUE         32803
-#define _APS_NEXT_CONTROL_VALUE         1030
+#define _APS_NEXT_RESOURCE_VALUE        132
+#define _APS_NEXT_COMMAND_VALUE         32804
+#define _APS_NEXT_CONTROL_VALUE         1033
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

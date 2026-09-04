@@ -80,6 +80,18 @@ BEGIN
     PUSHBUTTON      "Close",IDCANCEL,241,85,60,14
 END
 
+IDD_TRAINING_PLOT DIALOGEX 0, 0, 420, 360
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Training Data: Raw Score vs Data Range"
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
+BEGIN
+    LTEXT           "Score Type",IDC_STATIC,7,10,45,8
+    COMBOBOX        IDC_COMBO_PLOT_TYPE,55,7,80,120,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "",IDC_STATIC_PLOT_LEGEND,145,10,268,8
+    LTEXT           "Click a point to identify its case",IDC_STATIC_PLOT_SELECTED,7,336,343,10
+    PUSHBUTTON      "Close",IDCANCEL,363,333,50,14
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -181,6 +193,7 @@ BEGIN
     BEGIN
         MENUITEM "Score Training Data",         ID_OPTIMIZE_SCORETRAININGDATA
         MENUITEM "Optimize Scorer Weights",     ID_OPTIMIZE_SCOREWEIGHTS
+        MENUITEM "Show Training Data Plot",     ID_OPTIMIZE_SHOWPLOT
     END
 END
 

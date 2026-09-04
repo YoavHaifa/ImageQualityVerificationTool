@@ -227,6 +227,7 @@ copy ..\..\ImageRLib\$(Platform)\$(Configuration)\ImageRLib.dll $(OutDir)
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="TentScorer.h" />
+    <ClInclude Include="TrainingPlotDlg.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AllMaxScorer.cpp" />
@@ -252,6 +253,7 @@ copy ..\..\ImageRLib\$(Platform)\$(Configuration)\ImageRLib.dll $(OutDir)
     <ClCompile Include="ScoreTypeResults.cpp" />
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="TentScorer.cpp" />
+    <ClCompile Include="TrainingPlotDlg.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="IQV.rc" />
