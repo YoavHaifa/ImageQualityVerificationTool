@@ -61,12 +61,13 @@ void CTrainingPlotDlg::LoadData()
 	int nPass = 0, nFail = 0;
 	while (fgets(zLine, sizeof(zLine), pf))
 	{
-		// Columns (see COptimizer::WriteReports): label, case, main area width, image, ring,
-		// critical scorer, critical raw score, score, verdict, gap, assessment. Tokenize on ","
-		// only (not whitespace) since case names can contain spaces.
+		// Columns (see COptimizer::WriteReports): label, expected, case, main area width, image,
+		// ring, critical scorer, critical raw score, score, verdict, gap, assessment. Tokenize on
+		// "," only (not whitespace) since case names can contain spaces.
 		CString sLine(zLine);
 		int iPos = 0;
 		CString sLabel = sLine.Tokenize(",", iPos); sLabel.Trim();
+		CString sExpected = sLine.Tokenize(",", iPos); sExpected.Trim();
 		CString sCase = sLine.Tokenize(",", iPos); sCase.Trim();
 		CString sWidth = sLine.Tokenize(",", iPos); sWidth.Trim();
 		CString sImage = sLine.Tokenize(",", iPos); // unused
@@ -78,10 +79,14 @@ void CTrainingPlotDlg::LoadData()
 			continue;
 
 		SPoint pt;
-		pt.bPass = (sLabel.CompareNoCase("Pass") == 0);
+		// Colored by what THIS scorer is actually expected to produce for this case (e.g. a
+		// Fail_Ring case counts as green under the Center scorer, since Center isn't responsible
+		// for ring-only problems - see COptimizer::IsExpectedToFail), not the case's raw label.
+		pt.bPass = (sExpected.CompareNoCase("Pass") == 0);
 		pt.x = (float)atof(sWidth);
 		pt.y = (float)atof(sCriticalRaw);
 		pt.sCaseName = sCase;
+		pt.sLabel = sLabel;
 		mvPoints.push_back(pt);
 
 		if (pt.bPass) nPass++; else nFail++;
@@ -89,7 +94,7 @@ void CTrainingPlotDlg::LoadData()
 	fclose(pf);
 
 	CString sLegend;
-	sLegend.Format("X: main area width   Y: raw score   Pass: %d (green)   Fail: %d (red)", nPass, nFail);
+	sLegend.Format("X: main area width   Y: raw score   Expected Pass: %d (green)   Expected Fail: %d (red)", nPass, nFail);
 	SetDlgItemText(IDC_STATIC_PLOT_LEGEND, sLegend);
 }
 void CTrainingPlotDlg::OnPaint()
@@ -187,7 +192,7 @@ void CTrainingPlotDlg::OnLButtonDown(UINT nFlags, CPoint point)
 
 	const SPoint& pt = mvPoints[iBest];
 	CString sInfo;
-	sInfo.Format("Selected: %s   (%s, width=%.0f, raw score=%.2f)",
-		(LPCTSTR)pt.sCaseName, pt.bPass ? "Pass" : "Fail", pt.x, pt.y);
+	sInfo.Format("Selected: %s   (label=%s, expected=%s, width=%.0f, raw score=%.2f)",
+		(LPCTSTR)pt.sCaseName, (LPCTSTR)pt.sLabel, pt.bPass ? "Pass" : "Fail", pt.x, pt.y);
 	SetDlgItemText(IDC_STATIC_PLOT_SELECTED, sInfo);
 }

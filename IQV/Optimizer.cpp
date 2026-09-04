@@ -106,6 +106,17 @@ CString COptimizer::DetermineLabel(const CString& sSubDirName)
 		return "Fail_Both";
 	return CString();
 }
+bool COptimizer::IsExpectedToFail(EScoreType type, const CString& sLabel)
+{
+	if (sLabel.CompareNoCase("Pass") == 0)
+		return false;
+	if (type == EScoreType::AllMax)
+		return true;
+	if (type == EScoreType::Center)
+		return sLabel.CompareNoCase("Fail_Center") == 0 || sLabel.CompareNoCase("Fail_Both") == 0;
+	// MinMax, Tent, TentMin - the "ring" scorers
+	return sLabel.CompareNoCase("Fail_Ring") == 0 || sLabel.CompareNoCase("Fail_Both") == 0;
+}
 void COptimizer::RunOnLabelDir(const char* zSubDir, const char* zLabel, const CString& sSubDirName)
 {
 	if (!CMyWindows::IsDirectory(zSubDir))
@@ -168,7 +179,6 @@ void COptimizer::RunOnLabelDir(const char* zSubDir, const char* zLabel, const CS
 		CRingsScorer* pRingsScorer = manager.GetRingsScorer();
 		result.mainAreaWidth = pRingsScorer->GetMainAreaWidth();
 
-		bool bTrueLabelPass = (result.sLabel == "Pass");
 		result.vPerType.assign((int)EScoreType::N_SCORE_TYPES, SPerTypeResult());
 		for (int iType = 0; iType < (int)EScoreType::N_SCORE_TYPES; iType++)
 		{
@@ -189,7 +199,13 @@ void COptimizer::RunOnLabelDir(const char* zSubDir, const char* zLabel, const CS
 			pt.sCriticalScorer = ScoreTypeName(eCriticalScorer);
 			pt.criticalRawScore = pRingsScorer->GetRawScoreAt(eCriticalScorer, winner.miOriginalImage);
 
-			if (bTrueLabelPass)
+			// Not every scorer is expected to catch every kind of labeled failure - see
+			// IsExpectedToFail(). A case whose label this scorer isn't responsible for (e.g. a
+			// Fail_Ring case, as far as the Center scorer is concerned) is judged exactly like an
+			// actual Pass case here.
+			bool bExpectedFail = IsExpectedToFail(type, result.sLabel);
+			pt.sExpectedVerdict = bExpectedFail ? "Fail" : "Pass";
+			if (!bExpectedFail)
 				pt.sAssessment = pt.bScoredPass ? "Correct Pass" : "False Positive";
 			else
 				pt.sAssessment = pt.bScoredPass ? "False Negative" : "Correct Fail";
@@ -221,12 +237,12 @@ void COptimizer::WriteReports()
 			continue;
 		}
 
-		fprintf(pf, "label, case, main area width, image, ring, critical scorer, critical raw score, score, verdict, gap, assessment\n");
+		fprintf(pf, "label, expected, case, main area width, image, ring, critical scorer, critical raw score, score, verdict, gap, assessment\n");
 		for (const SCaseResult& r : mvResults)
 		{
 			const SPerTypeResult& pt = r.vPerType[iType];
-			fprintf(pf, "%s, %s, %d, %d, %d, %s, %.6f, %.6f, %s, %.6f, %s\n",
-				(LPCTSTR)r.sLabel, (LPCTSTR)r.sCaseName, r.mainAreaWidth,
+			fprintf(pf, "%s, %s, %s, %d, %d, %d, %s, %.6f, %.6f, %s, %.6f, %s\n",
+				(LPCTSTR)r.sLabel, (LPCTSTR)pt.sExpectedVerdict, (LPCTSTR)r.sCaseName, r.mainAreaWidth,
 				pt.originalImage, pt.ring, (LPCTSTR)pt.sCriticalScorer, pt.criticalRawScore,
 				pt.score, pt.bScoredPass ? "Pass" : "Fail", pt.gap, (LPCTSTR)pt.sAssessment);
 		}
@@ -271,6 +287,10 @@ void COptimizer::ComputeAndApplyNewWeights(vector<SWeightResult>& results)
 		wr.oldWeight = gConfig.GetScorerWeight(type);
 		wr.newWeight = wr.oldWeight;
 
+		// A case counts toward this scorer's "Pass" cohort (must never trip it) unless its label
+		// is a failure type this scorer is actually expected to catch - see IsExpectedToFail().
+		// E.g. a Fail_Ring case belongs in the Center scorer's "Pass" cohort, same as a real Pass
+		// case, since Center isn't responsible for ring-only problems.
 		float passMax = -FLT_MAX;
 		bool bAnyPass = false;
 		float failMinOverall = FLT_MAX;
@@ -278,7 +298,7 @@ void COptimizer::ComputeAndApplyNewWeights(vector<SWeightResult>& results)
 		for (const SCaseResult& r : mvResults)
 		{
 			float score = r.vPerType[iType].score;
-			if (r.sLabel == "Pass")
+			if (!IsExpectedToFail(type, r.sLabel))
 			{
 				if (!bAnyPass || score > passMax)
 					passMax = score;
@@ -304,7 +324,7 @@ void COptimizer::ComputeAndApplyNewWeights(vector<SWeightResult>& results)
 		bool bFoundAbove = false;
 		for (const SCaseResult& r : mvResults)
 		{
-			if (r.sLabel != "Fail")
+			if (!IsExpectedToFail(type, r.sLabel))
 				continue;
 			float score = r.vPerType[iType].score;
 			if (score > passMax && score < failMinAbove)

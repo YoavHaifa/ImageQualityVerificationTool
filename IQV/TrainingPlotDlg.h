@@ -26,8 +26,13 @@ protected:
 	{
 		float x = 0; // main area width
 		float y = 0; // raw score
+
+		// Colored green/red by whether the selected scorer actually expects this case to Pass or
+		// Fail (COptimizer::IsExpectedToFail) - not simply whether its raw label is "Pass".
 		bool bPass = true;
+
 		CString sCaseName;
+		CString sLabel; // the case's true raw label (Pass/Fail_Center/Fail_Ring/Fail_Both)
 
 		// Where this point was last drawn on screen - set by DrawPlot(), used by
 		// OnLButtonDown() to find which point (if any) was clicked.

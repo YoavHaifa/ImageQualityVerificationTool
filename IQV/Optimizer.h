@@ -45,6 +45,14 @@ private:
 		float score = 0;
 		bool bScoredPass = false;
 		float gap = 0; // score - gConfig.mMaxAcceptableScore (negative on the Pass side)
+
+		// "Pass" or "Fail" - what this specific scorer is actually expected to produce for this
+		// case, per IsExpectedToFail() (not necessarily the case's own raw label - e.g. a
+		// Fail_Ring case expects Pass from the Center scorer, since Center isn't responsible for
+		// ring-only problems). sAssessment, and ComputeAndApplyNewWeights()'s cohort split, are
+		// both driven by this rather than by sLabel directly.
+		CString sExpectedVerdict;
+
 		CString sAssessment; // Correct Pass / Correct Fail / False Positive / False Negative
 		int ring = -1; // the ring that produced `score`
 		int originalImage = -1; // the DICOM slice that produced `score`
@@ -84,6 +92,14 @@ private:
 	// "Fail_Ring", "fail_both" -> "Fail_Both". Returns an empty string if the name doesn't start
 	// with any of these - callers should skip such a directory rather than guess.
 	static CString DetermineLabel(const CString& sSubDirName);
+
+	// Whether the given scorer type is actually expected to fail a case carrying this label.
+	// Every scorer is expected to fail every Fail label, EXCEPT: the Center scorer only targets
+	// central artifacts, so it isn't expected to fail Fail_Ring (no center problem); the ring
+	// scorers (MinMax/Tent/TentMin) only target off-center ring artifacts, so they aren't
+	// expected to fail Fail_Center (no ring problem). AllMax is exempt from this narrowing - it's
+	// meant to catch every failure type, since it's built from every sibling's own score.
+	static bool IsExpectedToFail(EScoreType type, const CString& sLabel);
 
 	// Scores every case found under zSubDir (e.g. <root>\fail_ring_2), appending one row to
 	// mvResults per case actually scored, tagged with the given zLabel. sSubDirName (the

@@ -122,9 +122,13 @@ BEGIN_MESSAGE_MAP(CIQVDlg, CDialog)
 	ON_COMMAND(ID_UTILS_DOWNLOADDATA, &CIQVDlg::OnUtilsDownloaddata)
 	ON_COMMAND(ID_FILE_EXIT, &CIQVDlg::OnFileExit)
 	ON_COMMAND(ID_LABEL_SAVEALLASPASSED, &CIQVDlg::OnLabelSaveAllAsPassed)
-	ON_COMMAND(ID_LABEL_SAVEALLASFAILED, &CIQVDlg::OnLabelSaveAllAsFailed)
 	ON_COMMAND(ID_LABEL_SAVESECTIONASPASSED, &CIQVDlg::OnLabelSaveSectionAsPassed)
-	ON_COMMAND(ID_LABEL_SAVESECTIONASFAILED, &CIQVDlg::OnLabelSaveSectionAsFailed)
+	ON_COMMAND(ID_LABEL_SAVEALLASFAILED_CENTER, &CIQVDlg::OnLabelSaveAllAsFailedCenter)
+	ON_COMMAND(ID_LABEL_SAVEALLASFAILED_RING, &CIQVDlg::OnLabelSaveAllAsFailedRing)
+	ON_COMMAND(ID_LABEL_SAVEALLASFAILED_BOTH, &CIQVDlg::OnLabelSaveAllAsFailedBoth)
+	ON_COMMAND(ID_LABEL_SAVESECTIONASFAILED_CENTER, &CIQVDlg::OnLabelSaveSectionAsFailedCenter)
+	ON_COMMAND(ID_LABEL_SAVESECTIONASFAILED_RING, &CIQVDlg::OnLabelSaveSectionAsFailedRing)
+	ON_COMMAND(ID_LABEL_SAVESECTIONASFAILED_BOTH, &CIQVDlg::OnLabelSaveSectionAsFailedBoth)
 	ON_COMMAND(ID_OPTIMIZE_SCORETRAININGDATA, &CIQVDlg::OnOptimizeScoretrainingdata)
 	ON_COMMAND(ID_OPTIMIZE_SCOREWEIGHTS, &CIQVDlg::OnOptimizeScoreweights)
 	ON_COMMAND(ID_OPTIMIZE_SHOWPLOT, &CIQVDlg::OnOptimizeShowplot)
@@ -758,19 +762,35 @@ void CIQVDlg::OnUtilsDownloaddata()
 }
 void CIQVDlg::OnLabelSaveAllAsPassed()
 {
-	SaveLabeledData(true, true);
-}
-void CIQVDlg::OnLabelSaveAllAsFailed()
-{
-	SaveLabeledData(false, true);
+	SaveLabeledData("Pass", true);
 }
 void CIQVDlg::OnLabelSaveSectionAsPassed()
 {
-	SaveLabeledData(true, false);
+	SaveLabeledData("Pass", false);
 }
-void CIQVDlg::OnLabelSaveSectionAsFailed()
+void CIQVDlg::OnLabelSaveAllAsFailedCenter()
 {
-	SaveLabeledData(false, false);
+	SaveLabeledData("fail_center", true);
+}
+void CIQVDlg::OnLabelSaveAllAsFailedRing()
+{
+	SaveLabeledData("fail_ring", true);
+}
+void CIQVDlg::OnLabelSaveAllAsFailedBoth()
+{
+	SaveLabeledData("fail_both", true);
+}
+void CIQVDlg::OnLabelSaveSectionAsFailedCenter()
+{
+	SaveLabeledData("fail_center", false);
+}
+void CIQVDlg::OnLabelSaveSectionAsFailedRing()
+{
+	SaveLabeledData("fail_ring", false);
+}
+void CIQVDlg::OnLabelSaveSectionAsFailedBoth()
+{
+	SaveLabeledData("fail_both", false);
 }
 void CIQVDlg::OnOptimizeScoretrainingdata()
 {
@@ -804,7 +824,7 @@ void CIQVDlg::OnOptimizeShowplot()
 	CTrainingPlotDlg dlg(this);
 	dlg.DoModal();
 }
-void CIQVDlg::SaveLabeledData(bool bPass, bool bWholeCase)
+void CIQVDlg::SaveLabeledData(const char* zLabelFolder, bool bWholeCase)
 {
 	if (!mpImages)
 	{
@@ -813,7 +833,8 @@ void CIQVDlg::SaveLabeledData(bool bPass, bool bWholeCase)
 	}
 
 	CString sLabelRoot(gConfig.msTrainingSetRoot.c_str());
-	sLabelRoot += bPass ? "\\Pass" : "\\Fail";
+	sLabelRoot += "\\";
+	sLabelRoot += zLabelFolder;
 
 	// Multiple sections from the same case would otherwise all land in the same directory,
 	// each save overwriting/mixing with the last - suffix the case name with the actual image
@@ -862,7 +883,7 @@ void CIQVDlg::SaveLabeledData(bool bPass, bool bWholeCase)
 	}
 
 	CString sMsg;
-	sMsg.Format("Saved %d file(s) as %s to: %s", nCopied, bPass ? "Passed" : "Failed", (LPCTSTR)sDestDir);
+	sMsg.Format("Saved %d file(s) as %s to: %s", nCopied, zLabelFolder, (LPCTSTR)sDestDir);
 	gConfig.PrintStatus((LPCTSTR)sMsg);
 }
 void CIQVDlg::OnFileExit()

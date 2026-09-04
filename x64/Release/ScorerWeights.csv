@@ -1,6 +1,6 @@
 code, name, weight
-0, MinMax, 0.191149
-1, Tent, 0.235954
+0, MinMax, 0.130446
+1, Tent, 0.149964
 2, TentMin, 0.561301
 3, Center, 0.285226
 4, AllMax, 1.000000
