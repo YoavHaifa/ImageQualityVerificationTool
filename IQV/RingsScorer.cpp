@@ -28,7 +28,15 @@ CRingsScorer::~CRingsScorer()
 const CImageScore& CRingsScorer::ScoreCurrentImage(int iImage)
 {
 	if (mbScoresComputed)
-		return mpImageScorer->GetCurrentScore(iImage);
+	{
+		// iImage is the original DICOM slice number - convert to the 0-based push-order index
+		// mResults is actually indexed by (see CScoreTypeResults::AddScore). Assuming push order
+		// == iImage - 1 (i.e. slice numbering always starts at 1) used to be wrong for any case
+		// whose numbering doesn't start at 1 - e.g. a Label "Save Section" case, whose files keep
+		// their original slice numbers (say 143-160) - and crashed with an out-of-range access.
+		int iPushOrder = (iImage - miFirst) / mStep;
+		return mpImageScorer->GetCurrentScore(iPushOrder);
+	}
 
 	return mpImageScorer->Score(iImage);
 }

@@ -41,8 +41,10 @@ public:
 	// alongside the rest of the case's summary info.
 	STRange<int> GetHistogramMainArea(float cutPercent) const { return mHistogram.GetMainArea(cutPercent); }
 
-	// The score+ring already recorded for iImage, under the currently active score type (gConfig.mScoreType)
-	const CImageScore& GetCurrentScore(int iImage) const;
+	// The score+ring already recorded for the iPushOrder'th image scored so far (0-based, in
+	// scoring order - NOT the original DICOM slice number; see CRingsScorer::ScoreCurrentImage,
+	// the only caller, for the conversion), under the currently active score type (gConfig.mScoreType).
+	const CImageScore& GetCurrentScore(int iPushOrder) const;
 
 	// The score+ring already recorded for iImage, under the given score type
 	const CImageScore& GetScore(EScoreType eScoreType, int iImage) const;

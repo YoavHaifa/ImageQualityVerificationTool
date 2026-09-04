@@ -83,9 +83,9 @@ void CImageRingsScorer::LogHistogram()
 
 	gfLog.Printf("<CImageRingsScorer::LogHistogram> Saved %s", sfName.c_str());
 }
-const CImageScore& CImageRingsScorer::GetCurrentScore(int iImage) const
+const CImageScore& CImageRingsScorer::GetCurrentScore(int iPushOrder) const
 {
-	return GetScorer(gConfig.mScoreType)->mResults[iImage - 1];
+	return GetScorer(gConfig.mScoreType)->mResults[iPushOrder];
 }
 const CImageScore& CImageRingsScorer::GetScore(EScoreType eScoreType, int iImage) const
 {

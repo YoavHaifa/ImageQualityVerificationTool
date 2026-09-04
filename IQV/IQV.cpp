@@ -7,6 +7,8 @@
 #include "BatchScorer.h"
 #include "Optimizer.h"
 #include "IQVManager.h"
+#include "RingsScorer.h"
+#include "ImageScore.h"
 #include "ArinetaImages.h"
 #include "..\..\ImageRLib\TSharedImage.h"
 #include "Config.h"
@@ -138,6 +140,21 @@ BOOL CIQVApp::InitInstance()
 				if (pfOut) fclose(pfOut);
 				return FALSE;
 			}
+
+			// Exercises the ScoreCurrentImage() fix directly: a case whose DICOM numbering
+			// doesn't start at 1 (e.g. a Label "Save Section" case) used to crash here with an
+			// out-of-range vector access - test a middle-of-range image, not just the first.
+			{
+				int iFirst = manager.GetImages()->GetFirst();
+				int iLast = manager.GetImages()->GetLast();
+				int iMid = (iFirst + iLast) / 2;
+				const CImageScore& midScore = manager.GetRingsScorer()->ScoreCurrentImage(iMid);
+				char zBuf[256];
+				sprintf_s(zBuf, "ScoreCurrentImage(%d) [range %d-%d] OK: score=%.2f ring=%d",
+					iMid, iFirst, iLast, midScore.mScore, midScore.miRing);
+				report(zBuf);
+			}
+
 			CTSharedImage<short>* pVol = manager.GetImages()->GetSharedCtPerRadiusVolume();
 			if (!pVol)
 			{
