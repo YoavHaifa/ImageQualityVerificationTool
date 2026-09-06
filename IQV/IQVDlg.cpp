@@ -912,11 +912,13 @@ void CIQVDlg::SaveLabeledData(bool bPass, bool bWholeCase)
 	{
 		// Lives right alongside the copied DICOM files - a separate file, not mixed into them -
 		// recording where they actually came from, when and by whom, which IQV version scored/
-		// labeled it, and (for a failed save) which region(s) the labeler flagged. Written for
-		// Pass saves too, not just Fail - it's not only about failure regions, it's this case's
-		// labeling record in general; the region-dialog was never shown for a Pass save, so
-		// regionsDlg's 4 flags are still their default false there,
-		// which is exactly right (nothing failed).
+		// labeled it, the region-boundary config in effect at label time (n_central_rings/
+		// last_high_resolution_ring/first_low_resolution_ring - if these are ever retuned later,
+		// a look back here says whether an older label's regions still mean the same thing), and
+		// (for a failed save) which region(s) the labeler flagged. Written for Pass saves too, not
+		// just Fail - it's not only about failure regions, it's this case's labeling record in
+		// general; the region-dialog was never shown for a Pass save, so regionsDlg's 4 flags are
+		// still their default false there, which is exactly right (nothing failed).
 		CString sfName(sDestDir + "\\CaseLabelInfo.yaml");
 		FILE* pf = nullptr;
 		fopen_s(&pf, sfName, "w");
@@ -926,6 +928,9 @@ void CIQVDlg::SaveLabeledData(bool bPass, bool bWholeCase)
 			fprintf(pf, "labeled_at: %s\n", (LPCTSTR)CTime::GetCurrentTime().Format("%Y-%m-%d %H:%M:%S"));
 			fprintf(pf, "operator: %s\n", gConfig.msOperatorName.c_str());
 			fprintf(pf, "iqv_version: %s\n", gConfig.msVersion.c_str());
+			fprintf(pf, "n_central_rings: %d\n", gConfig.mnCentralRings);
+			fprintf(pf, "last_high_resolution_ring: %d\n", gConfig.miLastHighResolutionRing);
+			fprintf(pf, "first_low_resolution_ring: %d\n", gConfig.miFirstLowResolutionRing);
 			fprintf(pf, "failed_center: %s\n", regionsDlg.mbCenter ? "true" : "false");
 			fprintf(pf, "failed_hr: %s\n", regionsDlg.mbHR ? "true" : "false");
 			fprintf(pf, "failed_border: %s\n", regionsDlg.mbBorder ? "true" : "false");
