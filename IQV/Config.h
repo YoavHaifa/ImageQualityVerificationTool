@@ -143,6 +143,15 @@ public:
 	// clipped to the case's own first/last image
 	int mSavedSectionLength = 21;
 
+	// Name of whoever is currently labeling data, typed into the "Operator" edit box on the main
+	// dialog - recorded in each failed case's CaseLabelInfo.yaml (see CIQVDlg::SaveLabeledData)
+	// alongside the region flags, so a labeled case can be traced back to who labeled it.
+	// Deliberately no default value - stays blank until someone types it in. Persisted to
+	// ReconTest.State.xml like any other setting, EXCEPT when consolidating a version for export:
+	// strip this key back out of the copied state file so an exported build doesn't carry the
+	// last internal labeler's name (see the version-release-procedure memory).
+	std::string msOperatorName;
+
 	// msCaseLogDir with the msLogRoot prefix stripped off - i.e. [<msBatchRootDir>\]<case name>
 	// [_<index>]. Reused to mirror the same case-identifying relative structure under
 	// msTrainingSetRoot (see the Label feature) - computed fresh each time since msCaseLogDir

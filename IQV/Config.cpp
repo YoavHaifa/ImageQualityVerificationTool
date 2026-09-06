@@ -184,6 +184,7 @@ void CConfig::SaveToFile()
 	dumpFile.Write("collect_data_for_training", mbCollectDataForTraining);
 	dumpFile.Write("training_set_root", msTrainingSetRoot.c_str());
 	dumpFile.Write("saved_section_length", mSavedSectionLength);
+	dumpFile.Write("operator_name", msOperatorName.c_str());
 
 	dumpFile.Write("debug", mDebug);
 }
@@ -241,6 +242,7 @@ void CConfig::ReadFromFile()
 	pRoot->GetValue("collect_data_for_training", mbCollectDataForTraining);
 	pRoot->GetValue("training_set_root", msTrainingSetRoot);
 	pRoot->GetValue("saved_section_length", mSavedSectionLength);
+	pRoot->GetValue("operator_name", msOperatorName);
 
 	pRoot->GetValue("debug", mDebug);
 

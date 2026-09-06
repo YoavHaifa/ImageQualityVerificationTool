@@ -80,10 +80,13 @@ public:
 
 	// Copies the current case's DICOM files, as-is, to gConfig.msTrainingSetRoot\[Pass|Fail]\
 	// <case-relative dir> - either the whole case (bWholeCase) or just gConfig.mSavedSectionLength
-	// images centered on the one currently displayed, clipped to the case's own image range. For
-	// a failed save, first shows CFailRegionsDlg to ask which region(s) show the problem -
-	// canceling that dialog aborts the whole save (nothing is copied) - and writes a CaseLabelInfo.yaml
-	// alongside the copied files recording the case's origin path and the chosen region(s).
+	// images centered on the one currently displayed, clipped to the case's own image range. If
+	// gConfig.msOperatorName is still blank, prompts for it first (CNameGetDialog) - canceling that
+	// prompt aborts the save. For a failed save, then shows CFailRegionsDlg to ask which region(s)
+	// show the problem - canceling that dialog also aborts the whole save (nothing is copied).
+	// Either way (Pass or Fail), writes a CaseLabelInfo.yaml alongside the copied files recording
+	// the case's origin path, the labeling time, gConfig.msOperatorName, gConfig.msVersion, and the
+	// region flags (all false for a Pass save, since the region dialog is Fail-only).
 	void SaveLabeledData(bool bPass, bool bWholeCase);
 
 	bool mbDisplayReadyImages;
@@ -128,6 +131,7 @@ public:
 	afx_msg void OnBnClickedButtonNext();
 	afx_msg void OnBnClickedButtonPrev();
 	afx_msg void OnCbnSelchangeComboScoreType();
+	afx_msg void OnEnKillfocusEditOperatorName();
 
 	afx_msg void OnBnClickedButtonWorstCase();
 	afx_msg void OnBnClickedButtonNextCase();

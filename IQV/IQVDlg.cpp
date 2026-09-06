@@ -24,6 +24,7 @@
 #include "..\..\yUtils\MyFolderDialog.h"
 #include "..\..\yUtils\FilesList.h"
 #include "..\..\yUtils\FileName.h"
+#include "..\..\yUtils\NameGetDialog.h"
 
 #include "..\..\ImageRLib\ImageRIF.h"
 #include "..\..\ImageRLib\DataRoi.h"
@@ -136,6 +137,7 @@ BEGIN_MESSAGE_MAP(CIQVDlg, CDialog)
 	ON_BN_CLICKED(IDC_BUTTON_NEXT, &CIQVDlg::OnBnClickedButtonNext)
 	ON_BN_CLICKED(IDC_BUTTON_PREV, &CIQVDlg::OnBnClickedButtonPrev)
 	ON_CBN_SELCHANGE(IDC_COMBO_SCORE_TYPE, &CIQVDlg::OnCbnSelchangeComboScoreType)
+	ON_EN_KILLFOCUS(IDC_EDIT_OPERATOR_NAME, &CIQVDlg::OnEnKillfocusEditOperatorName)
 	ON_BN_CLICKED(IDC_BUTTON_WORST_CASE, &CIQVDlg::OnBnClickedButtonWorstCase)
 	ON_BN_CLICKED(IDC_BUTTON_NEXT_CASE, &CIQVDlg::OnBnClickedButtonNextCase)
 	ON_BN_CLICKED(IDC_BUTTON_PREV_CASE, &CIQVDlg::OnBnClickedButtonPrevCase)
@@ -188,6 +190,8 @@ BOOL CIQVDlg::OnInitDialog()
 			pComboScoreType->AddString(ScoreTypeName((EScoreType)i));
 		pComboScoreType->SetCurSel((int)gConfig.mScoreType);
 	}
+
+	SetDlgItemText(IDC_EDIT_OPERATOR_NAME, gConfig.msOperatorName.c_str());
 
 	// TODO: Add extra initialization here
 	//DisplayPos();
@@ -813,6 +817,23 @@ void CIQVDlg::SaveLabeledData(bool bPass, bool bWholeCase)
 		return;
 	}
 
+	// Every labeled save (Pass or Fail) needs an operator name - ask once, up front, if it's
+	// never been set (see the "Operator" edit box on the main dialog). Canceling this prompt
+	// aborts the save, same as canceling the region dialog below.
+	if (gConfig.msOperatorName.empty())
+	{
+		CString sOperatorName;
+		if (!CNameGetDialog::GetStringValue("Operator Name", sOperatorName))
+		{
+			gConfig.PrintStatus("Label: canceled - operator name is required.");
+			return;
+		}
+
+		gConfig.msOperatorName = (LPCTSTR)sOperatorName;
+		gConfig.SaveToFile();
+		SetDlgItemText(IDC_EDIT_OPERATOR_NAME, gConfig.msOperatorName.c_str());
+	}
+
 	// A failed save must say which region(s) show the problem before anything is copied -
 	// canceling aborts the whole save, exactly as if the menu had never been chosen.
 	CFailRegionsDlg regionsDlg(this);
@@ -873,17 +894,23 @@ void CIQVDlg::SaveLabeledData(bool bPass, bool bWholeCase)
 		}
 	}
 
-	if (!bPass)
 	{
 		// Lives right alongside the copied DICOM files - a separate file, not mixed into them -
-		// recording where they actually came from and which region(s) the labeler flagged, for
-		// whatever later reads this back (not yet COptimizer - see the region-labeling memory).
+		// recording where they actually came from, when and by whom, which IQV version scored/
+		// labeled it, and (for a failed save) which region(s) the labeler flagged. Written for
+		// Pass saves too, not just Fail - it's not only about failure regions, it's this case's
+		// labeling record in general; the region-dialog was never shown for a Pass save, so
+		// regionsDlg's 4 flags are still their default false there,
+		// which is exactly right (nothing failed).
 		CString sfName(sDestDir + "\\CaseLabelInfo.yaml");
 		FILE* pf = nullptr;
 		fopen_s(&pf, sfName, "w");
 		if (pf)
 		{
 			fprintf(pf, "origin: %s\n", (LPCTSTR)mpImages->GetPath());
+			fprintf(pf, "labeled_at: %s\n", (LPCTSTR)CTime::GetCurrentTime().Format("%Y-%m-%d %H:%M:%S"));
+			fprintf(pf, "operator: %s\n", gConfig.msOperatorName.c_str());
+			fprintf(pf, "iqv_version: %s\n", gConfig.msVersion.c_str());
 			fprintf(pf, "failed_center: %s\n", regionsDlg.mbCenter ? "true" : "false");
 			fprintf(pf, "failed_hr: %s\n", regionsDlg.mbHR ? "true" : "false");
 			fprintf(pf, "failed_border: %s\n", regionsDlg.mbBorder ? "true" : "false");
@@ -1079,4 +1106,11 @@ void CIQVDlg::OnCbnSelchangeComboScoreType()
 	{
 		mpRingsScorer->OnActiveScoreTypeChanged();
 	}
+}
+void CIQVDlg::OnEnKillfocusEditOperatorName()
+{
+	CString sName;
+	GetDlgItemText(IDC_EDIT_OPERATOR_NAME, sName);
+	gConfig.msOperatorName = (LPCTSTR)sName;
+	gConfig.SaveToFile();
 }
