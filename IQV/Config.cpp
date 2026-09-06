@@ -168,6 +168,10 @@ void CConfig::SaveToFile()
 	dumpFile.Write("ignore_low_resolution_area", mbIgnoreLowResolutionArea);
 	dumpFile.Write("last_high_resolution_ring", miLastHighResolutionRing);
 	dumpFile.Write("first_low_resolution_ring", miFirstLowResolutionRing);
+	dumpFile.Write("review_center", mbReviewCenter);
+	dumpFile.Write("review_high_res", mbReviewHighRes);
+	dumpFile.Write("review_hr_lr_border", mbReviewHRLRBorder);
+	dumpFile.Write("review_low_res", mbReviewLowRes);
 	dumpFile.Write("score_type", (int)mScoreType);
 	dumpFile.Write("max_acceptable_score", mMaxAcceptableScore);
 	dumpFile.Write("version", msVersion.c_str());
@@ -222,6 +226,10 @@ void CConfig::ReadFromFile()
 	pRoot->GetValue("ignore_low_resolution_area", mbIgnoreLowResolutionArea);
 	pRoot->GetValue("last_high_resolution_ring", miLastHighResolutionRing);
 	pRoot->GetValue("first_low_resolution_ring", miFirstLowResolutionRing);
+	pRoot->GetValue("review_center", mbReviewCenter);
+	pRoot->GetValue("review_high_res", mbReviewHighRes);
+	pRoot->GetValue("review_hr_lr_border", mbReviewHRLRBorder);
+	pRoot->GetValue("review_low_res", mbReviewLowRes);
 
 	int iScoreType = (int)mScoreType;
 	if (pRoot->GetValue("score_type", iScoreType))

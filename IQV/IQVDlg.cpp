@@ -138,6 +138,11 @@ BEGIN_MESSAGE_MAP(CIQVDlg, CDialog)
 	ON_BN_CLICKED(IDC_BUTTON_PREV, &CIQVDlg::OnBnClickedButtonPrev)
 	ON_CBN_SELCHANGE(IDC_COMBO_SCORE_TYPE, &CIQVDlg::OnCbnSelchangeComboScoreType)
 	ON_EN_KILLFOCUS(IDC_EDIT_OPERATOR_NAME, &CIQVDlg::OnEnKillfocusEditOperatorName)
+	ON_BN_CLICKED(IDC_CHECK_DISPLAY_BORDERS, &CIQVDlg::OnBnClickedCheckDisplayBorders)
+	ON_BN_CLICKED(IDC_CHECK_REVIEW_CENTER, &CIQVDlg::OnBnClickedCheckReviewRegion)
+	ON_BN_CLICKED(IDC_CHECK_REVIEW_HIGHRES, &CIQVDlg::OnBnClickedCheckReviewRegion)
+	ON_BN_CLICKED(IDC_CHECK_REVIEW_BORDER, &CIQVDlg::OnBnClickedCheckReviewRegion)
+	ON_BN_CLICKED(IDC_CHECK_REVIEW_LOWRES, &CIQVDlg::OnBnClickedCheckReviewRegion)
 	ON_BN_CLICKED(IDC_BUTTON_WORST_CASE, &CIQVDlg::OnBnClickedButtonWorstCase)
 	ON_BN_CLICKED(IDC_BUTTON_NEXT_CASE, &CIQVDlg::OnBnClickedButtonNextCase)
 	ON_BN_CLICKED(IDC_BUTTON_PREV_CASE, &CIQVDlg::OnBnClickedButtonPrevCase)
@@ -192,6 +197,16 @@ BOOL CIQVDlg::OnInitDialog()
 	}
 
 	SetDlgItemText(IDC_EDIT_OPERATOR_NAME, gConfig.msOperatorName.c_str());
+
+	// Always starts off - not persisted, just a way to check where the boundary rings currently
+	// fall while the app is open
+	mbDisplayHrLrBorders = false;
+	CheckDlgButton(IDC_CHECK_DISPLAY_BORDERS, BST_UNCHECKED);
+
+	CheckDlgButton(IDC_CHECK_REVIEW_CENTER, gConfig.mbReviewCenter ? BST_CHECKED : BST_UNCHECKED);
+	CheckDlgButton(IDC_CHECK_REVIEW_HIGHRES, gConfig.mbReviewHighRes ? BST_CHECKED : BST_UNCHECKED);
+	CheckDlgButton(IDC_CHECK_REVIEW_BORDER, gConfig.mbReviewHRLRBorder ? BST_CHECKED : BST_UNCHECKED);
+	CheckDlgButton(IDC_CHECK_REVIEW_LOWRES, gConfig.mbReviewLowRes ? BST_CHECKED : BST_UNCHECKED);
 
 	// TODO: Add extra initialization here
 	//DisplayPos();
@@ -988,16 +1003,14 @@ void CIQVDlg::OnBnClickedButtonAddColors()
 	
 	mpImageRIF->DisplayShared(mpColors);
 }
-void CIQVDlg::DisplayCircle(CDataCoordinates& center, float radius)
+void CIQVDlg::DisplayCircle(CDataCoordinates& center, float radius, const char* zName, COLORREF color)
 {
 	static int count = 0;
 	//if (count > 0)
 	//	return;
 	count++;
 
-	//char zName[128];
-	//sprintf_s(zName, "CenteredCircle", count, miPos + 1, miPos2d + 1);
-	CDataRoi* pCircle = new CDataRoi(NULL, "CenteredCircle", RGB(255, 255, 0)); // bright yellow - visible against grayscale CT
+	CDataRoi* pCircle = new CDataRoi(NULL, zName, color);
 	pCircle->InitEllipse(center, max(radius, 5.0f)); // otherwise too small to see on screen
 	pCircle->SetCircle();
 	pCircle->SetFixedCenter();
@@ -1006,6 +1019,39 @@ void CIQVDlg::DisplayCircle(CDataCoordinates& center, float radius)
 	pCircle->mbReportClientOnActivation = true;
 	mpImageRIF->SetCurrentDR(0);
 	mpImageRIF->DisplayGraphic(pCircle);
+}
+void CIQVDlg::DisplayHrLrBorderCircles()
+{
+	if (!mpImages || !mpImageRIF)
+		return;
+
+	// Cyan/magenta - distinct from the score circle's yellow
+	DisplayCircle(mpImages->GetRotationCenter(), (float)gConfig.miLastHighResolutionRing, "HRBorderCircle", RGB(0, 255, 255));
+	DisplayCircle(mpImages->GetRotationCenter(), (float)gConfig.miFirstLowResolutionRing, "LRBorderCircle", RGB(255, 0, 255));
+}
+void CIQVDlg::RemoveHrLrBorderCircles()
+{
+	if (!mpImageRIF)
+		return;
+
+	mpImageRIF->RemoveGraphics("HRBorderCircle");
+	mpImageRIF->RemoveGraphics("LRBorderCircle");
+}
+void CIQVDlg::OnBnClickedCheckDisplayBorders()
+{
+	mbDisplayHrLrBorders = (IsDlgButtonChecked(IDC_CHECK_DISPLAY_BORDERS) != 0);
+	if (mbDisplayHrLrBorders)
+		DisplayHrLrBorderCircles();
+	else
+		RemoveHrLrBorderCircles();
+}
+void CIQVDlg::OnBnClickedCheckReviewRegion()
+{
+	gConfig.mbReviewCenter = (IsDlgButtonChecked(IDC_CHECK_REVIEW_CENTER) != 0);
+	gConfig.mbReviewHighRes = (IsDlgButtonChecked(IDC_CHECK_REVIEW_HIGHRES) != 0);
+	gConfig.mbReviewHRLRBorder = (IsDlgButtonChecked(IDC_CHECK_REVIEW_BORDER) != 0);
+	gConfig.mbReviewLowRes = (IsDlgButtonChecked(IDC_CHECK_REVIEW_LOWRES) != 0);
+	gConfig.SaveToFile();
 }
 void CIQVDlg::DisplayVolume(CTSharedImage<short>* pVolume, const CString& sDumpFileName)
 {
@@ -1037,6 +1083,11 @@ void CIQVDlg::DisplayScore()
 	SetParameter(IDC_EDIT_RADIUS, score.miRing);
 	if (score.miRing >= 0)
 		DisplayCircle(mpImages->GetRotationCenter(), (float)score.miRing);
+
+	// Redrawing here (same name each time - see DisplayCircle) keeps the border circles current
+	// across navigation and across loading a different case, same as the score circle above.
+	if (mbDisplayHrLrBorders)
+		DisplayHrLrBorderCircles();
 
 	// Only meaningful while AllMax is the active scorer - hide it otherwise
 	bool bShowSource = (gConfig.mScoreType == EScoreType::AllMax);

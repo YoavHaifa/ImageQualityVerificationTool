@@ -103,7 +103,28 @@ public:
 	int mMyViewerOffsetX;
 	int mMyViewerOffsetY;
 
-	void DisplayCircle(CDataCoordinates& center, float radius);
+	// zName/color let this be reused for more than the current-score circle (see
+	// DisplayHrLrBorderCircles) - same name every call replaces the previous circle of that name
+	// instead of piling up a new one (as ImageR itself already relies on for the score circle,
+	// redrawn on every navigation).
+	void DisplayCircle(CDataCoordinates& center, float radius, const char* zName = "CenteredCircle",
+		COLORREF color = RGB(255, 255, 0));
+
+	// Two static reference circles at gConfig.miLastHighResolutionRing/miFirstLowResolutionRing
+	// (same center as the score circle) - lets a labeler see where the HR/Border/LR boundaries
+	// actually fall on the real image. Toggled by the "Display HR/LR borders" checkbox
+	// (mbDisplayHrLrBorders) - always off at startup (see OnBnClickedCheckDisplayBorders), and
+	// redrawn on every DisplayScore() while on so a newly loaded/navigated case picks them up too.
+	void DisplayHrLrBorderCircles();
+	void RemoveHrLrBorderCircles();
+	bool mbDisplayHrLrBorders = false;
+	afx_msg void OnBnClickedCheckDisplayBorders();
+
+	// The 4 "Review Regions" checkboxes - GUI/config only for now (2026-09-07): reflect and persist
+	// gConfig.mbReviewCenter/mbReviewHighRes/mbReviewHRLRBorder/mbReviewLowRes, but nothing yet
+	// reads them back during actual scoring/review (that's next). All independent - any combination
+	// is legal, including none checked.
+	afx_msg void OnBnClickedCheckReviewRegion();
 
 	// Pass/fail indicator state for the currently displayed score - see
 	// CConfig::IsPass()/ComputeCertaintyFraction(). mbHasScore is false until DisplayScore() has

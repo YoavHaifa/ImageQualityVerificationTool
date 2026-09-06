@@ -49,6 +49,10 @@ public:
 	// simply never enters any pixel whose ring index is above miLastHighResolutionRing into that
 	// ring's statistics - same as a ring with too few valid pixels, it ends up IGNORE_RING and every
 	// scorer already skips those. The displayed image itself is not masked.
+	// NOTE (2026-09-07): conceptually superseded by mbReviewCenter/mbReviewHighRes/
+	// mbReviewHRLRBorder/mbReviewLowRes below (a single low-res on/off toggle vs. 4 independent
+	// per-region ones) - left as-is and still what scoring actually reads until that switchover
+	// happens (planned for when scoring/reviewing itself is updated to use the 4 new flags).
 	bool mbIgnoreLowResolutionArea = true;
 
 	// Together with mnCentralRings, these two mark the image's 4 label regions by ring index -
@@ -59,6 +63,16 @@ public:
 	// COptimizer::IsExpectedToFail()'s NOTE.
 	int miLastHighResolutionRing = 250;
 	int miFirstLowResolutionRing = 265;
+
+	// Which of the 4 image regions are currently included when scoring/reviewing - toggled by 4
+	// checkboxes on the main dialog (added 2026-09-07, GUI/config only for now - not yet consumed
+	// by any scoring code, that's next). All 4 default on: every region is always actually scored,
+	// so unchecking one here is meant to just narrow what review currently shows/considers, letting
+	// a reviewer flip fast between regions rather than turning scoring itself on/off.
+	bool mbReviewCenter = true;
+	bool mbReviewHighRes = true;
+	bool mbReviewHRLRBorder = true;
+	bool mbReviewLowRes = true;
 
 	EScoreType mScoreType = EScoreType::MinMax;
 
