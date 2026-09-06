@@ -14,9 +14,9 @@ public:
 
 	// zRootDir may directly contain any number of sub-directories, each holding one or more
 	// labeled DICOM sets (however deeply nested under them) - every one is scored, with its label
-	// determined by its own name's prefix (case-insensitive): "pass", "fail_center", "fail_ring",
-	// or "fail_both" (see DetermineLabel()) - a sub-directory whose name doesn't start with any of
-	// these is skipped (reported via status). Scores every case found under every scorer type
+	// determined by its own name's prefix (case-insensitive): "pass" or "fail" (see
+	// DetermineLabel()) - a sub-directory whose name doesn't start with either is skipped
+	// (reported via status). Scores every case found under every scorer type
 	// (not just whichever is currently active), and writes one report per type to
 	// <gConfig.msLogRoot>\TrainingSetReport\TrainingSetReport_<type>.csv. Returns the number of
 	// cases scored (every label combined).
@@ -65,7 +65,7 @@ private:
 
 	struct SCaseResult
 	{
-		CString sLabel; // "Pass", "Fail_Center", "Fail_Ring", or "Fail_Both" - see DetermineLabel()
+		CString sLabel; // "Pass" or "Fail" - see DetermineLabel()
 		CString sCaseName;
 		int mainAreaWidth = 0; // this case's own pixel-histogram main area width (same for every type)
 
@@ -88,12 +88,18 @@ private:
 	};
 
 	// Determines a training-set sub-directory's label from its own name's prefix
-	// (case-insensitive): "pass" -> "Pass", "fail_center" -> "Fail_Center", "fail_ring" ->
-	// "Fail_Ring", "fail_both" -> "Fail_Both". Returns an empty string if the name doesn't start
-	// with any of these - callers should skip such a directory rather than guess.
+	// (case-insensitive): "pass" -> "Pass", "fail" -> "Fail" (this includes an old
+	// fail_center/fail_ring/fail_both sub-directory - which region(s) of a failed case show the
+	// problem now lives in that case's own CaseLabelInfo.yaml, see CIQVDlg::SaveLabeledData, not the
+	// directory name). Returns an empty string if the name starts with neither - callers should
+	// skip such a directory rather than guess.
 	static CString DetermineLabel(const CString& sSubDirName);
 
 	// Whether the given scorer type is actually expected to fail a case carrying this label.
+	// NOTE (2026-09-06): dormant for now - DetermineLabel() only ever produces "Pass"/"Fail", so
+	// every branch below except the Pass and AllMax ones is currently unreachable. Left as-is
+	// deliberately (not deleted) - the plan is to revisit this once CaseLabelInfo.yaml's per-case
+	// region flags are read back in, rather than folder-name suffixes.
 	// Every scorer is expected to fail every Fail label, EXCEPT: the Center scorer only targets
 	// central artifacts, so it isn't expected to fail Fail_Ring (no center problem); the ring
 	// scorers (MinMax/Tent/TentMin) only target off-center ring artifacts, so they aren't

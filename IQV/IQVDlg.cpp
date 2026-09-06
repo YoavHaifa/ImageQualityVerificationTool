@@ -13,6 +13,7 @@
 #include "DataDownloader.h"
 #include "Optimizer.h"
 #include "TrainingPlotDlg.h"
+#include "FailRegionsDlg.h"
 #include "CaseReviewer.h"
 #include "BatchReviewer.h"
 #include "ImageScore.h"
@@ -122,13 +123,9 @@ BEGIN_MESSAGE_MAP(CIQVDlg, CDialog)
 	ON_COMMAND(ID_UTILS_DOWNLOADDATA, &CIQVDlg::OnUtilsDownloaddata)
 	ON_COMMAND(ID_FILE_EXIT, &CIQVDlg::OnFileExit)
 	ON_COMMAND(ID_LABEL_SAVEALLASPASSED, &CIQVDlg::OnLabelSaveAllAsPassed)
+	ON_COMMAND(ID_LABEL_SAVEALLASFAILED, &CIQVDlg::OnLabelSaveAllAsFailed)
 	ON_COMMAND(ID_LABEL_SAVESECTIONASPASSED, &CIQVDlg::OnLabelSaveSectionAsPassed)
-	ON_COMMAND(ID_LABEL_SAVEALLASFAILED_CENTER, &CIQVDlg::OnLabelSaveAllAsFailedCenter)
-	ON_COMMAND(ID_LABEL_SAVEALLASFAILED_RING, &CIQVDlg::OnLabelSaveAllAsFailedRing)
-	ON_COMMAND(ID_LABEL_SAVEALLASFAILED_BOTH, &CIQVDlg::OnLabelSaveAllAsFailedBoth)
-	ON_COMMAND(ID_LABEL_SAVESECTIONASFAILED_CENTER, &CIQVDlg::OnLabelSaveSectionAsFailedCenter)
-	ON_COMMAND(ID_LABEL_SAVESECTIONASFAILED_RING, &CIQVDlg::OnLabelSaveSectionAsFailedRing)
-	ON_COMMAND(ID_LABEL_SAVESECTIONASFAILED_BOTH, &CIQVDlg::OnLabelSaveSectionAsFailedBoth)
+	ON_COMMAND(ID_LABEL_SAVESECTIONASFAILED, &CIQVDlg::OnLabelSaveSectionAsFailed)
 	ON_COMMAND(ID_OPTIMIZE_SCORETRAININGDATA, &CIQVDlg::OnOptimizeScoretrainingdata)
 	ON_COMMAND(ID_OPTIMIZE_SCOREWEIGHTS, &CIQVDlg::OnOptimizeScoreweights)
 	ON_COMMAND(ID_OPTIMIZE_SHOWPLOT, &CIQVDlg::OnOptimizeShowplot)
@@ -762,35 +759,19 @@ void CIQVDlg::OnUtilsDownloaddata()
 }
 void CIQVDlg::OnLabelSaveAllAsPassed()
 {
-	SaveLabeledData("Pass", true);
+	SaveLabeledData(true, true);
+}
+void CIQVDlg::OnLabelSaveAllAsFailed()
+{
+	SaveLabeledData(false, true);
 }
 void CIQVDlg::OnLabelSaveSectionAsPassed()
 {
-	SaveLabeledData("Pass", false);
+	SaveLabeledData(true, false);
 }
-void CIQVDlg::OnLabelSaveAllAsFailedCenter()
+void CIQVDlg::OnLabelSaveSectionAsFailed()
 {
-	SaveLabeledData("fail_center", true);
-}
-void CIQVDlg::OnLabelSaveAllAsFailedRing()
-{
-	SaveLabeledData("fail_ring", true);
-}
-void CIQVDlg::OnLabelSaveAllAsFailedBoth()
-{
-	SaveLabeledData("fail_both", true);
-}
-void CIQVDlg::OnLabelSaveSectionAsFailedCenter()
-{
-	SaveLabeledData("fail_center", false);
-}
-void CIQVDlg::OnLabelSaveSectionAsFailedRing()
-{
-	SaveLabeledData("fail_ring", false);
-}
-void CIQVDlg::OnLabelSaveSectionAsFailedBoth()
-{
-	SaveLabeledData("fail_both", false);
+	SaveLabeledData(false, false);
 }
 void CIQVDlg::OnOptimizeScoretrainingdata()
 {
@@ -824,7 +805,7 @@ void CIQVDlg::OnOptimizeShowplot()
 	CTrainingPlotDlg dlg(this);
 	dlg.DoModal();
 }
-void CIQVDlg::SaveLabeledData(const char* zLabelFolder, bool bWholeCase)
+void CIQVDlg::SaveLabeledData(bool bPass, bool bWholeCase)
 {
 	if (!mpImages)
 	{
@@ -832,6 +813,16 @@ void CIQVDlg::SaveLabeledData(const char* zLabelFolder, bool bWholeCase)
 		return;
 	}
 
+	// A failed save must say which region(s) show the problem before anything is copied -
+	// canceling aborts the whole save, exactly as if the menu had never been chosen.
+	CFailRegionsDlg regionsDlg(this);
+	if (!bPass && regionsDlg.DoModal() != IDOK)
+	{
+		gConfig.PrintStatus("Label: canceled - nothing saved.");
+		return;
+	}
+
+	const char* zLabelFolder = bPass ? "Pass" : "Fail";
 	CString sLabelRoot(gConfig.msTrainingSetRoot.c_str());
 	sLabelRoot += "\\";
 	sLabelRoot += zLabelFolder;
@@ -879,6 +870,25 @@ void CIQVDlg::SaveLabeledData(const char* zLabelFolder, bool bWholeCase)
 			CString sDestFile(sDestDir + "\\" + CFileName::GetLastInPath(sSourceFile));
 			if (CMyWindows::MyCopyFile(sSourceFile, sDestFile))
 				nCopied++;
+		}
+	}
+
+	if (!bPass)
+	{
+		// Lives right alongside the copied DICOM files - a separate file, not mixed into them -
+		// recording where they actually came from and which region(s) the labeler flagged, for
+		// whatever later reads this back (not yet COptimizer - see the region-labeling memory).
+		CString sfName(sDestDir + "\\CaseLabelInfo.yaml");
+		FILE* pf = nullptr;
+		fopen_s(&pf, sfName, "w");
+		if (pf)
+		{
+			fprintf(pf, "origin: %s\n", (LPCTSTR)mpImages->GetPath());
+			fprintf(pf, "failed_center: %s\n", regionsDlg.mbCenter ? "true" : "false");
+			fprintf(pf, "failed_hr: %s\n", regionsDlg.mbHR ? "true" : "false");
+			fprintf(pf, "failed_border: %s\n", regionsDlg.mbBorder ? "true" : "false");
+			fprintf(pf, "failed_lr: %s\n", regionsDlg.mbLR ? "true" : "false");
+			fclose(pf);
 		}
 	}
 

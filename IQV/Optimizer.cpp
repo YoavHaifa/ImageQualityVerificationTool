@@ -69,21 +69,8 @@ int COptimizer::RunOnTrainingSet(const char* zRootDir)
 		CString sLabel = DetermineLabel(sSubDirName);
 		if (sLabel.IsEmpty())
 		{
-			// A name starting with "fail" that still doesn't match one of the three recognized
-			// fail_ prefixes is almost certainly a naming mistake (a typo, or a leftover
-			// pre-relabeling directory) rather than something genuinely unrelated - flag it with
-			// a MessBox so it actually gets noticed and fixed, instead of just silently skipped.
-			if (sSubDirName.Left(4).CompareNoCase("fail") == 0)
-			{
-				CMyWindows::MessBox(format("Training-set sub-directory \"{}\" starts with \"fail\" but isn't "
-					"fail_center, fail_ring, or fail_both - please check/correct its name.",
-					(LPCTSTR)sSubDirName).c_str(), "Score Training Data");
-			}
-			else
-			{
-				CBatchScorer::MyPrintStatus(format("Skipping \"{}\" - name doesn't start with pass/fail_center/fail_ring/fail_both",
-					(LPCTSTR)sSubDirName).c_str());
-			}
+			CBatchScorer::MyPrintStatus(format("Skipping \"{}\" - name doesn't start with pass or fail",
+				(LPCTSTR)sSubDirName).c_str());
 			continue;
 		}
 
@@ -96,14 +83,14 @@ int COptimizer::RunOnTrainingSet(const char* zRootDir)
 }
 CString COptimizer::DetermineLabel(const CString& sSubDirName)
 {
+	// Back to just two labels - which region(s) of a failed case actually show the problem now
+	// lives in that case's own CaseLabelInfo.yaml (see CIQVDlg::SaveLabeledData), not the
+	// sub-directory name, so any "fail..." name (old fail_center/fail_ring/fail_both
+	// sub-directories included) is just "Fail" here.
 	if (sSubDirName.Left(4).CompareNoCase("pass") == 0)
 		return "Pass";
-	if (sSubDirName.Left(11).CompareNoCase("fail_center") == 0)
-		return "Fail_Center";
-	if (sSubDirName.Left(9).CompareNoCase("fail_ring") == 0)
-		return "Fail_Ring";
-	if (sSubDirName.Left(9).CompareNoCase("fail_both") == 0)
-		return "Fail_Both";
+	if (sSubDirName.Left(4).CompareNoCase("fail") == 0)
+		return "Fail";
 	return CString();
 }
 bool COptimizer::IsExpectedToFail(EScoreType type, const CString& sLabel)

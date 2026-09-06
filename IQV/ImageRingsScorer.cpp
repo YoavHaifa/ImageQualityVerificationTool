@@ -153,7 +153,7 @@ void CImageRingsScorer::CollectRingsInfo()
 
 		// Some scanners have lesser-quality off-center detectors - never enter that data into
 		// ring statistics at all, same as if the ring had too few valid pixels (see ErodeValidArea)
-		if (gConfig.mbIgnoreLowResolutionArea && iRadius > gConfig.mLowResolutionDistanceFromCenterPixels)
+		if (gConfig.mbIgnoreLowResolutionArea && iRadius > gConfig.miLastHighResolutionRing)
 			continue;
 
 		mvRingsInfo[iRadius].mnPixelsInRaster++;

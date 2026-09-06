@@ -166,7 +166,8 @@ void CConfig::SaveToFile()
 	dumpFile.Write("n_off_center_rings", mnOffCenterRings);
 	dumpFile.Write("min_pixels_in_mask", mnMinPixelsInMask);
 	dumpFile.Write("ignore_low_resolution_area", mbIgnoreLowResolutionArea);
-	dumpFile.Write("low_resolution_distance_from_center_pixels", mLowResolutionDistanceFromCenterPixels);
+	dumpFile.Write("last_high_resolution_ring", miLastHighResolutionRing);
+	dumpFile.Write("first_low_resolution_ring", miFirstLowResolutionRing);
 	dumpFile.Write("score_type", (int)mScoreType);
 	dumpFile.Write("max_acceptable_score", mMaxAcceptableScore);
 	dumpFile.Write("version", msVersion.c_str());
@@ -218,7 +219,8 @@ void CConfig::ReadFromFile()
 	pRoot->GetValue("n_off_center_rings", mnOffCenterRings);
 	pRoot->GetValue("min_pixels_in_mask", mnMinPixelsInMask);
 	pRoot->GetValue("ignore_low_resolution_area", mbIgnoreLowResolutionArea);
-	pRoot->GetValue("low_resolution_distance_from_center_pixels", mLowResolutionDistanceFromCenterPixels);
+	pRoot->GetValue("last_high_resolution_ring", miLastHighResolutionRing);
+	pRoot->GetValue("first_low_resolution_ring", miFirstLowResolutionRing);
 
 	int iScoreType = (int)mScoreType;
 	if (pRoot->GetValue("score_type", iScoreType))

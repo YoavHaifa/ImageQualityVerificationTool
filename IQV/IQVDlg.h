@@ -71,23 +71,20 @@ public:
 	// mpSharedVolume/mpColors (unrelated to case viewing). No-op if nothing is open.
 	void CloseCurrentViewer();
 	afx_msg void OnLabelSaveAllAsPassed();
+	afx_msg void OnLabelSaveAllAsFailed();
 	afx_msg void OnLabelSaveSectionAsPassed();
-	afx_msg void OnLabelSaveAllAsFailedCenter();
-	afx_msg void OnLabelSaveAllAsFailedRing();
-	afx_msg void OnLabelSaveAllAsFailedBoth();
-	afx_msg void OnLabelSaveSectionAsFailedCenter();
-	afx_msg void OnLabelSaveSectionAsFailedRing();
-	afx_msg void OnLabelSaveSectionAsFailedBoth();
+	afx_msg void OnLabelSaveSectionAsFailed();
 	afx_msg void OnOptimizeScoretrainingdata();
 	afx_msg void OnOptimizeScoreweights();
 	afx_msg void OnOptimizeShowplot();
 
-	// Copies the current case's DICOM files, as-is, to gConfig.msTrainingSetRoot\<zLabelFolder>\
+	// Copies the current case's DICOM files, as-is, to gConfig.msTrainingSetRoot\[Pass|Fail]\
 	// <case-relative dir> - either the whole case (bWholeCase) or just gConfig.mSavedSectionLength
-	// images centered on the one currently displayed, clipped to the case's own image range.
-	// zLabelFolder is "Pass" for a passed save, or "fail_center"/"fail_ring"/"fail_both" for a
-	// failed save - matching the prefixes COptimizer::DetermineLabel() recognizes.
-	void SaveLabeledData(const char* zLabelFolder, bool bWholeCase);
+	// images centered on the one currently displayed, clipped to the case's own image range. For
+	// a failed save, first shows CFailRegionsDlg to ask which region(s) show the problem -
+	// canceling that dialog aborts the whole save (nothing is copied) - and writes a CaseLabelInfo.yaml
+	// alongside the copied files recording the case's origin path and the chosen region(s).
+	void SaveLabeledData(bool bPass, bool bWholeCase);
 
 	bool mbDisplayReadyImages;
 	class CArinetaImages* mpImages;

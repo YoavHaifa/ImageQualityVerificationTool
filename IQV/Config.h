@@ -46,11 +46,19 @@ public:
 
 	// Some of Arineta's scanners have lesser-quality off-center detectors - data out there
 	// shouldn't be reported as a ring artifact. When on, CImageRingsScorer::CollectRingsInfo()
-	// simply never enters any pixel whose ring index is above mLowResolutionDistanceFromCenterPixels
-	// into that ring's statistics - same as a ring with too few valid pixels, it ends up IGNORE_RING
-	// and every scorer already skips those. The displayed image itself is not masked.
+	// simply never enters any pixel whose ring index is above miLastHighResolutionRing into that
+	// ring's statistics - same as a ring with too few valid pixels, it ends up IGNORE_RING and every
+	// scorer already skips those. The displayed image itself is not masked.
 	bool mbIgnoreLowResolutionArea = true;
-	int mLowResolutionDistanceFromCenterPixels = 256;
+
+	// Together with mnCentralRings, these two mark the image's 4 label regions by ring index -
+	// Center: [0, mnCentralRings); High Resolution: [mnCentralRings, miLastHighResolutionRing];
+	// Border: (miLastHighResolutionRing, miFirstLowResolutionRing); Low Resolution: everything at
+	// or beyond miFirstLowResolutionRing. Used today only for mbIgnoreLowResolutionArea's cutoff
+	// (miLastHighResolutionRing) - not yet consumed by scoring/tuning, see
+	// COptimizer::IsExpectedToFail()'s NOTE.
+	int miLastHighResolutionRing = 250;
+	int miFirstLowResolutionRing = 265;
 
 	EScoreType mScoreType = EScoreType::MinMax;
 

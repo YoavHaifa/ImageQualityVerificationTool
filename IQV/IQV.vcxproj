@@ -210,6 +210,7 @@ copy ..\..\ImageRLib\$(Platform)\$(Configuration)\ImageRLib.dll $(OutDir)
     <ClInclude Include="CenterScorer.h" />
     <ClInclude Include="Config.h" />
     <ClInclude Include="DataDownloader.h" />
+    <ClInclude Include="FailRegionsDlg.h" />
     <ClInclude Include="IQV.h" />
     <ClInclude Include="IQVDlg.h" />
     <ClInclude Include="framework.h" />
@@ -239,6 +240,7 @@ copy ..\..\ImageRLib\$(Platform)\$(Configuration)\ImageRLib.dll $(OutDir)
     <ClCompile Include="CenterScorer.cpp" />
     <ClCompile Include="Config.cpp" />
     <ClCompile Include="DataDownloader.cpp" />
+    <ClCompile Include="FailRegionsDlg.cpp" />
     <ClCompile Include="IQV.cpp" />
     <ClCompile Include="IQVDlg.cpp" />
     <ClCompile Include="ImageRingsScorer.cpp" />
