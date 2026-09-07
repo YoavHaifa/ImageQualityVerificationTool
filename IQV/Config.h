@@ -97,7 +97,7 @@ public:
 
 	// Bump this when a change is expected to affect scoring results. Used e.g. to name
 	// baseline result snapshots ("<msLogRoot>_<msVersion>") for regression comparison.
-	std::string msVersion = "0.8.6";
+	std::string msVersion = "0.8.7";
 
 	std::string msLogRoot = "d:\\IQV_Log";
 	std::string msCaseLogDir; // <msLogRoot>\[<batch root name>\]<current case name>[_<miCaseIndex>], set by SetCurrentCase
