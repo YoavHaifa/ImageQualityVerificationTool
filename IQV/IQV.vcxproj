@@ -200,7 +200,6 @@ copy ..\..\ImageRLib\$(Platform)\$(Configuration)\ImageRLib.dll $(OutDir)
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="AllMaxScorer.h" />
     <ClInclude Include="ArinetaImages.h" />
     <ClInclude Include="BatchCompleteDlg.h" />
     <ClInclude Include="BatchReviewer.h" />
@@ -224,6 +223,7 @@ copy ..\..\ImageRLib\$(Platform)\$(Configuration)\ImageRLib.dll $(OutDir)
     <ClInclude Include="RingInfo.h" />
     <ClInclude Include="RingsScorer.h" />
     <ClInclude Include="ScorerBase.h" />
+    <ClInclude Include="ScorerResult.h" />
     <ClInclude Include="ScoreTypeResults.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
@@ -231,7 +231,6 @@ copy ..\..\ImageRLib\$(Platform)\$(Configuration)\ImageRLib.dll $(OutDir)
     <ClInclude Include="TrainingPlotDlg.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="AllMaxScorer.cpp" />
     <ClCompile Include="ArinetaImages.cpp" />
     <ClCompile Include="BatchCompleteDlg.cpp" />
     <ClCompile Include="BatchReviewer.cpp" />
@@ -252,6 +251,7 @@ copy ..\..\ImageRLib\$(Platform)\$(Configuration)\ImageRLib.dll $(OutDir)
     <ClCompile Include="RingInfo.cpp" />
     <ClCompile Include="RingsScorer.cpp" />
     <ClCompile Include="ScorerBase.cpp" />
+    <ClCompile Include="ScorerResult.cpp" />
     <ClCompile Include="ScoreTypeResults.cpp" />
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="TentScorer.cpp" />

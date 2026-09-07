@@ -83,8 +83,11 @@ public:
 	// images centered on the one currently displayed, clipped to the case's own image range. If
 	// gConfig.msOperatorName is still blank, prompts for it first (CNameGetDialog) - canceling that
 	// prompt aborts the save. For a failed save, then shows CFailRegionsDlg to ask which region(s)
-	// show the problem - canceling that dialog also aborts the whole save (nothing is copied).
-	// Either way (Pass or Fail), writes a CaseLabelInfo.yaml alongside the copied files recording
+	// show the problem - canceling that dialog also aborts the whole save (nothing is copied). If
+	// the destination was already the target of a completed label save (CaseLabelInfo.yaml already
+	// there - most likely a repeat/operator error), asks once whether to replace it before copying
+	// anything - canceling that prompt also aborts with nothing changed. Either way (Pass or Fail),
+	// on a confirmed save writes a CaseLabelInfo.yaml alongside the copied files recording
 	// the case's origin path, the labeling time, gConfig.msOperatorName, gConfig.msVersion, the
 	// region-boundary config in effect (mnCentralRings/miLastHighResolutionRing/
 	// miFirstLowResolutionRing - so a later retuning can tell whether an older label's regions

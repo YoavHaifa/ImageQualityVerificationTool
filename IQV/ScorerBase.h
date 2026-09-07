@@ -2,76 +2,41 @@
 #include "ImageScore.h"
 #include "ScoreTypes.h"
 #include "RingInfo.h"
-#include "ScoreTypeResults.h"
 #include "..\..\yUtils\TRange.h"
 #include <vector>
 #include <algorithm>
 
-// Common interface for all per-image ring scorers (CMinMaxScorer, CTentScorer, ...).
-// CImageRingsScorer holds a polymorphic list of these, created once and re-scored for
-// every image - it creates them, but otherwise doesn't need to know which concrete
-// types exist, how many there are, or how each scores.
-// The set of concrete scorer types is fixed (not dynamically extended), and every
-// scorer needs the same across-images bookkeeping, so that bookkeeping (mResults)
-// lives here rather than in a separate per-type array kept elsewhere.
+// Computes one scorer TYPE's raw per-ring scores (mvRingScore) for the current image - shared by
+// the 3 "ring scorers" (CMinMaxScorer, CTentScorer, CTentMinScorer) and CCenterScorer. Turning
+// those raw per-ring scores into actual weighted, recorded, region-scoped results is
+// CImageRingsScorer's job (see CScorerResult) - this class only computes; it doesn't track
+// per-image history, weight, or CSV logging/replay any more (all of that used to live here when
+// there was exactly one result per scorer type - now a ring scorer has 3 independent region
+// results, so that bookkeeping moved to CImageRingsScorer/CScorerResult, which don't care how
+// many results a given type actually has).
 class CScorerBase
 {
 public:
 	CScorerBase(const std::vector<float>& vRingMean, EScoreType eScoreType);
 	virtual ~CScorerBase() = default;
 
-	// Clears state left over from whatever image was scored previously, then scores mvRingMean as it is now.
-	// bEnoughData false (too few in-mask pixels to trust this image) scores it 0 without calling ComputeScore().
-	void Score(int iImage, const std::vector<CRingInfo>& vRingsInfo, bool bEnoughData);
+	// Fills mvRingScore for mvRingMean as it is right now - 0 everywhere if !bEnoughData (too few
+	// in-mask pixels to trust this image).
+	void ComputeRingScores(const std::vector<CRingInfo>& vRingsInfo, bool bEnoughData);
 
-	// Called once all images have been scored and recorded - finalizes mResults' peaks
-	void OnAllImagesScored()
-	{
-		mResults.OnAllImagesScored();
-	}
-	void ScaleScores(float factor)
-	{
-		mResults.ScaleScores(factor);
-	}
 	const char* Name() const { return ScoreTypeName(meScoreType); }
 	EScoreType GetScoreType() const { return meScoreType; }
 
-	// Writes this scorer's score/ring/peak data for every image scored so far to
-	// <gConfig.msCaseLogDir>\ScoreAllImages_<Name>.csv, one row per image. iFirst/iStep
-	// map internal image indices back to the original DICOM slice numbers.
-	void LogAllImages(int iFirst, int iStep) const;
-
-	// Reverse of LogAllImages: replays this scorer's score/ring data from
-	// <zCaseDir>\ScoreAllImages_<Name>.csv into mResults, in place of an actual scoring pass.
-	// The saved raw_score column is the real, physical raw score (see CScorerBase::Score) -
-	// dataRangeFactor (this case's own, read back from CaseInfo.yaml) and mWeight (as it is
-	// now, possibly changed since this case was scored) are re-applied here to rebuild the
-	// weighted score, same two constants Score() would've multiplied in live.
-	// Peak/peak_order columns aren't read back - OnAllImagesScored() recomputes them
-	// identically from the replayed scores. Returns false if the CSV can't be opened.
-	// Virtual: CAllMaxScorer overrides this to recompute itself from its siblings' (by then
-	// already-loaded, possibly newly-reweighted) mResults instead of reading its own CSV.
-	virtual bool LoadSavedResults(const char* zCaseDir, float dataRangeFactor);
-
-	CImageScore mScore;
 	std::vector<float> mvRingScore; // score at every candidate ring this scorer considered, 0 elsewhere
-	CScoreTypeResults mResults; // score+ring per image scored so far, for peak finding/navigation
 
 protected:
 	virtual void ComputeScore() = 0;
 	void CorrectCenter(const std::vector<CRingInfo>& vRingsInfo);
-	void FindMaxScorePerCurrentImage();
 
 	STRange<int> ComputeDataRange(int iFrom, int n, const std::vector<CRingInfo>& vRingsInfo);
 
 	const std::vector<float>& mvRingMean;
-	const std::vector<CRingInfo>* mpRingsInfo = nullptr; // valid only during ComputeScore(), set by Score()
+	const std::vector<CRingInfo>* mpRingsInfo = nullptr; // valid only during ComputeScore(), set by ComputeRingScores()
 	int mnRings;
 	EScoreType meScoreType;
-
-	// Multiplies this scorer's raw per-image score to bring it to a similar scale as the others
-	// (see gConfig.GetScorerWeight) - applied in Score(), right after the raw score is known.
-	// CAllMaxScorer overrides this to 1 in its own constructor, since it's already built from
-	// its siblings' weighted scores.
-	float mWeight = 1.0f;
 };

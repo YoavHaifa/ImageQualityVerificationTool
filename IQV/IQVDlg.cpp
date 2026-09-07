@@ -888,6 +888,23 @@ void CIQVDlg::SaveLabeledData(bool bPass, bool bWholeCase)
 		return;
 	}
 
+	// This exact destination was already the target of a completed label save (CaseLabelInfo.yaml
+	// is only ever written at the end of one - see below) - most likely a repeat/operator error
+	// (e.g. re-labeling the same section). Ask once, up front, rather than letting the copy loop
+	// below either silently overwrite (whole case) or spam one failed-to-copy error box per file
+	// that already exists (section - CMyWindows::MyCopyFile fails on an existing destination).
+	if (CFileName::Exist(sDestDir + "\\CaseLabelInfo.yaml"))
+	{
+		CString sMsg;
+		sMsg.Format("This case is already labeled here:\n%s\n\nReplace the existing label with this save?",
+			(LPCTSTR)sDestDir);
+		if (MessageBox(sMsg, "Label", MB_YESNO | MB_ICONWARNING) != IDYES)
+		{
+			gConfig.PrintStatus("Label: canceled - a label already exists here.");
+			return;
+		}
+	}
+
 	int nCopied = 0;
 	if (bWholeCase)
 	{
@@ -904,8 +921,16 @@ void CIQVDlg::SaveLabeledData(bool bPass, bool bWholeCase)
 			if (sSourceFile.IsEmpty())
 				continue;
 			CString sDestFile(sDestDir + "\\" + CFileName::GetLastInPath(sSourceFile));
-			if (CMyWindows::MyCopyFile(sSourceFile, sDestFile))
+
+			// Not CMyWindows::MyCopyFile() - it fails (and pops its own error box) if sDestFile
+			// already exists, which is exactly the normal case for a confirmed replace above.
+			// CopyFile's own bFailIfExists=FALSE overwrites quietly instead; a genuine failure
+			// (permissions, disk full, file locked) still gets reported, same as CopyDiretoryTree
+			// (the whole-case path below) already does for its own real copy failures.
+			if (::CopyFile(sSourceFile, sDestFile, FALSE))
 				nCopied++;
+			else
+				CMyWindows::DisplayLastError(GetLastError(), "Failed to copy a section image");
 		}
 	}
 
@@ -1057,6 +1082,20 @@ void CIQVDlg::OnBnClickedCheckReviewRegion()
 	gConfig.mbReviewHRLRBorder = (IsDlgButtonChecked(IDC_CHECK_REVIEW_BORDER) != 0);
 	gConfig.mbReviewLowRes = (IsDlgButtonChecked(IDC_CHECK_REVIEW_LOWRES) != 0);
 	gConfig.SaveToFile();
+
+	// Same reposition-immediately pattern as OnCbnSelchangeComboScoreType (changing which regions
+	// are active is, from the reviewer's point of view, just as much "the criteria changed" as
+	// changing the scorer type itself - both should jump to the new worst peak right away, not
+	// wait for the next unrelated navigation).
+	if (mpBatchReviewer)
+	{
+		if (mpBatchReviewer->DisplayWorstCase())
+			DisplayBatchCase();
+	}
+	else if (mpRingsScorer)
+	{
+		mpRingsScorer->OnActiveScoreTypeChanged();
+	}
 }
 void CIQVDlg::DisplayVolume(CTSharedImage<short>* pVolume, const CString& sDumpFileName)
 {
@@ -1106,12 +1145,15 @@ void CIQVDlg::DisplayScore()
 	// Explains how the displayed score was computed - the scorer that actually produced it
 	// (AllMax's source when active, otherwise the active scorer itself), its real raw score
 	// (a physical property, e.g. tent amplitude - untouched by weight or data range factor,
-	// see CScoreTypeResults::ScaleScores), its weight, and this case's data-range scale factor.
+	// see CScoreTypeResults::ScaleScores), the weight actually applied (a ring scorer now carries
+	// 3 region weights, not 1 - GetWeightForRing picks the one that matches score.miRing's region),
+	// and this case's data-range scale factor.
 	EScoreType eDetailType = (score.meSourceType != EScoreType::N_SCORE_TYPES) ? score.meSourceType : gConfig.mScoreType;
 	float dataRangeFactor = mpRingsScorer->GetDataRangeScoreFactor();
+	float appliedWeight = mpRingsScorer->GetWeightForRing(eDetailType, score.miRing);
 	CString sDetail;
 	sDetail.Format("Score computed from %s: raw score %.2f, data range factor %.4f, weight %.2f",
-		ScoreTypeName(eDetailType), score.mRawScore, dataRangeFactor, gConfig.GetScorerWeight(eDetailType));
+		ScoreTypeName(eDetailType), score.mRawScore, dataRangeFactor, appliedWeight);
 	SetDlgItemText(IDC_STATIC_SCORE_DETAIL, sDetail);
 
 	mbHasScore = true;

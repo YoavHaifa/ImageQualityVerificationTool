@@ -60,9 +60,21 @@ void CConfig::ComputeConfigDir()
 			msConfigDir = (LPCTSTR)sReleaseDir;
 	}
 }
+// HighRes/Border/LowRes -> 0/1/2 within a scorer type's 3-slot row (see mvScorerWeights).
+// Center isn't stored here at all - CImageRingsScorer::GetWeightForRing leaves a ring scorer's
+// Center-region rings unweighted, so this fallback (same slot as HighRes) is never actually read for Center.
+static int RegionSlotIndex(ERegion region)
+{
+	switch (region)
+	{
+	case ERegion::Border: return 1;
+	case ERegion::LowRes: return 2;
+	default: return 0; // HighRes, and the Center fallback described above
+	}
+}
 void CConfig::LoadScorerWeights()
 {
-	mvScorerWeights.assign((int)EScoreType::N_SCORE_TYPES, 1.0f);
+	mvScorerWeights.assign((int)EScoreType::N_SCORE_TYPES * 3, 1.0f);
 
 	string sfName = GetScorerWeightsFileName();
 	if (!CFileName::Exist(sfName.c_str()))
@@ -78,16 +90,43 @@ void CConfig::LoadScorerWeights()
 
 	char zLine[128];
 	fgets(zLine, sizeof(zLine), pf); // header
+	bool bMigratedOldFormat = false;
 	while (fgets(zLine, sizeof(zLine), pf))
 	{
 		int iCode;
 		char zName[64];
-		float weight;
-		if (sscanf_s(zLine, "%d, %63[^,], %f", &iCode, zName, (unsigned)sizeof(zName), &weight) == 3
-			&& iCode >= 0 && iCode < (int)mvScorerWeights.size())
-			mvScorerWeights[iCode] = weight;
+		float wHighRes, wBorder, wLowRes;
+		int nParsed = sscanf_s(zLine, "%d, %63[^,], %f, %f, %f", &iCode, zName, (unsigned)sizeof(zName),
+			&wHighRes, &wBorder, &wLowRes);
+		if (iCode < 0 || iCode >= (int)EScoreType::N_SCORE_TYPES)
+			continue;
+
+		if (nParsed == 5)
+		{
+			mvScorerWeights[iCode * 3 + 0] = wHighRes;
+			mvScorerWeights[iCode * 3 + 1] = wBorder;
+			mvScorerWeights[iCode * 3 + 2] = wLowRes;
+		}
+		else if (nParsed == 3)
+		{
+			// Old single-weight-column format (from before per-region weights) - migrate forward
+			// by starting all 3 regions at whatever value was already tuned there
+			SetScorerWeight((EScoreType)iCode, wHighRes);
+			bMigratedOldFormat = true;
+		}
+		else
+		{
+			gfLog.Printf("<CConfig::LoadScorerWeights> Unrecognized line (parsed %d of 5 fields): %s", nParsed, zLine);
+		}
 	}
 	fclose(pf);
+
+	// Persist the migration immediately, rather than leaving the on-disk file in the old format
+	// (and re-migrating it in memory) until the next time something else happens to call
+	// SaveScorerWeights() (e.g. Optimize Scorer Weights) - SaveScorerWeights() always writes the
+	// current 5-column format, so this brings the file itself up to date right away.
+	if (bMigratedOldFormat)
+		SaveScorerWeights();
 }
 void CConfig::SaveScorerWeights() const
 {
@@ -97,16 +136,27 @@ void CConfig::SaveScorerWeights() const
 	if (!pfOut)
 		return;
 
-	fprintf(pfOut, "code, name, weight\n");
-	for (int i = 0; i < (int)mvScorerWeights.size(); i++)
-		fprintf(pfOut, "%d, %s, %.6f\n", i, ScoreTypeName((EScoreType)i), mvScorerWeights[i]);
+	fprintf(pfOut, "code, name, weight_highres, weight_border, weight_lowres\n");
+	for (int i = 0; i < (int)EScoreType::N_SCORE_TYPES; i++)
+		fprintf(pfOut, "%d, %s, %.6f, %.6f, %.6f\n", i, ScoreTypeName((EScoreType)i),
+			mvScorerWeights[i * 3 + 0], mvScorerWeights[i * 3 + 1], mvScorerWeights[i * 3 + 2]);
 	fclose(pfOut);
 }
 void CConfig::SetScorerWeight(EScoreType type, float weight)
 {
 	int i = (int)type;
-	if (i >= 0 && i < (int)mvScorerWeights.size())
-		mvScorerWeights[i] = weight;
+	if (i < 0 || i >= (int)EScoreType::N_SCORE_TYPES)
+		return;
+	mvScorerWeights[i * 3 + 0] = weight;
+	mvScorerWeights[i * 3 + 1] = weight;
+	mvScorerWeights[i * 3 + 2] = weight;
+}
+void CConfig::SetScorerWeight(EScoreType type, ERegion region, float weight)
+{
+	int i = (int)type;
+	if (i < 0 || i >= (int)EScoreType::N_SCORE_TYPES)
+		return;
+	mvScorerWeights[i * 3 + RegionSlotIndex(region)] = weight;
 }
 float CConfig::ComputeCertaintyFraction(float score) const
 {
@@ -130,8 +180,35 @@ float CConfig::ComputeCertaintyFraction(float score) const
 }
 float CConfig::GetScorerWeight(EScoreType type) const
 {
+	return GetScorerWeight(type, ERegion::HighRes);
+}
+float CConfig::GetScorerWeight(EScoreType type, ERegion region) const
+{
 	int i = (int)type;
-	return (i >= 0 && i < (int)mvScorerWeights.size()) ? mvScorerWeights[i] : 1.0f;
+	if (i < 0 || i >= (int)EScoreType::N_SCORE_TYPES)
+		return 1.0f;
+	return mvScorerWeights[i * 3 + RegionSlotIndex(region)];
+}
+ERegion CConfig::ClassifyRing(int iRing) const
+{
+	if (iRing < mnCentralRings)
+		return ERegion::Center;
+	if (iRing <= miLastHighResolutionRing)
+		return ERegion::HighRes;
+	if (iRing < miFirstLowResolutionRing)
+		return ERegion::Border;
+	return ERegion::LowRes;
+}
+bool CConfig::IsRegionEnabled(ERegion region) const
+{
+	switch (region)
+	{
+	case ERegion::Center: return mbReviewCenter;
+	case ERegion::HighRes: return mbReviewHighRes;
+	case ERegion::Border: return mbReviewHRLRBorder;
+	case ERegion::LowRes: return mbReviewLowRes;
+	default: return true;
+	}
 }
 void CConfig::SetCurrentCase(const char* zCaseName, int iCaseIndex)
 {
@@ -165,7 +242,6 @@ void CConfig::SaveToFile()
 	dumpFile.Write("n_central_rings", mnCentralRings);
 	dumpFile.Write("n_off_center_rings", mnOffCenterRings);
 	dumpFile.Write("min_pixels_in_mask", mnMinPixelsInMask);
-	dumpFile.Write("ignore_low_resolution_area", mbIgnoreLowResolutionArea);
 	dumpFile.Write("last_high_resolution_ring", miLastHighResolutionRing);
 	dumpFile.Write("first_low_resolution_ring", miFirstLowResolutionRing);
 	dumpFile.Write("review_center", mbReviewCenter);
@@ -223,7 +299,6 @@ void CConfig::ReadFromFile()
 	pRoot->GetValue("n_central_rings", mnCentralRings);
 	pRoot->GetValue("n_off_center_rings", mnOffCenterRings);
 	pRoot->GetValue("min_pixels_in_mask", mnMinPixelsInMask);
-	pRoot->GetValue("ignore_low_resolution_area", mbIgnoreLowResolutionArea);
 	pRoot->GetValue("last_high_resolution_ring", miLastHighResolutionRing);
 	pRoot->GetValue("first_low_resolution_ring", miFirstLowResolutionRing);
 	pRoot->GetValue("review_center", mbReviewCenter);

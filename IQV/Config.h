@@ -44,31 +44,27 @@ public:
 	// trusted - e.g. wide images sharing a mask with the very first slice, which has little data
 	int mnMinPixelsInMask = 1000;
 
-	// Some of Arineta's scanners have lesser-quality off-center detectors - data out there
-	// shouldn't be reported as a ring artifact. When on, CImageRingsScorer::CollectRingsInfo()
-	// simply never enters any pixel whose ring index is above miLastHighResolutionRing into that
-	// ring's statistics - same as a ring with too few valid pixels, it ends up IGNORE_RING and every
-	// scorer already skips those. The displayed image itself is not masked.
-	// NOTE (2026-09-07): conceptually superseded by mbReviewCenter/mbReviewHighRes/
-	// mbReviewHRLRBorder/mbReviewLowRes below (a single low-res on/off toggle vs. 4 independent
-	// per-region ones) - left as-is and still what scoring actually reads until that switchover
-	// happens (planned for when scoring/reviewing itself is updated to use the 4 new flags).
-	bool mbIgnoreLowResolutionArea = true;
-
 	// Together with mnCentralRings, these two mark the image's 4 label regions by ring index -
 	// Center: [0, mnCentralRings); High Resolution: [mnCentralRings, miLastHighResolutionRing];
 	// Border: (miLastHighResolutionRing, miFirstLowResolutionRing); Low Resolution: everything at
-	// or beyond miFirstLowResolutionRing. Used today only for mbIgnoreLowResolutionArea's cutoff
-	// (miLastHighResolutionRing) - not yet consumed by scoring/tuning, see
-	// COptimizer::IsExpectedToFail()'s NOTE.
+	// or beyond miFirstLowResolutionRing. See ClassifyRing(). Drives both per-region scoring
+	// weights (GetScorerWeight(type, region)) and the "Review Regions" enable/disable checkboxes
+	// (IsRegionEnabled) below.
 	int miLastHighResolutionRing = 250;
 	int miFirstLowResolutionRing = 265;
 
+	// Classifies a ring index into one of the 4 regions above, by mnCentralRings/
+	// miLastHighResolutionRing/miFirstLowResolutionRing.
+	ERegion ClassifyRing(int iRing) const;
+
 	// Which of the 4 image regions are currently included when scoring/reviewing - toggled by 4
-	// checkboxes on the main dialog (added 2026-09-07, GUI/config only for now - not yet consumed
-	// by any scoring code, that's next). All 4 default on: every region is always actually scored,
-	// so unchecking one here is meant to just narrow what review currently shows/considers, letting
-	// a reviewer flip fast between regions rather than turning scoring itself on/off.
+	// checkboxes on the main dialog (mbReviewCenter/mbReviewHighRes/mbReviewHRLRBorder/
+	// mbReviewLowRes below). All 4 default on: by default every ring in every region is scored -
+	// see CImageRingsScorer::CollectRingsInfo(), which never enters a pixel from a currently-
+	// disabled region into ring statistics at all (same as a ring with too few valid pixels), and
+	// CScorerBase::LoadSavedResults(), which zeroes a saved score whose ring falls in a currently-
+	// disabled region on replay. Lets a reviewer flip fast between regions without rescoring.
+	bool IsRegionEnabled(ERegion region) const;
 	bool mbReviewCenter = true;
 	bool mbReviewHighRes = true;
 	bool mbReviewHRLRBorder = true;
@@ -214,12 +210,19 @@ public:
 	void PrintStatus(const char* zStatus);
 
 	// Per-scorer weight, brings different scorers' scores to a similar scale before they're
-	// compared (e.g. by CAllMaxScorer) or displayed. Read from ScorerWeights.csv (app directory,
-	// created with every weight defaulted to 1.0 if missing) once at startup - changing a weight
+	// compared (e.g. by CImageRingsScorer's AllMax aggregation) or displayed. Read from
+	// ScorerWeights.csv (app directory, created with every weight defaulted to 1.0 if missing)
+	// once at startup - changing a weight
 	// there needs an app restart to take effect, but Case/Batch Review's replay path (which
 	// re-weights each scorer's saved raw score, not just replaying the old weighted one) then
 	// reflects it without rescoring.
+	// The 3 "ring scorers" (MinMax/Tent/TentMin - see IsRingScorerType) actually carry one weight
+	// per region (HighRes/Border/LowRes - see the (type, region) overload below); this single-arg
+	// form reads/writes their HighRes slot. Center/AllMax only ever have one real weight - this
+	// form is the only one they need, and the (type, region) overload's setter keeps all 3 of
+	// their region slots in sync so both forms always agree for them.
 	float GetScorerWeight(EScoreType type) const;
+	float GetScorerWeight(EScoreType type, ERegion region) const;
 
 	// Where ScorerWeights.csv lives (msConfigDir\ScorerWeights.csv) - exposed so a caller (e.g.
 	// COptimizer) can back the file up before overwriting it.
@@ -228,7 +231,9 @@ public:
 	// Overwrites one scorer's in-memory weight immediately - unlike a hand-edited ScorerWeights.csv,
 	// this takes effect on the very next CScorerBase constructed (e.g. the next LoadAndScore() call),
 	// no restart needed. Doesn't touch disk by itself - call SaveScorerWeights() too to persist it.
+	// The single-arg form sets all 3 region slots to the same value (see GetScorerWeight above).
 	void SetScorerWeight(EScoreType type, float weight);
+	void SetScorerWeight(EScoreType type, ERegion region, float weight);
 
 	// Rewrites ScorerWeights.csv from the current in-memory weights - e.g. after SetScorerWeight().
 	void SaveScorerWeights() const;
@@ -243,6 +248,12 @@ private:
 	// of assuming the parent already exists (same technique CDataDownloader already relies on).
 	void VerifyTrainingSetRoot();
 
+	// Sized N_SCORE_TYPES * 3 (HighRes/Border/LowRes slots per scorer type, indexed
+	// type*3 + slot) - see GetScorerWeight/SetScorerWeight. Center's ring rarely reaches this
+	// table at all (CScorerBase::GetWeightForRing leaves it unweighted), and AllMax's real weight
+	// is hardcoded to 1.0 in its own constructor regardless of what's stored here - both still get
+	// a full 3-slot row for a uniform file format, kept in sync across all 3 slots by the
+	// single-arg SetScorerWeight.
 	std::vector<float> mvScorerWeights;
 };
 

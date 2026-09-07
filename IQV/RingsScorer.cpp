@@ -145,15 +145,23 @@ int CRingsScorer::LoadFromSavedResults(const char* zCaseDir)
 		}
 	}
 
-	// Every scorer's own LoadSavedResults() already handles a missing CSV gracefully (returns
-	// false, leaves it unscored) - no need to pre-filter by name. Iterating in registration
-	// order (not whatever order CaseInfo.yaml happens to list names in) also guarantees
-	// CAllMaxScorer - always last, see CImageRingsScorer::CreateScorers() - loads only after
-	// every sibling it depends on has already replayed its own (possibly newly-reweighted)
-	// results; and since its override doesn't read a CSV at all, this also lets it compute
-	// itself for a case scored before AllMax existed, not just ones that already had it.
+	// Every result's own LoadSavedResults() already handles a missing CSV gracefully (returns
+	// false, leaves it unscored) - no need to pre-filter by name. AllMax is skipped here and
+	// rebuilt afterward instead (ReplayAllMaxResult) - it's never itself replayed from a saved
+	// CSV, it's always recomputed from its siblings' (by then already replayed, possibly
+	// newly-reweighted) results, same as during live scoring.
 	for (int iScorer = 0; iScorer < mpImageScorer->GetNScorers(); iScorer++)
-		mpImageScorer->GetScorerByIndex(iScorer)->LoadSavedResults(zCaseDir, mDataRangeScoreFactor);
+	{
+		CScorerResult* pResult = mpImageScorer->GetScorerByIndex(iScorer);
+		if (pResult->meScoreType == EScoreType::AllMax)
+			continue;
+
+		float weight = IsRingScorerType(pResult->meScoreType)
+			? gConfig.GetScorerWeight(pResult->meScoreType, pResult->meRegion)
+			: gConfig.GetScorerWeight(pResult->meScoreType);
+		pResult->LoadSavedResults(zCaseDir, weight, mDataRangeScoreFactor);
+	}
+	mpImageScorer->ReplayAllMaxResult();
 
 	// Peaks weren't read back from the CSVs - recompute them from the replayed scores,
 	// same as a live run does once every image has been scored
@@ -230,12 +238,16 @@ void CRingsScorer::LogCaseInfo()
 	fprintf(pfLog, "  width: %d\n", miMainAreaWidth);
 	fprintf(pfLog, "data_range_score_factor: %.4f\n", mDataRangeScoreFactor);
 
+	// Comprehensive (every region, always) per scorer TYPE - not the finer 11-way per-(type,region)
+	// split ScoreAllImages_<name>.csv now uses - CBatchReviewer::BuildCaseList parses this block
+	// back looking for exactly ScoreTypeName(gConfig.mScoreType) ("MinMax", not "MinMax_HighRes"),
+	// so this shape must stay exactly N_SCORE_TYPES entries.
 	fprintf(pfLog, "scorers:\n");
-	for (int iScorer = 0; iScorer < mpImageScorer->GetNScorers(); iScorer++)
+	for (int iType = 0; iType < N_SCORE_TYPES; iType++)
 	{
-		CScorerBase* pScorer = mpImageScorer->GetScorerByIndex(iScorer);
-		fprintf(pfLog, "  %s:\n", pScorer->Name());
-		fprintf(pfLog, "    worst_score: %.2f\n", pScorer->mResults.mMaxScore);
+		EScoreType type = (EScoreType)iType;
+		fprintf(pfLog, "  %s:\n", ScoreTypeName(type));
+		fprintf(pfLog, "    worst_score: %.2f\n", mpImageScorer->GetWorstScore(type));
 	}
 	fclose(pfLog);
 
@@ -252,6 +264,10 @@ const CImageScore& CRingsScorer::GetScoreAtMax(EScoreType eScoreType) const
 float CRingsScorer::GetRawScoreAt(EScoreType eScoreType, int iOriginalImage) const
 {
 	return mpImageScorer->GetRawScoreAt(eScoreType, iOriginalImage);
+}
+float CRingsScorer::GetWeightForRing(EScoreType eScoreType, int iRing) const
+{
+	return mpImageScorer->GetWeightForRing(eScoreType, iRing);
 }
 void CRingsScorer::OnActiveScoreTypeChanged()
 {

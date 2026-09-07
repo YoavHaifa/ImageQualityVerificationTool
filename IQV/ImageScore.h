@@ -14,8 +14,8 @@ public:
 	// lets CAllMaxScorer reconstruct itself from siblings' mResults on replay (see LoadSavedResults)
 	int miOriginalImage = -1;
 
-	// Which scorer this score actually came from - set only by CAllMaxScorer; N_SCORE_TYPES
-	// ("none") for every other scorer's own scores
+	// Which scorer this score actually came from - set only for AllMax's own result (see
+	// CImageRingsScorer::ComputeAllMaxScore); N_SCORE_TYPES ("none") for every other scorer's own scores
 	EScoreType meSourceType = EScoreType::N_SCORE_TYPES;
 };
 

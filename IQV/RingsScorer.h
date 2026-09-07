@@ -50,6 +50,10 @@ public:
 	const class CImageScore& GetScoreAtMax(EScoreType eScoreType) const;
 	float GetRawScoreAt(EScoreType eScoreType, int iOriginalImage) const;
 
+	// The weight actually applied to a score at ring iRing, for the given scorer type - see
+	// CImageRingsScorer::GetWeightForRing. Used by the main dialog's score-detail display.
+	float GetWeightForRing(EScoreType eScoreType, int iRing) const;
+
 private:
 	static constexpr int N_SCORE_TYPES = (int)EScoreType::N_SCORE_TYPES;
 

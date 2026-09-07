@@ -5,6 +5,7 @@
 #include "..\..\yUtils\TRange.h"
 #include "ScoreTypes.h"
 #include "RingInfo.h"
+#include "ScorerResult.h"
 #include <vector>
 #include <memory>
 
@@ -19,18 +20,24 @@ public:
 	CImageRingsScorer(class CArinetaImages* pImages, class CRadiusImage* pRadiusImage);
 	~CImageRingsScorer();
 
-	// Score the given image; safe to call repeatedly on the same instance, one image at a time
+	// Score the given image; safe to call repeatedly on the same instance, one image at a time.
+	// The returned score is the LIVE, active-region view of gConfig.mScoreType - for a ring scorer
+	// (MinMax/Tent/TentMin), the max over whichever of its 3 regions currently pass
+	// gConfig.IsRegionEnabled (see GetActiveScore) - so toggling a "Review Regions" checkbox
+	// changes what's shown here immediately, without rescoring. Every region is still fully
+	// scored and recorded every time regardless (see CollectRingsInfo) - "at scoring stage we do
+	// not have to check region limits, we have to score all regions" - only this one, most-visible
+	// query is filtered by what's currently active; every other query below (GetScore/
+	// GetScoreAtMax/GetWorstScore/peak-finding/GetRawScoreAt) stays comprehensive (every region,
+	// always), matching how it always worked before regions existed.
 	const CImageScore& Score(int iImage);
 
-	// Files the score each scorer just computed into its own mResults, under iImage
-	void RecordScores(int iImage);
-
-	// Call once, after all images have been scored and recorded, to finalize each scorer's peaks
+	// Call once, after all images have been scored and recorded, to finalize each result's peaks
 	void OnAllImagesScored();
 
-	// Applies factor to every scorer's recorded scores (see CScoreTypeResults::ScaleScores) - the
-	// same factor for every scorer, since it normalizes for the case's own pixel-value spread
-	// rather than anything scorer-specific
+	// Applies factor to every result's recorded scores (see CScoreTypeResults::ScaleScores) - the
+	// same factor for every one, since it normalizes for the case's own pixel-value spread rather
+	// than anything scorer- or region-specific
 	void ScaleScores(float factor);
 
 	// Writes the case-wide pixel-value histogram (accumulated across all images scored so far)
@@ -41,39 +48,54 @@ public:
 	// alongside the rest of the case's summary info.
 	STRange<int> GetHistogramMainArea(float cutPercent) const { return mHistogram.GetMainArea(cutPercent); }
 
-	// The score+ring already recorded for the iPushOrder'th image scored so far (0-based, in
-	// scoring order - NOT the original DICOM slice number; see CRingsScorer::ScoreCurrentImage,
-	// the only caller, for the conversion), under the currently active score type (gConfig.mScoreType).
+	// Same "live, active-region" view as Score() above, but for an already-scored image (Case/
+	// Batch Review's replay path) - see CRingsScorer::ScoreCurrentImage. iPushOrder is 0-based, in
+	// scoring order (NOT the original DICOM slice number).
 	const CImageScore& GetCurrentScore(int iPushOrder) const;
 
-	// The score+ring already recorded for iImage, under the given score type
+	// Comprehensive (every region, always - see the Score() doc comment above) - the score+ring
+	// already recorded for iImage (push order), under the given score type.
 	const CImageScore& GetScore(EScoreType eScoreType, int iImage) const;
 
-	// The image index with the highest score, under the currently active score type
+	// Comprehensive. The image (original DICOM slice number) with the highest score, under the
+	// currently active score type.
 	int GetImageWithMaxScore() const;
 
-	// The image index holding the given peak severity order under the currently active score type, or -1 if not found
+	// Active-region-filtered (unlike every other query on this list) - the image index (push
+	// order) holding the given peak severity order under the currently active score type,
+	// considering only its currently-enabled regions, or -1 if not found - see MergeResults. This
+	// is what CRingsScorer::DisplayMaxPeak/Next/Prev actually navigate with, so toggling a "Review
+	// Regions" checkbox changes what "next peak" means immediately, the same way picking a
+	// different scorer type already does (see CIQVDlg::OnBnClickedCheckReviewRegion).
 	int FindImageIndexOfPeak(int iWantedPeak) const;
 
-	// This case's single worst (highest) score under the given score type, across every image
-	// scored so far - same value CaseInfo.yaml logs as scorers > <name> > worst_score.
+	// Comprehensive. This case's single worst (highest) score under the given score type, across
+	// every image scored so far - same value CaseInfo.yaml logs as scorers > <name> > worst_score.
 	float GetWorstScore(EScoreType eScoreType) const;
 
-	// The full recorded score of the case's worst image under the given score type - unlike
-	// GetWorstScore(), also carries the ring, source scorer (meaningful for AllMax), and which
-	// original image it came from. See CScoreTypeResults::GetScoreAtMax().
+	// Comprehensive. The full recorded score of the case's worst image under the given score type -
+	// unlike GetWorstScore(), also carries the ring, source scorer (meaningful for AllMax), and
+	// which original image it came from.
 	const CImageScore& GetScoreAtMax(EScoreType eScoreType) const;
 
-	// The given scorer's own raw score for the given *original* image number, or 0 if that
-	// scorer never scored that image. Used to find a source scorer's true (unweighted,
-	// unscaled) raw score for whichever image produced another scorer's (e.g. AllMax's) max -
-	// see COptimizer.
+	// Comprehensive. The given scorer type's own raw score for the given *original* image number
+	// (whichever of its regions actually produced that image's own recorded score), or 0 if never
+	// scored. Used to find a source scorer's true (unweighted, unscaled) raw score for whichever
+	// image produced another scorer's (e.g. AllMax's) max - see COptimizer.
 	float GetRawScoreAt(EScoreType eScoreType, int iOriginalImage) const;
 
-	// Generic access to the scorers, so callers (e.g. per-scorer logging) don't need
-	// to know the concrete set of score types
-	int GetNScorers() const { return (int)mvScorers.size(); }
-	class CScorerBase* GetScorerByIndex(int iScorer) const { return mvScorers[iScorer].get(); }
+	// The weight actually applied to a score at ring iRing, for the given scorer type - see
+	// CConfig::GetScorerWeight(type, region). Used by the main dialog's score-detail display.
+	float GetWeightForRing(EScoreType eScoreType, int iRing) const;
+
+	// Generic access to the flat per-(type,region) result list, so callers (per-scorer logging,
+	// replay) don't need to know the concrete set of score types/regions.
+	int GetNScorers() const { return (int)mvResults.size(); }
+	class CScorerResult* GetScorerByIndex(int iScorer) { return &mvResults[iScorer]; }
+
+	// Rebuilds AllMax's own history from its (by then already replayed) siblings' mResults - call
+	// once, after every other result's LoadSavedResults() has run. See ComputeAllMaxScore.
+	void ReplayAllMaxResult();
 
 	// Number of rings in this case (mvRingMean has mnRings+1 entries, one per ring 0..mnRings).
 	int GetNRings() const { return mnRings; }
@@ -84,14 +106,37 @@ public:
 	// gConfig.mbDisplayCtPerRadius (this is cheap, and Review's use of it is a separate toggle).
 	void PrepareRingMeanProfile(int nTotalImages);
 
-	//float mScore = 0;
-	//int miRingOfScore = -1;
-
 private:
 	void CreateScorers();
+	void CreateResults();
 
-	// The scorer of the given type; its mResults holds the score+ring history across all images scored so far
-	class CScorerBase* GetScorer(EScoreType eScoreType) const { return mvScorers[(int)eScoreType].get(); }
+	CScorerResult* FindResult(EScoreType type); // Center/AllMax - one region-less result
+	const CScorerResult* FindResult(EScoreType type) const;
+	CScorerResult* FindResult(EScoreType type, ERegion region); // a ring scorer's one region
+
+	void RecordRegionResults(int iImage); // MinMax/Tent/TentMin -> 9 entries, comprehensive
+	void RecordCenterResult(int iImage);
+	void RecordAllMaxResult(int iImage); // comprehensive - see ComputeAllMaxScore(bActiveOnly=false)
+
+	// AllMax's own value: max over every OTHER result's score, EXCLUDING AllMax itself.
+	// bActiveOnly true restricts that to currently-active results (see GetActiveScore) - false is
+	// the comprehensive, always-stored value RecordAllMaxResult/ReplayAllMaxResult use.
+	CImageScore ComputeAllMaxScore(int iImage, bool bActiveOnly) const; // historical, by push-order index
+	CImageScore ComputeAllMaxScoreLive(bool bActiveOnly) const; // from the CURRENT (just-scored) image only
+
+	// The live "what's currently active" merge for gConfig.mScoreType - see Score()/GetCurrentScore().
+	const CImageScore& GetActiveScore(EScoreType type) const; // current (just-scored) image
+	const CImageScore& GetActiveScore(EScoreType type, int iPushOrder) const; // historical, by push-order
+
+	// Merges every CScorerResult matching type (max per image, across all its regions) into a
+	// fresh, properly peak-ordered CScoreTypeResults - lets FindImageIndexOfPeak() work over "all
+	// of this type's regions together" without needing to track that merge incrementally. Cheap:
+	// just a max-scan over already-computed per-image scores, no rescoring - same principle as
+	// picking a different already-scored scorer type needs no rescoring either. bActiveOnly
+	// restricts the merge to currently-active regions (see CScorerResult::IsActive) - what
+	// FindImageIndexOfPeak() actually wants, so toggling a "Review Regions" checkbox repositions
+	// peak navigation immediately, the same way picking a different scorer type already does.
+	CScoreTypeResults MergeResults(EScoreType type, bool bActiveOnly) const;
 
 	void CollectRingsInfo();
 	void ErodeValidArea();
@@ -99,8 +144,8 @@ private:
 	// Paints mpImages' CT-per-radius volume for the current image: each pixel gets its ring's
 	// mean CT value (mvRingMean) instead of the raw pixel value, except pixels the erode mask
 	// excluded ("illegal"), which get a constant 10 CT numbers below this image's lowest ring
-	// mean, to stand out from any real value. Gated by gConfig.mbDisplayCtPerRadius; called once
-	// mvRingMean and mErodedMask are final for this image.
+	// mean, to stand out. Gated by gConfig.mbDisplayCtPerRadius; called once mvRingMean and
+	// mErodedMask are final for this image.
 	void FillCtPerRadiusImage();
 
 	void Log();
@@ -121,8 +166,14 @@ private:
 	std::vector<float> mvRingMean0;
 	std::vector<float> mvRingMean;
 	std::vector<CRingInfo> mvRingsInfo;
-	std::vector<std::unique_ptr<CScorerBase>> mvScorers;
+	std::vector<std::unique_ptr<CScorerBase>> mvScorers; // MinMax/Tent/TentMin/Center - compute objects only, no AllMax
+	std::vector<CScorerResult> mvResults; // flat: 3x(MinMax,Tent,TentMin) regions + Center + AllMax = 11
+
+	// mutable: AllMax's live "active" value is recomputed fresh on every GetActiveScore() call
+	// (rather than stored, unlike every other result) so a currently-disabled region correctly
+	// drops out of AllMax's own live verdict too - this just gives that fresh value a stable
+	// address to return a const reference to.
+	mutable CImageScore mLastActiveAllMax;
 
 	int miRingMeanProfileRow = 0; // next row to record into mpImages' compact ring-mean profile
 };
-
