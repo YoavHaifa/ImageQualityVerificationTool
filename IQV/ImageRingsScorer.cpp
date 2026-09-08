@@ -117,6 +117,17 @@ int CImageRingsScorer::FindImageIndexOfPeak(int iWantedPeak) const
 	CScoreTypeResults merged = MergeResults(gConfig.mScoreType, /*bActiveOnly=*/true);
 	return merged.FindImageIndexOfPeak(iWantedPeak);
 }
+int CImageRingsScorer::GetActiveImageWithMaxScore() const
+{
+	CScoreTypeResults merged = MergeResults(gConfig.mScoreType, /*bActiveOnly=*/true);
+	if (merged.miImageWithMaxScore >= 0)
+		return merged.miImageWithMaxScore;
+
+	// Nothing is currently active at all (e.g. every region disabled) - land on the comprehensive
+	// worst image rather than nowhere; its score will legitimately show as 0 under the active
+	// filter, but that's far better than an invalid/negative position.
+	return GetImageWithMaxScore();
+}
 float CImageRingsScorer::GetWorstScore(EScoreType eScoreType) const
 {
 	float best = 0;
@@ -132,6 +143,13 @@ float CImageRingsScorer::GetWorstScore(EScoreType eScoreType) const
 		}
 	}
 	return best;
+}
+float CImageRingsScorer::GetWorstScore(EScoreType eScoreType, ERegion region) const
+{
+	for (const CScorerResult& r : mvResults)
+		if (r.meScoreType == eScoreType && r.meRegion == region)
+			return r.mResults.mMaxScore;
+	return 0;
 }
 void CImageRingsScorer::PrepareRingMeanProfile(int nTotalImages)
 {
@@ -153,6 +171,14 @@ const CImageScore& CImageRingsScorer::GetScoreAtMax(EScoreType eScoreType) const
 			pBest = &r;
 	}
 	return pBest ? pBest->mResults.GetScoreAtMax() : empty;
+}
+const CImageScore& CImageRingsScorer::GetScoreAtMax(EScoreType eScoreType, ERegion region) const
+{
+	static CImageScore empty;
+	for (const CScorerResult& r : mvResults)
+		if (r.meScoreType == eScoreType && r.meRegion == region)
+			return r.mResults.GetScoreAtMax();
+	return empty;
 }
 float CImageRingsScorer::GetRawScoreAt(EScoreType eScoreType, int iOriginalImage) const
 {

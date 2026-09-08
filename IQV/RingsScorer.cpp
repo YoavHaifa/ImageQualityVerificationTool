@@ -105,6 +105,11 @@ int CRingsScorer::ScoreAllImages()
 	string s(format("All {} images scored", mnImages));
 	gConfig.PrintStatus(s.c_str());
 
+	// Comprehensive, NOT GetActiveImageWithMaxScore() - CIQVManager::LoadAndScore treats a negative
+	// return here as "this case failed to load" and drops it (see also CBatchScorer), which would
+	// wrongly skip/fail a perfectly good case whose only real severity happens to sit in a
+	// currently-disabled region. LoadFromSavedResults() below has no such gating, so it's safe to
+	// use the active-filtered landing image there.
 	return mpImageScorer->GetImageWithMaxScore();
 }
 float CRingsScorer::ComputeDataRangeScoreFactor(int width)
@@ -170,7 +175,7 @@ int CRingsScorer::LoadFromSavedResults(const char* zCaseDir)
 	mbScoresComputed = true;
 	miCurrentPeak = 1;
 
-	return mpImageScorer->GetImageWithMaxScore();
+	return mpImageScorer->GetActiveImageWithMaxScore();
 }
 void CRingsScorer::Log()
 {
@@ -238,16 +243,24 @@ void CRingsScorer::LogCaseInfo()
 	fprintf(pfLog, "  width: %d\n", miMainAreaWidth);
 	fprintf(pfLog, "data_range_score_factor: %.4f\n", mDataRangeScoreFactor);
 
-	// Comprehensive (every region, always) per scorer TYPE - not the finer 11-way per-(type,region)
-	// split ScoreAllImages_<name>.csv now uses - CBatchReviewer::BuildCaseList parses this block
-	// back looking for exactly ScoreTypeName(gConfig.mScoreType) ("MinMax", not "MinMax_HighRes"),
-	// so this shape must stay exactly N_SCORE_TYPES entries.
+	// Comprehensive (every region, always) worst_score per scorer TYPE - CBatchReviewer::
+	// BuildCaseList parses this block back looking for exactly ScoreTypeName(gConfig.mScoreType)
+	// ("MinMax", not "MinMax_HighRes"), so this top-level shape must stay exactly N_SCORE_TYPES
+	// entries. A ring scorer's own 3 regions (HighRes/Border/LowRes) additionally get their own
+	// worst_score nested underneath, so CBatchReviewer can compute an active-region-filtered case
+	// ordering on the fly (see CConfig::IsRegionEnabled) without reopening/rescoring every case.
 	fprintf(pfLog, "scorers:\n");
 	for (int iType = 0; iType < N_SCORE_TYPES; iType++)
 	{
 		EScoreType type = (EScoreType)iType;
 		fprintf(pfLog, "  %s:\n", ScoreTypeName(type));
 		fprintf(pfLog, "    worst_score: %.2f\n", mpImageScorer->GetWorstScore(type));
+		if (IsRingScorerType(type))
+		{
+			fprintf(pfLog, "    highres: %.2f\n", mpImageScorer->GetWorstScore(type, ERegion::HighRes));
+			fprintf(pfLog, "    border: %.2f\n", mpImageScorer->GetWorstScore(type, ERegion::Border));
+			fprintf(pfLog, "    lowres: %.2f\n", mpImageScorer->GetWorstScore(type, ERegion::LowRes));
+		}
 	}
 	fclose(pfLog);
 
@@ -257,9 +270,17 @@ float CRingsScorer::GetWorstScore(EScoreType eScoreType) const
 {
 	return mpImageScorer->GetWorstScore(eScoreType);
 }
+float CRingsScorer::GetWorstScore(EScoreType eScoreType, ERegion region) const
+{
+	return mpImageScorer->GetWorstScore(eScoreType, region);
+}
 const CImageScore& CRingsScorer::GetScoreAtMax(EScoreType eScoreType) const
 {
 	return mpImageScorer->GetScoreAtMax(eScoreType);
+}
+const CImageScore& CRingsScorer::GetScoreAtMax(EScoreType eScoreType, ERegion region) const
+{
+	return mpImageScorer->GetScoreAtMax(eScoreType, region);
 }
 float CRingsScorer::GetRawScoreAt(EScoreType eScoreType, int iOriginalImage) const
 {
@@ -296,7 +317,8 @@ bool CRingsScorer::LookForPeak(int iWantedPeak)
 	int iImage = mpImageScorer->FindImageIndexOfPeak(iWantedPeak);
 	if (iImage < 0)
 	{
-		gfLog.Printf("<CRingsScorer::LookForPeak> Failed to find peak %d", iWantedPeak);
+		gfLog.Printf("<CRingsScorer::LookForPeak> scorer=%s: failed to find peak %d",
+			ScoreTypeName(gConfig.mScoreType), iWantedPeak);
 		gConfig.PrintStatus(format("no more relevant scores for {}", ScoreTypeName(gConfig.mScoreType)).c_str());
 		return false;
 	}
@@ -304,7 +326,10 @@ bool CRingsScorer::LookForPeak(int iWantedPeak)
 	miCurrentPeak = iWantedPeak;
 	miCurrentPeakImage = iImage;
 	int iOriginal = miFirst + iImage * mStep;
-	gfLog.Printf("<CRingsScorer::LookForPeak> Found peak %d at image %d original %d", iWantedPeak, iImage, iOriginal);
+
+	const CImageScore& score = mpImageScorer->GetCurrentScore(iImage);
+	gfLog.Printf("<CRingsScorer::LookForPeak> scorer=%s: found peak %d at image %d (original %d): score=%.3f ring=%d",
+		ScoreTypeName(gConfig.mScoreType), iWantedPeak, iImage, iOriginal, score.mScore, score.miRing);
 
 	string s(format("Fount peak {} at image {}", miCurrentPeak, iOriginal));
 	gConfig.PrintStatus(s.c_str());

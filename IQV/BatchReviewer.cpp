@@ -81,7 +81,10 @@ void CBatchReviewer::BuildCaseList(const char* zRootDir)
 				iScorer = (int)mvScorerNames.size();
 				mvScorerNames.push_back(sName);
 				for (CCaseInfo& c : mvCases)
+				{
 					c.mvWorstScore.push_back(0.0f);
+					c.mvRegionScore.push_back({ 0.0f, 0.0f, 0.0f });
+				}
 			}
 
 			float worstScore = 0;
@@ -90,6 +93,15 @@ void CBatchReviewer::BuildCaseList(const char* zRootDir)
 			while ((int)caseInfo.mvWorstScore.size() <= iScorer)
 				caseInfo.mvWorstScore.push_back(0.0f);
 			caseInfo.mvWorstScore[iScorer] = worstScore;
+
+			while ((int)caseInfo.mvRegionScore.size() <= iScorer)
+				caseInfo.mvRegionScore.push_back({ 0.0f, 0.0f, 0.0f });
+			// Only a ring scorer's own block has these nested keys - a plain worst_score-only
+			// block (Center/AllMax) just leaves all 3 at 0, which GetActiveWorstScore() never
+			// reads for those anyway.
+			pScorer->GetValue("highres", caseInfo.mvRegionScore[iScorer][0]);
+			pScorer->GetValue("border", caseInfo.mvRegionScore[iScorer][1]);
+			pScorer->GetValue("lowres", caseInfo.mvRegionScore[iScorer][2]);
 		}
 
 		mvCases.push_back(caseInfo);
@@ -100,7 +112,10 @@ void CBatchReviewer::ComputeOrder()
 	for (CCaseInfo& c : mvCases)
 	{
 		while (c.mvWorstScore.size() < mvScorerNames.size())
+		{
 			c.mvWorstScore.push_back(0.0f);
+			c.mvRegionScore.push_back({ 0.0f, 0.0f, 0.0f });
+		}
 		c.mvOrder.assign(mvScorerNames.size(), 0);
 	}
 
@@ -110,15 +125,43 @@ void CBatchReviewer::ComputeOrder()
 		for (int i = 0; i < (int)mvCases.size(); i++)
 			vIndices[i] = i;
 
-		// Worst (highest) score first, like CScoreTypeResults' peak severity order
+		// Worst (highest) ACTIVE score first, like CScoreTypeResults' peak severity order - not
+		// the comprehensive mvWorstScore directly, so calling this again after a "Review Regions"
+		// checkbox change re-ranks by only what's currently enabled (see GetActiveWorstScore).
 		std::sort(vIndices.begin(), vIndices.end(), [this, iScorer](int a, int b)
 			{
-				return mvCases[a].mvWorstScore[iScorer] > mvCases[b].mvWorstScore[iScorer];
+				return GetActiveWorstScore(mvCases[a], iScorer) > GetActiveWorstScore(mvCases[b], iScorer);
 			});
 
 		for (int iRank = 0; iRank < (int)vIndices.size(); iRank++)
 			mvCases[vIndices[iRank]].mvOrder[iScorer] = iRank + 1;
 	}
+}
+float CBatchReviewer::GetActiveWorstScore(const CCaseInfo& c, int iScorer) const
+{
+	if (iScorer < 0 || iScorer >= (int)mvScorerNames.size())
+		return 0.0f;
+
+	const CString& sName = mvScorerNames[iScorer];
+	if (sName.CompareNoCase(ScoreTypeName(EScoreType::AllMax)) == 0)
+	{
+		float best = 0;
+		for (int i = 0; i < (int)mvScorerNames.size(); i++)
+			if (mvScorerNames[i].CompareNoCase(ScoreTypeName(EScoreType::AllMax)) != 0)
+				best = max(best, GetActiveWorstScore(c, i));
+		return best;
+	}
+	if (sName.CompareNoCase(ScoreTypeName(EScoreType::Center)) == 0)
+		return gConfig.IsRegionEnabled(ERegion::Center) ? c.mvWorstScore[iScorer] : 0.0f;
+
+	// A ring scorer (MinMax/Tent/TentMin) - max of whichever of its own 3 regions are enabled
+	if (iScorer >= (int)c.mvRegionScore.size())
+		return 0.0f;
+	float best = 0;
+	if (gConfig.IsRegionEnabled(ERegion::HighRes)) best = max(best, c.mvRegionScore[iScorer][0]);
+	if (gConfig.IsRegionEnabled(ERegion::Border)) best = max(best, c.mvRegionScore[iScorer][1]);
+	if (gConfig.IsRegionEnabled(ERegion::LowRes)) best = max(best, c.mvRegionScore[iScorer][2]);
+	return best;
 }
 int CBatchReviewer::FindScorerIndex(const char* zName) const
 {
@@ -174,7 +217,7 @@ bool CBatchReviewer::DisplayNextCase()
 	const char* zScorerName = ScoreTypeName(gConfig.mScoreType);
 	int iScorer = FindScorerIndex(zScorerName);
 	const CCaseInfo* pNext = FindCaseAtRank(miCurrentRank + 1);
-	if (iScorer < 0 || !pNext || pNext->mvWorstScore[iScorer] <= 0)
+	if (iScorer < 0 || !pNext || GetActiveWorstScore(*pNext, iScorer) <= 0)
 	{
 		gConfig.PrintStatus(std::format("no more relevant scores for {}", zScorerName).c_str());
 		return false;

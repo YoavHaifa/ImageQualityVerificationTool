@@ -693,6 +693,7 @@ void CIQVDlg::OnFileOpenbatchscoring()
 }
 void CIQVDlg::OnBnClickedButtonWorstCase()
 {
+	gfLog.Printf("<CIQVDlg> Button pressed: Worst Case");
 	if (!mpBatchReviewer)
 		return;
 	if (mpBatchReviewer->DisplayWorstCase())
@@ -700,6 +701,7 @@ void CIQVDlg::OnBnClickedButtonWorstCase()
 }
 void CIQVDlg::OnBnClickedButtonNextCase()
 {
+	gfLog.Printf("<CIQVDlg> Button pressed: Next Case");
 	if (!mpBatchReviewer)
 		return;
 	if (mpBatchReviewer->DisplayNextCase())
@@ -707,6 +709,7 @@ void CIQVDlg::OnBnClickedButtonNextCase()
 }
 void CIQVDlg::OnBnClickedButtonPrevCase()
 {
+	gfLog.Printf("<CIQVDlg> Button pressed: Prev Case");
 	if (!mpBatchReviewer)
 		return;
 	if (mpBatchReviewer->DisplayPrevCase())
@@ -724,6 +727,14 @@ void CIQVDlg::DisplayBatchCase()
 	CString sCaseIndex;
 	sCaseIndex.Format("Case %d of %d", mpBatchReviewer->GetCurrentRank(), mpBatchReviewer->GetNumCases());
 	SetDlgItemText(IDC_STATIC_CASE_INDEX, sCaseIndex);
+
+	// The button/checkbox that got us here is logged at its own handler - this is the one common
+	// landing point for all of them (Worst/Next/Prev Case, the Score Type combo, and the Review
+	// Regions checkboxes), so it's the right place to log the actual result selected.
+	const CImageScore& score = mpRingsScorer->ScoreCurrentImage(miPos);
+	gfLog.Printf("<CIQVDlg::DisplayBatchCase> scorer=%s: %s, case=%s, image=%d: score=%.3f ring=%d",
+		ScoreTypeName(gConfig.mScoreType), (LPCTSTR)sCaseIndex, (LPCTSTR)mpImages->GetPath(), miPos,
+		score.mScore, score.miRing);
 
 	// Same one-shot-good-window-fit reasoning as OnFileOpencasescoring: show the target
 	// (worst-score) image, not an arbitrary one
@@ -1083,12 +1094,20 @@ void CIQVDlg::OnBnClickedCheckReviewRegion()
 	gConfig.mbReviewLowRes = (IsDlgButtonChecked(IDC_CHECK_REVIEW_LOWRES) != 0);
 	gConfig.SaveToFile();
 
+	gfLog.Printf("<CIQVDlg> Review Regions changed: Center=%d HighRes=%d Border=%d LowRes=%d",
+		gConfig.mbReviewCenter, gConfig.mbReviewHighRes, gConfig.mbReviewHRLRBorder, gConfig.mbReviewLowRes);
+
 	// Same reposition-immediately pattern as OnCbnSelchangeComboScoreType (changing which regions
 	// are active is, from the reviewer's point of view, just as much "the criteria changed" as
 	// changing the scorer type itself - both should jump to the new worst peak right away, not
 	// wait for the next unrelated navigation).
 	if (mpBatchReviewer)
 	{
+		// Case ordering itself is keyed off which regions are active too (see
+		// CBatchReviewer::GetActiveWorstScore) - re-rank before landing on the new worst case,
+		// or "worst case" would still reflect the region selection from whenever Init() first
+		// built the list.
+		mpBatchReviewer->ComputeOrder();
 		if (mpBatchReviewer->DisplayWorstCase())
 			DisplayBatchCase();
 	}
@@ -1172,14 +1191,17 @@ void CIQVDlg::OnBnClickedCancel()
 }
 void CIQVDlg::OnBnClickedButtonMax()
 {
+	gfLog.Printf("<CIQVDlg> Button pressed: Max Score");
 	mpRingsScorer->DisplayMaxPeak();
 }
 void CIQVDlg::OnBnClickedButtonNext()
 {
+	gfLog.Printf("<CIQVDlg> Button pressed: Next");
 	mpRingsScorer->DisplayNextPeak();
 }
 void CIQVDlg::OnBnClickedButtonPrev()
 {
+	gfLog.Printf("<CIQVDlg> Button pressed: Previous");
 	mpRingsScorer->DisplayPrevPeak();
 }
 void CIQVDlg::OnCbnSelchangeComboScoreType()
@@ -1191,6 +1213,8 @@ void CIQVDlg::OnCbnSelchangeComboScoreType()
 
 	gConfig.mScoreType = (EScoreType)iSel;
 	gConfig.SaveToFile();
+
+	gfLog.Printf("<CIQVDlg> Score Type changed to %s", ScoreTypeName(gConfig.mScoreType));
 
 	if (mpBatchReviewer)
 	{

@@ -45,9 +45,11 @@ public:
 
 	// This case's single worst score under the given score type - see CImageRingsScorer::GetWorstScore
 	float GetWorstScore(EScoreType eScoreType) const;
+	float GetWorstScore(EScoreType eScoreType, ERegion region) const;
 
 	// See CImageRingsScorer::GetScoreAtMax / GetRawScoreAt
 	const class CImageScore& GetScoreAtMax(EScoreType eScoreType) const;
+	const class CImageScore& GetScoreAtMax(EScoreType eScoreType, ERegion region) const;
 	float GetRawScoreAt(EScoreType eScoreType, int iOriginalImage) const;
 
 	// The weight actually applied to a score at ring iRing, for the given scorer type - see

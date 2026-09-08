@@ -1,6 +1,7 @@
 #pragma once
 #include "ScoreTypes.h"
 #include <vector>
+#include <functional>
 
 // Scores every labeled case under gConfig.msTrainingSetRoot (see the Label feature, File > Label)
 // and reports, per case and per scorer, how the current scoring configuration's verdict compares
@@ -47,10 +48,11 @@ private:
 		float gap = 0; // score - gConfig.mMaxAcceptableScore (negative on the Pass side)
 
 		// "Pass" or "Fail" - what this specific scorer is actually expected to produce for this
-		// case, per IsExpectedToFail() (not necessarily the case's own raw label - e.g. a
-		// Fail_Ring case expects Pass from the Center scorer, since Center isn't responsible for
-		// ring-only problems). sAssessment, and ComputeAndApplyNewWeights()'s cohort split, are
-		// both driven by this rather than by sLabel directly.
+		// case, per IsRegionExpectedToFail()/IsAnyRingRegionExpectedToFail() (not necessarily the
+		// case's own raw label - e.g. a case labeled Fail only in LowRes expects Pass from the
+		// Center scorer, since Center isn't responsible for problems outside its own region).
+		// sAssessment, and ComputeAndApplyNewWeights()'s cohort split, are both driven by this
+		// rather than by sLabel directly.
 		CString sExpectedVerdict;
 
 		CString sAssessment; // Correct Pass / Correct Fail / False Positive / False Negative
@@ -73,6 +75,24 @@ private:
 		// scoring pass produce every type's report, and OptimizeWeights() compute new weights,
 		// without rescoring.
 		std::vector<SPerTypeResult> vPerType;
+
+		// This case's outcome for each of the 3 ring scorers' (MinMax/Tent/TentMin) 3 regions
+		// (HighRes/Border/LowRes) - unlike vPerType above (comprehensive, merged across a ring
+		// scorer's regions), this is one specific region's own score. Indexed
+		// iRingType*3+iRegion, where iRingType is 0/1/2 for MinMax/Tent/TentMin (not (int)EScoreType
+		// - Center/AllMax have no regions and aren't in here) and iRegion is 0/1/2 for
+		// HighRes/Border/LowRes - see ComputeAndApplyNewWeights(), which is the only reader.
+		std::vector<SPerTypeResult> vPerRegion;
+
+		// Which region(s) this case's own CaseLabelInfo.yaml flagged as showing the problem (see
+		// CIQVDlg::SaveLabeledData) - read directly from that file, alongside the DICOM images
+		// themselves, by RunOnLabelDir(). Always false for a Pass-labeled case (the region dialog
+		// is Fail-only, so the YAML's own flags are already false there too - this is just read
+		// back, not re-derived from sLabel). See IsRegionExpectedToFail().
+		bool bFailedCenter = false;
+		bool bFailedHR = false;
+		bool bFailedBorder = false;
+		bool bFailedLR = false;
 	};
 
 	// One scorer's weight-optimization outcome - see ComputeAndApplyNewWeights()
@@ -95,17 +115,24 @@ private:
 	// skip such a directory rather than guess.
 	static CString DetermineLabel(const CString& sSubDirName);
 
-	// Whether the given scorer type is actually expected to fail a case carrying this label.
-	// NOTE (2026-09-06): dormant for now - DetermineLabel() only ever produces "Pass"/"Fail", so
-	// every branch below except the Pass and AllMax ones is currently unreachable. Left as-is
-	// deliberately (not deleted) - the plan is to revisit this once CaseLabelInfo.yaml's per-case
-	// region flags are read back in, rather than folder-name suffixes.
-	// Every scorer is expected to fail every Fail label, EXCEPT: the Center scorer only targets
-	// central artifacts, so it isn't expected to fail Fail_Ring (no center problem); the ring
-	// scorers (MinMax/Tent/TentMin) only target off-center ring artifacts, so they aren't
-	// expected to fail Fail_Center (no ring problem). AllMax is exempt from this narrowing - it's
-	// meant to catch every failure type, since it's built from every sibling's own score.
-	static bool IsExpectedToFail(EScoreType type, const CString& sLabel);
+	// Whether this case is expected to fail in the given region specifically (Center for the
+	// Center scorer, or one of HighRes/Border/LowRes for a ring scorer's own per-region cohort) -
+	// reads the case's own labeled region flags (SCaseResult::bFailed*, from CaseLabelInfo.yaml),
+	// not just its coarse Pass/Fail label. A Pass-labeled case is never expected to fail anywhere
+	// (its region flags are already all false anyway - see CIQVDlg::SaveLabeledData).
+	// NOTE (2026-09-08): replaces an earlier IsExpectedToFail(EScoreType, CString) that had gone
+	// silently dormant - it matched against the OLD "Fail_Center"/"Fail_Ring"/"Fail_Both" directory
+	// names, which DetermineLabel() stopped producing once labeling moved to CaseLabelInfo.yaml
+	// (see [[project-four-region-labeling]]) - so every non-AllMax cohort came back empty
+	// ("no data - unchanged" in WeightOptimization.csv) for every training run since. Caught while
+	// wiring up per-region tuning tonight.
+	static bool IsRegionExpectedToFail(const SCaseResult& r, ERegion region);
+
+	// Whether this case is expected to fail ANY of a ring scorer's 3 regions (HighRes/Border/
+	// LowRes) - used for a ring scorer's own COMPREHENSIVE assessment (vPerType, merged across its
+	// regions, same as TrainingSetReport_<type>.csv already reports), as opposed to one specific
+	// region's own cohort (IsRegionExpectedToFail).
+	static bool IsAnyRingRegionExpectedToFail(const SCaseResult& r);
 
 	// Scores every case found under zSubDir (e.g. <root>\fail_ring_2), appending one row to
 	// mvResults per case actually scored, tagged with the given zLabel. sSubDirName (the
@@ -117,16 +144,31 @@ private:
 	// Writes one CSV per scorer type into msReportDir (created if needed).
 	void WriteReports();
 
-	// For each individual scorer type: finds the highest Pass score and the lowest Fail score
-	// above it, targets the midpoint between them (so gConfig.mMaxAcceptableScore lands exactly
-	// there), and rescales that scorer's weight accordingly - catches every Fail case without
-	// failing any Pass case, whenever such a clean separation exists. A false positive (failing a
-	// Pass case) is never acceptable - so if no Fail case scores above the Pass max, there's no
-	// safe split at all: the weight is instead lowered just enough that even the worst Pass case
-	// stays at/below threshold, meaning this scorer flags nothing as Fail rather than risk one.
-	// Applies each new weight to gConfig immediately (SetScorerWeight) and
-	// persists them all at the end (SaveScorerWeights). Requires mvResults to already be
-	// populated (see RunOnLabelDir) - does not itself score anything.
+	// Computes one weight-optimization outcome via the midpoint algorithm: finds the highest Pass
+	// score and the lowest Fail score above it (getScore extracts whichever score matters - a
+	// whole type's comprehensive score, or one specific region's own score), targets the midpoint
+	// between them (so gConfig.mMaxAcceptableScore lands exactly there), and rescales oldWeight
+	// accordingly - catches every Fail case without failing any Pass case, whenever such a clean
+	// separation exists. A false positive (failing a Pass case) is never acceptable - so if no Fail
+	// case scores above the Pass max, there's no safe split at all: the weight is instead lowered
+	// just enough that even the worst Pass case stays at/below threshold, meaning this scorer
+	// flags nothing as Fail rather than risk one. Doesn't touch gConfig or mvResults itself -
+	// ComputeAndApplyNewWeights() (the only caller) applies/persists the returned weight.
+	// isExpectedToFail decides cohort membership (Pass vs Fail) for each case - the caller passes
+	// whichever notion applies (IsRegionExpectedToFail for one region, IsAnyRingRegionExpectedToFail
+	// for a ring type's own comprehensive weight, or a simple Fail-label check for AllMax-like
+	// "catches everything" semantics), so this method itself doesn't need to know which scorer or
+	// region it's tuning.
+	SWeightResult ComputeOneWeight(const CString& sName, float oldWeight,
+		const std::function<float(const SCaseResult&)>& getScore,
+		const std::function<bool(const SCaseResult&)>& isExpectedToFail) const;
+
+	// For each of the 3 ring scorers' (MinMax/Tent/TentMin) 3 regions (HighRes/Border/LowRes),
+	// and separately for Center (which has no regions), computes and applies (SetScorerWeight)
+	// a new weight via ComputeOneWeight() - see there for the algorithm. AllMax's weight stays
+	// fixed at 1.0, built from siblings - not tunable. Persists every weight at the end
+	// (SaveScorerWeights). Requires mvResults to already be populated (see RunOnLabelDir) - does
+	// not itself score anything.
 	void ComputeAndApplyNewWeights(std::vector<SWeightResult>& results);
 
 	void WriteWeightsReport(const std::vector<SWeightResult>& results);

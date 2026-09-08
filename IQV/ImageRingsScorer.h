@@ -61,6 +61,14 @@ public:
 	// currently active score type.
 	int GetImageWithMaxScore() const;
 
+	// Active-region-filtered equivalent of GetImageWithMaxScore() above - the original image
+	// (DICOM slice number) with the highest ACTIVE score under the currently active score type, or
+	// -1 if none of its regions are currently enabled. Used when a case is first opened/replayed
+	// (see CRingsScorer::ScoreAllImages/LoadFromSavedResults and CBatchReviewer), so landing on a
+	// case never shows a score of 0 just because its real severity happens to be in a
+	// currently-disabled region.
+	int GetActiveImageWithMaxScore() const;
+
 	// Active-region-filtered (unlike every other query on this list) - the image index (push
 	// order) holding the given peak severity order under the currently active score type,
 	// considering only its currently-enabled regions, or -1 if not found - see MergeResults. This
@@ -73,10 +81,23 @@ public:
 	// every image scored so far - same value CaseInfo.yaml logs as scorers > <name> > worst_score.
 	float GetWorstScore(EScoreType eScoreType) const;
 
+	// Same, but for exactly ONE region of a ring scorer - this case's own single worst score for
+	// just that (type,region) pair, across every image scored so far. Used to log CaseInfo.yaml's
+	// per-region breakdown (see CRingsScorer::LogCaseInfo), which CBatchReviewer reads back to
+	// compute an active-region-filtered case ordering without needing to reopen every case.
+	float GetWorstScore(EScoreType eScoreType, ERegion region) const;
+
 	// Comprehensive. The full recorded score of the case's worst image under the given score type -
 	// unlike GetWorstScore(), also carries the ring, source scorer (meaningful for AllMax), and
 	// which original image it came from.
 	const CImageScore& GetScoreAtMax(EScoreType eScoreType) const;
+
+	// Same, but for exactly ONE region of a ring scorer, rather than merged across its 3 regions -
+	// this case's own single worst score for just that (type,region) pair. Used by COptimizer to
+	// tune each region's weight independently, from that region's own score distribution. Only
+	// meaningful when IsRingScorerType(eScoreType); returns an empty score for Center/AllMax
+	// (they have no per-region breakdown - use the type-only overload above for those).
+	const CImageScore& GetScoreAtMax(EScoreType eScoreType, ERegion region) const;
 
 	// Comprehensive. The given scorer type's own raw score for the given *original* image number
 	// (whichever of its regions actually produced that image's own recorded score), or 0 if never
